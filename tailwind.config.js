@@ -4,6 +4,7 @@ export default {
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
         "./resources/**/*.jsx",
+        "./storage/framework/views/*.php",
     ],
     theme: {
         extend: {},

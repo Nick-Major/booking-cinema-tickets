@@ -18,7 +18,7 @@ export default function Welcome({ version, phpVersion }) {
             <p className="text-lg">
               <span className="font-semibold">Frontend:</span> React with Tailwind CSS
             </p>
-            <p className="text-lg text-green-600 font-semibold">
+            <p className="text-lg text-purple-500 font-semibold">
               ✅ HMR should work now!
             </p>
           </div>
