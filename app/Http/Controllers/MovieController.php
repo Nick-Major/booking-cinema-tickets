@@ -25,6 +25,7 @@ class MovieController extends Controller
             'movie_description' => 'nullable|string',
             'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'movie_duration' => 'required|integer|min:1',
+            'country' => 'nullable|string|max:100',
             'is_active' => 'sometimes|boolean'
         ]);
 
@@ -36,7 +37,9 @@ class MovieController extends Controller
 
         $movie = Movie::create($validated);
 
-        return response()->json($movie, 201);
+        // Редирект
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Фильм успешно добавлен!');
     }
 
     public function show(Movie $movie)
@@ -51,7 +54,8 @@ class MovieController extends Controller
 
     public function edit(Movie $movie)
     {
-        return $movie;
+        // Возвращаем view для редактирования
+        return view('admin.modals.edit-movie-modal', compact('movie'));
     }
 
     public function update(Request $request, Movie $movie)
@@ -61,6 +65,7 @@ class MovieController extends Controller
             'movie_description' => 'nullable|string',
             'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'movie_duration' => 'sometimes|integer|min:1',
+            'country' => 'nullable|string|max:100',
             'is_active' => 'sometimes|boolean'
         ]);
 
@@ -77,7 +82,9 @@ class MovieController extends Controller
 
         $movie->update($validated);
 
-        return response()->json($movie);
+        // Редирект
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Фильм успешно обновлен!');
     }
 
     public function destroy(Movie $movie)
@@ -88,7 +95,29 @@ class MovieController extends Controller
         }
 
         $movie->delete();
-        return response()->json(null, 204);
+        
+        // Редирект
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Фильм успешно удален!');
+    }
+
+    // AJAX методы для админки
+    
+    public function toggleActive(Movie $movie)
+    {
+        $movie->update(['is_active' => !$movie->is_active]);
+        
+        return response()->json([
+            'success' => true,
+            'is_active' => $movie->is_active,
+            'message' => $movie->is_active ? 'Фильм активирован' : 'Фильм деактивирован'
+        ]);
+    }
+
+    public function getMoviesForTimeline()
+    {
+        $movies = Movie::active()->get(['id', 'title', 'movie_duration']);
+        return response()->json($movies);
     }
 
     public function listAllActiveMovies()
@@ -97,9 +126,6 @@ class MovieController extends Controller
         return response()->json($movies);
     }
 
-    
-    // Метод для получения фильмов с активными сеансами
-    
     public function withActiveSessions()
     {
         $movies = Movie::active()
@@ -118,7 +144,6 @@ class MovieController extends Controller
         return response()->json($movies);
     }
 
-    // Метод для поиска фильмов по названию
     public function search(Request $request)
     {
         $request->validate([

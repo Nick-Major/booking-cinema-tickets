@@ -19,7 +19,7 @@ html {
   font-size: 62.5%; }
 
 body {
-  background-image: url("../i/background.jpg");
+  background-image: url("/images/admin/background.jpg");
   background-color: rgba(0, 0, 0, 0.5);
   background-blend-mode: multiply;
   background-size: cover;
@@ -101,7 +101,7 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
     right: 42px;
     width: 24px;
     height: 16px;
-    background-image: url("../i/switch.png");
+    background-image: url("/images/admin/switch.png");
     background-size: 24px 16px; }
   .conf-step__header:hover, .conf-step__header:focus {
     background-color: #89639e; }
@@ -231,7 +231,7 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
     left: 4px;
     width: 12px;
     height: 12px;
-    background-image: url("../i/trash-sprite.png");
+    background-image: url("/images/admin/trash-sprite.png");
     background-position: 0 0;
     background-size: 24px 12px;
     background-repeat: no-repeat; }
@@ -294,7 +294,7 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
 .conf-step__chair_vip {
   border-color: #0a828a;
   background-color: #b0d6d8;
-  background-image: url("../i/green-pattern.png");
+  background-image: url("/images/admin/green-pattern.png");
   background-repeat: repeat; }
 
 .conf-step__chair_disabled {
@@ -583,3 +583,27 @@ textarea.conf-step__input {
   font-weight: 600;
 }
 /*# sourceMappingURL=styles.css.map */
+
+/* Стили для пустых состояний */
+.conf-step__empty {
+  color: #848484;
+  font-style: italic;
+  list-style: none;
+}
+
+.conf-step__empty::before {
+  content: '–';
+  position: absolute;
+  left: -14px;
+  color: #848484;
+}
+
+.conf-step__empty-movies,
+.conf-step__empty-seances {
+  text-align: center;
+  color: #848484;
+  font-style: italic;
+  padding: 20px;
+  border: 1px dashed #b7b7b7;
+  border-radius: 3px;
+}

@@ -79,19 +79,6 @@ class Ticket extends Model
         return $code;
     }
 
-    // Расчет итоговой цены с учетом типа места
-    public static function calculateFinalPrice($basePrice, $seatStatus): float
-    {
-        $multiplier = match($seatStatus) {
-            'vip' => 1.5,  // VIP дороже на 50%
-            'regular' => 1.0,
-            'blocked' => 0.0,
-            default => 1.0,
-        };
-
-        return $basePrice * $multiplier;
-    }
-
     // Проверка, активен ли билет
     public function isActive(): bool
     {

@@ -6,6 +6,7 @@ use App\Models\MovieSession;
 use App\Models\Movie;
 use App\Models\CinemaHall;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class MovieSessionController extends Controller
 {
@@ -22,7 +23,6 @@ class MovieSessionController extends Controller
             'movie_id' => 'required|exists:movies,id',
             'cinema_hall_id' => 'required|exists:cinema_halls,id',
             'session_start' => 'required|date|after:now',
-            'base_price' => 'required|numeric|min:0',
             'is_actual' => 'sometimes|boolean'
         ]);
 
@@ -38,15 +38,15 @@ class MovieSessionController extends Controller
 
         // Проверяем конфликты по времени
         if ($session->hasTimeConflict()) {
-            return response()->json([
-                'message' => 'В выбранное время в этом зале уже есть сеанс'
-            ], 422);
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'В выбранное время в этом зале уже есть сеанс');
         }
 
         // Сохраняем сеанс
-        $movieSession = MovieSession::create($validated);
+        MovieSession::create($validated);
 
-        return response()->json($movieSession->load(['movie', 'cinemaHall']), 201);
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Сеанс успешно создан!');
     }
 
     public function show(MovieSession $movieSession)
@@ -60,7 +60,6 @@ class MovieSessionController extends Controller
             'movie_id' => 'sometimes|exists:movies,id',
             'cinema_hall_id' => 'sometimes|exists:cinema_halls,id',
             'session_start' => 'sometimes|date',
-            'base_price' => 'sometimes|numeric|min:0',
             'is_actual' => 'sometimes|boolean'
         ]);
 
@@ -82,20 +81,71 @@ class MovieSessionController extends Controller
 
         // Проверяем конфликты по времени (кроме текущего сеанса)
         if ($tempSession->hasTimeConflict()) {
-            return response()->json([
-                'message' => 'В выбранное время в этом зале уже есть сеанс'
-            ], 422);
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'В выбранное время в этом зале уже есть сеанс');
         }
 
         $movieSession->update($validated);
 
-        return response()->json($movieSession->load(['movie', 'cinemaHall']));
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Сеанс успешно обновлен!');
     }
 
     public function destroy(MovieSession $movieSession)
     {
         $movieSession->delete();
-        return response()->json(null, 204);
+        
+        return redirect()->route('admin.dashboard')
+            ->with('success', 'Сеанс успешно удален!');
+    }
+
+    // AJAX методы для админки
+    
+    public function edit(MovieSession $movieSession)
+    {
+        $movies = Movie::active()->get();
+        $halls = CinemaHall::active()->get();
+        
+        return view('admin.modals.edit-session-modal', compact('movieSession', 'movies', 'halls'));
+    }
+
+    public function toggleActual(MovieSession $movieSession)
+    {
+        $movieSession->update(['is_actual' => !$movieSession->is_actual]);
+        
+        return response()->json([
+            'success' => true,
+            'is_actual' => $movieSession->is_actual,
+            'message' => $movieSession->is_actual ? 'Сеанс активирован' : 'Сеанс деактивирован'
+        ]);
+    }
+
+    public function getSessionsForTimeline()
+    {
+        $sessions = MovieSession::with(['movie', 'cinemaHall'])
+            ->where('session_start', '>=', now()->startOfDay())
+            ->where('session_start', '<=', now()->addDays(7)->endOfDay())
+            ->orderBy('session_start')
+            ->get();
+
+        return response()->json($sessions);
+    }
+
+    public function getHallSessions($hallId, $date = null)
+    {
+        $query = MovieSession::with('movie')
+            ->where('cinema_hall_id', $hallId)
+            ->where('is_actual', true);
+
+        if ($date) {
+            $query->whereDate('session_start', $date);
+        } else {
+            $query->where('session_start', '>=', now());
+        }
+
+        $sessions = $query->orderBy('session_start')->get();
+
+        return response()->json($sessions);
     }
 
     public function listSessions(Request $request)
@@ -148,6 +198,17 @@ class MovieSessionController extends Controller
         return response()->json([
             'session' => $movieSession,
             'occupied_seats' => $occupiedSeats
+        ]);
+    }
+
+    // Массовое удаление устаревших сеансов
+    public function cleanupOldSessions()
+    {
+        $deletedCount = MovieSession::where('session_end', '<', now())->delete();
+        
+        return response()->json([
+            'success' => true,
+            'message' => "Удалено $deletedCount устаревших сеансов"
         ]);
     }
 }

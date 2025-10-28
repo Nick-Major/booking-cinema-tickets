@@ -29,7 +29,7 @@ class Seat extends Model
         return $this->belongsTo(CinemaHall::class);
     }
 
-    // Связь: место может быть в нескольких билетах (история бронирований)
+    // Связь: место может быть в нескольких билетах
     public function tickets(): HasMany
     {
         return $this->hasMany(Ticket::class);
@@ -65,14 +65,18 @@ class Seat extends Model
         $this->update(['seat_status' => $status]);
     }
 
-    // Метод для получения цены места (будет доработан после создания PriceRule)
+    // Метод для получения цены места из настроек зала
     public function getPriceAttribute(): float
     {
+        if ($this->seat_status === 'blocked') {
+            return 0.00;
+        }
+
+        // Цена берется из настроек зала
         return match($this->seat_status) {
-            'vip' => 500.00,
-            'regular' => 300.00,
-            'blocked' => 0.00,
-            default => 300.00,
+            'vip' => $this->cinemaHall->vip_price,
+            'regular' => $this->cinemaHall->regular_price,
+            default => $this->cinemaHall->regular_price,
         };
     }
 
@@ -82,7 +86,7 @@ class Seat extends Model
         return $this->seat_status !== 'blocked';
     }
 
-    // Получить строку представления места (например: "Ряд 3 Место 5")
+    // Получить ряд и номер места
     public function getSeatLabelAttribute(): string
     {
         return "Ряд {$this->row_number} Место {$this->row_seat_number}";
