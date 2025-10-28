@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>ИдёмВКино</title>
   <link rel="stylesheet" href="{{ asset('css/admin/normalize.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin/styles.css') }}">
@@ -17,6 +18,17 @@
   </header>
   
   <main class="conf-steps">
+    @if(session('success'))
+        <div class="conf-step__wrapper" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; margin: 10px 0;">
+            {{ session('success') }}
+        </div>
+    @endif
+
+    @if(session('error'))  
+        <div class="conf-step__wrapper" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 10px 0;">
+            {{ session('error') }}
+        </div>
+    @endif
     
     <!-- Управление залами -->
     <section class="conf-step">
@@ -177,6 +189,6 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <script src="{{ asset('js/admin.js') }}"></script>
+  <script type="module" src="{{ asset('js/admin/main.js') }}"></script>
 </body>
 </html>

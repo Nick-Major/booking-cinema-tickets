@@ -19,8 +19,11 @@
                    name="hall_name" required>
           </label>
           <div class="conf-step__buttons text-center">
-            <button type="submit" class="conf-step__button conf-step__button-accent">
+            <!-- <button type="submit" class="conf-step__button conf-step__button-accent">
               Добавить зал
+            </button> -->
+            <button type="submit" class="conf-step__button conf-step__button-accent" onclick="testButton()">
+                Добавить зал
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
                     onclick="closeAddHallModal()">

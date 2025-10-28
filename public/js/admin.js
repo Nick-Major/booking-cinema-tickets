@@ -81,7 +81,7 @@ function deleteHall(hallId) {
         fetch(`/admin/halls/${hallId}`, {
             method: 'DELETE',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': getCsrfToken(),
                 'Content-Type': 'application/json'
             }
         })
@@ -104,7 +104,7 @@ function saveSession() {
     fetch('/admin/sessions', {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': getCsrfToken()
         },
         body: formData
     })
@@ -131,7 +131,7 @@ function toggleSales() {
     fetch('/admin/toggle-sales', {
         method: 'POST',
         headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'X-CSRF-TOKEN': getCsrfToken(),
             'Content-Type': 'application/json'
         },
         body: JSON.stringify({ action: action })
@@ -167,7 +167,7 @@ function generateHallLayout(hallId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': getCsrfToken()
         },
         body: JSON.stringify({ rows, seats_per_row: seatsPerRow })
     })
@@ -205,7 +205,7 @@ function saveHallConfiguration(hallId) {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            'X-CSRF-TOKEN': getCsrfToken()
         },
         body: JSON.stringify({ seats })
     })
@@ -245,7 +245,7 @@ function saveHallConfiguration(hallId) {
         fetch(`/admin/movies/${movieId}/toggle-active`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': getCsrfToken(),
                 'Content-Type': 'application/json'
             }
         })
@@ -285,7 +285,7 @@ function saveHallConfiguration(hallId) {
             fetch(`/admin/sessions/${sessionId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': getCsrfToken()
                 }
             })
             .then(response => {
@@ -305,7 +305,7 @@ function saveHallConfiguration(hallId) {
         fetch(`/admin/sessions/${sessionId}/toggle-actual`, {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': getCsrfToken(),
                 'Content-Type': 'application/json'
             }
         })
@@ -325,7 +325,7 @@ function saveHallConfiguration(hallId) {
             fetch('/admin/sessions/cleanup', {
                 method: 'POST',
                 headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': getCsrfToken()
                 }
             })
             .then(response => response.json())
