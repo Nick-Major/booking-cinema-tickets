@@ -1,27 +1,35 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\AuthController;
+use App\Http\Controllers\AdminController;
+use App\Http\Controllers\CinemaHallController;
+use App\Http\Controllers\MovieController;
+use App\Http\Controllers\MovieSessionController;
+use App\Http\Controllers\TicketController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
+// Главная страница
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
+    return 'Главная страница кинотеатра';
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Аутентификация
+Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+// Админка (требует авторизации)
+Route::middleware('auth')->prefix('admin')->group(function () {
+    Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+    
+    // Ресурсы админки
+    Route::resource('halls', CinemaHallController::class);
+    Route::resource('movies', MovieController::class);
+    Route::resource('sessions', MovieSessionController::class);
 });
 
-require __DIR__.'/auth.php';
+// Публичные API для клиентов
+Route::get('/movies/active', [MovieController::class, 'withActiveSessions']);
+Route::get('/sessions/available', [MovieSessionController::class, 'index']);
+Route::get('/sessions/{session}/seats', [MovieSessionController::class, 'availableSeats']);
+Route::post('/tickets/book', [TicketController::class, 'bookTicket']);

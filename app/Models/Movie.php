@@ -15,6 +15,7 @@ class Movie extends Model
         'movie_description',
         'movie_poster',
         'movie_duration',
+        'country',
         'is_active'
     ];
 

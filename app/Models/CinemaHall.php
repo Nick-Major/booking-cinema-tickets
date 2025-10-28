@@ -14,6 +14,8 @@ class CinemaHall extends Model
         'hall_name',
         'row_count', 
         'max_seats_number_in_row',
+        'regular_price',
+        'vip_price',
         'is_active'
     ];
 
