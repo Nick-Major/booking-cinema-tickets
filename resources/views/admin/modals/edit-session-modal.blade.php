@@ -10,7 +10,7 @@
         </h2>
       </div>
       <div class="popup__wrapper">
-        <form action="{{ route('sessions.update', $movieSession->id) }}" method="POST">
+        <form action="{{ route('sessions.update', $movieSession) }}" method="POST">
           @csrf
           @method('PUT')
           

@@ -109,86 +109,94 @@ class CinemaHallController extends Controller
     }
 
     // Конфигурация зала
-    public function configuration(CinemaHall $cinemaHall)
+    public function configuration($hallId)
     {
-        return view('admin.modals.hall-configuration', ['hall' => $cinemaHall]);
+        $hall = CinemaHall::findOrFail($hallId);
+        return view('admin.modals.hall-configuration', ['hall' => $hall]);
     }
 
     // Конфигурация цен
-    public function prices(CinemaHall $cinemaHall)
+    public function prices($hallId)
     {
-        return view('admin.modals.price-configuration', ['hall' => $cinemaHall]);
+        $hall = CinemaHall::findOrFail($hallId);
+        return view('admin.modals.price-configuration', ['hall' => $hall]);
     }
 
     // Генерация схемы зала
-    public function generateLayout(Request $request, CinemaHall $cinemaHall)
+    public function generateLayout(Request $request, $hallId)
     {
+        $hall = CinemaHall::findOrFail($hallId);
+        
         $validated = $request->validate([
             'rows' => 'required|integer|min:1|max:20',
             'seats_per_row' => 'required|integer|min:1|max:20'
         ]);
 
         // Обновляем данные зала
-        $cinemaHall->update([
+        $hall->update([
             'row_count' => $validated['rows'],
             'max_seats_number_in_row' => $validated['seats_per_row']
         ]);
 
         // Генерируем HTML для схемы
-        $html = $this->generateHallLayoutHTML($cinemaHall, $validated['rows'], $validated['seats_per_row']);
+        $html = $this->generateHallLayoutHTML($hall, $validated['rows'], $validated['seats_per_row']);
 
         return response($html);
     }
 
     // Сохранение конфигурации зала
-    public function saveConfiguration(Request $request, CinemaHall $cinemaHall)
+    public function saveConfiguration(Request $request, $hallId)
     {
+        // Найдем зал вручную
+        $cinemaHall = CinemaHall::find($hallId);
+        
+        if (!$cinemaHall) {
+            return response()->json(['success' => false, 'message' => 'Ошибка: зал не найден'], 500);
+        }
+
         $validated = $request->validate([
             'seats' => 'required|array',
-            'seats.*.row' => 'required|integer|min:1',
-            'seats.*.seat' => 'required|integer|min:1',
+            'seats.*.row' => 'required|numeric|min:1',
+            'seats.*.seat' => 'required|numeric|min:1',
             'seats.*.type' => 'required|in:regular,vip,blocked'
         ]);
 
         try {
-            DB::transaction(function () use ($cinemaHall, $validated) {
-                // Удаляем старые места
-                $cinemaHall->seats()->delete();
+            // Принудительное удаление
+            Seat::where('cinema_hall_id', $cinemaHall->id)->delete();
 
-                // Создаем все места (включая заблокированные)
-                $seatsToCreate = [];
-                foreach ($validated['seats'] as $seatData) {
-                    $seatsToCreate[] = [
-                        'cinema_hall_id' => $cinemaHall->id,
-                        'row_number' => $seatData['row'],
-                        'row_seat_number' => $seatData['seat'],
-                        'seat_status' => $seatData['type'],
-                        'created_at' => now(),
-                        'updated_at' => now()
-                    ];
-                }
-
-                if (!empty($seatsToCreate)) {
-                    Seat::insert($seatsToCreate);
-                }
-            });
+            // Создаем новые места
+            foreach ($validated['seats'] as $seatData) {
+                $seat = new Seat();
+                $seat->cinema_hall_id = $cinemaHall->id;
+                $seat->row_number = (int)$seatData['row'];
+                $seat->row_seat_number = (int)$seatData['seat'];
+                $seat->seat_status = $seatData['type'];
+                $seat->save();
+            }
 
             return response()->json(['success' => true, 'message' => 'Конфигурация сохранена']);
 
         } catch (\Exception $e) {
-            return response()->json(['success' => false, 'message' => 'Ошибка при сохранении'], 500);
+            \Log::error('Error saving hall configuration', [
+                'hall_id' => $cinemaHall->id,
+                'error' => $e->getMessage()
+            ]);
+            return response()->json(['success' => false, 'message' => 'Ошибка при сохранении: ' . $e->getMessage()], 500);
         }
     }
 
     // Обновление цен
-    public function updatePrices(Request $request, CinemaHall $cinemaHall)
+    public function updatePrices(Request $request, $hallId)
     {
+        $hall = CinemaHall::findOrFail($hallId);
+        
         $validated = $request->validate([
             'regular_price' => 'required|numeric|min:0',
             'vip_price' => 'required|numeric|min:0'
         ]);
 
-        $cinemaHall->update($validated);
+        $hall->update($validated);
 
         return response()->json(['success' => true, 'message' => 'Цены обновлены']);
     }

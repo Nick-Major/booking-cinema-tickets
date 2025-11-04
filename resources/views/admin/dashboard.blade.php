@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="{{ asset('css/admin/normalize.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin/styles.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
-  <!-- <link rel="stylesheet" href="{{ asset('css/admin/fix.css') }}" > -->
 </head>
 
 <body>
@@ -42,7 +41,7 @@
           @forelse($halls as $hall)
             <li>{{ $hall->hall_name }}
               <button class="conf-step__button conf-step__button-trash" 
-                      onclick="deleteHall({{ $hall->id }})"></button>
+                      onclick="deleteHall({{ $hall->id }}, '{{ $hall->hall_name }}')"></button>
             </li>
           @empty
             <li class="conf-step__empty">Нет созданных залов</li>
@@ -127,16 +126,26 @@
         
         <div class="conf-step__movies" id="moviesList">
           @forelse($movies as $movie)
-            <div class="conf-step__movie" data-movie-id="{{ $movie->id }}">
+            <div class="conf-step__movie" data-movie-id="{{ $movie->id }}" style="position: relative;">
               @if($movie->movie_poster)
                 <img class="conf-step__movie-poster" alt="{{ $movie->title }}" 
-                     src="{{ asset('storage/' . $movie->movie_poster) }}">
+                    src="{{ asset('storage/' . $movie->movie_poster) }}">
               @else
                 <img class="conf-step__movie-poster" alt="Постер отсутствует" 
-                     src="{{ asset('images/admin/poster-placeholder.png') }}">
+                    src="{{ asset('images/admin/poster-placeholder.png') }}">
               @endif
               <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
               <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
+              
+              <!-- Кнопки управления фильмом -->
+              <div class="conf-step__movie-controls" style="position: absolute; top: 5px; right: 5px;">
+                <button class="conf-step__button conf-step__button-small conf-step__button-regular" 
+                        onclick="openEditMovieModal({{ $movie->id }})"
+                        title="Редактировать фильм">✎</button>
+                <button class="conf-step__button conf-step__button-small conf-step__button-trash" 
+                        onclick="deleteMovie({{ $movie->id }}, '{{ $movie->title }}')"
+                        title="Удалить фильм"></button>
+              </div>
             </div>
           @empty
             <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
@@ -180,6 +189,9 @@
   @include('admin.modals.add-hall-modal')
   @include('admin.modals.add-movie-modal')
   @include('admin.modals.add-session-modal')
+  @include('admin.modals.delete-hall-modal')
+  @include('admin.modals.delete-movie-modal')
+  @include('admin.modals.delete-session-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">
@@ -187,6 +199,6 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <script src="{{ asset('js/admin.js') }}"></script>
+  <script type="module" src="{{ asset('js/admin/app.js') }}"></script>
 </body>
 </html>

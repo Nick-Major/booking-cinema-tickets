@@ -16,11 +16,20 @@
                         $left = ($startMinutes / 1440) * 100; // 1440 минут в сутках
                         $width = ($durationMinutes / 1440) * 100;
                     @endphp
-                    <div class="conf-step__seances-movie" 
-                         style="width: {{ max($width, 5) }}%; left: {{ $left }}%; background-color: #{{ substr(md5($session->movie_id), 0, 6) }};"
-                         onclick="openEditSessionModal({{ $session->id }})">
+                    <div class="conf-step__seances-movie"
+                         style="width: {{ max($width, 5) }}%; left: {{ $left }}%; background-color: #{{ substr(md5($session->movie_id), 0, 6) }};">
                         <p class="conf-step__seances-movie-title">{{ $session->movie->title }}</p>
                         <p class="conf-step__seances-movie-start">{{ $startTime->format('H:i') }}</p>
+                        
+                        <!-- Кнопки управления сеансом -->
+                        <div class="conf-step__seances-controls" style="position: absolute; top: 2px; right: 2px;">
+                            <button class="conf-step__button conf-step__button-small conf-step__button-regular" 
+                                    onclick="openEditSessionModal({{ $session->id }})"
+                                    title="Редактировать сеанс">✎</button>
+                            <button class="conf-step__button conf-step__button-small conf-step__button-trash" 
+                                    onclick="deleteSession({{ $session->id }}, '{{ $session->movie->title }}')"
+                                    title="Удалить сеанс"></button>
+                        </div>
                     </div>
                 @endforeach
             </div>

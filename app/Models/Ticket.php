@@ -5,6 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
+use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
+use Endroid\QrCode\Writer\PngWriter;
 
 class Ticket extends Model
 {
@@ -112,5 +117,54 @@ class Ticket extends Model
     public function cancel(): void
     {
         $this->update(['status' => 'cancelled']);
+    }
+
+    // Генерация данных для QR-кода
+    public function getQrCodeData(): array
+    {
+        return [
+            'code' => $this->unique_code,
+            'movie' => $this->movieSession->movie->title,
+            'hall' => $this->movieSession->cinemaHall->hall_name,
+            'seat' => $this->seat->getSeatLabelAttribute(),
+            'date' => $this->movieSession->session_start->format('d.m.Y'),
+            'time' => $this->movieSession->session_start->format('H:i'),
+            'price' => $this->final_price,
+            'status' => $this->status
+        ];
+    }
+
+    // Генерация QR-кода как PNG изображения
+    public function generateQrCode(): string
+    {
+        $qrData = $this->getQrCodeData();
+        $qrContent = json_encode($qrData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+
+        $result = Builder::create()
+            ->writer(new PngWriter())
+            ->writerOptions([])
+            ->data($qrContent)
+            ->encoding(new Encoding('UTF-8'))
+            ->errorCorrectionLevel(new ErrorCorrectionLevelLow())
+            ->size(200)
+            ->margin(10)
+            ->roundBlockSizeMode(new RoundBlockSizeModeMargin())
+            ->build();
+
+        return $result->getString();
+    }
+
+    // Получить QR-код в base64 для отображения в HTML
+    public function getQrCodeBase64(): string
+    {
+        $qrPng = $this->generateQrCode();
+        return 'data:image/png;base64,' . base64_encode($qrPng);
+    }
+
+    // Сохранить QR-код в файл
+    public function saveQrCodeToFile(string $path): bool
+    {
+        $qrPng = $this->generateQrCode();
+        return file_put_contents($path, $qrPng) !== false;
     }
 }

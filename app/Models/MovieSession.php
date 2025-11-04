@@ -46,4 +46,74 @@ class MovieSession extends Model
     {
         return $this->session_start > now();
     }
+
+    // Расчет времени окончания сеанса
+    public static function calculateSessionEnd($sessionStart, $movieDuration): string
+    {
+        $start = \Carbon\Carbon::parse($sessionStart);
+        return $start->addMinutes($movieDuration)->toDateTimeString();
+    }
+
+    // Проверка конфликтов по времени в зале
+    public function hasTimeConflict(): bool
+    {
+        return self::where('cinema_hall_id', $this->cinema_hall_id)
+            ->where('id', '!=', $this->id ?? 0)
+            ->where(function ($query) {
+                $query->whereBetween('session_start', [$this->session_start, $this->session_end])
+                    ->orWhereBetween('session_end', [$this->session_start, $this->session_end])
+                    ->orWhere(function ($query) {
+                        $query->where('session_start', '<=', $this->session_start)
+                            ->where('session_end', '>=', $this->session_end);
+                    });
+            })
+            ->exists();
+    }
+
+    // Scope: активные сеансы
+    public function scopeActual($query)
+    {
+        return $query->where('is_actual', true);
+    }
+
+    // Scope: будущие сеансы
+    public function scopeFuture($query)
+    {
+        return $query->where('session_start', '>=', now());
+    }
+
+    // Scope: по дате
+    public function scopeByDate($query, $date)
+    {
+        return $query->whereDate('session_start', $date);
+    }
+
+    // Scope: по залу
+    public function scopeByHall($query, $hallId)
+    {
+        return $query->where('cinema_hall_id', $hallId);
+    }
+
+    // Получить доступные места
+    public function getAvailableSeats()
+    {
+        $occupiedSeatIds = $this->tickets()
+            ->whereIn('status', ['reserved', 'paid'])
+            ->pluck('seat_id');
+
+        return $this->cinemaHall->seats()
+            ->whereNotIn('id', $occupiedSeatIds)
+            ->active()
+            ->get();
+    }
+
+    // Получить занятые места
+    public function getOccupiedSeats()
+    {
+        return $this->tickets()
+            ->with('seat')
+            ->whereIn('status', ['reserved', 'paid'])
+            ->get()
+            ->pluck('seat');
+    }
 }

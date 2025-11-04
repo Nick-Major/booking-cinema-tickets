@@ -109,6 +109,33 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
   }  
 }
 
+.conf-step__button-small {
+    width: 20px;
+    height: 20px;
+    padding: 2px;
+    font-size: 12px;
+    line-height: 1;
+    
+    &.conf-step__button-trash {
+        background-size: 12px 12px;
+    }
+}
+
+.conf-step__movie-controls,
+.conf-step__seances-controls {
+    display: flex;
+    gap: 2px;
+    
+    .conf-step__button {
+        opacity: 0.7;
+        transition: opacity 0.2s;
+        
+        &:hover {
+            opacity: 1;
+        }
+    }
+}
+
 .conf-step__header_opened + .conf-step__wrapper {
   display: block;
 }
