@@ -1,0 +1,16 @@
+{
+  "name": "booking-cinema-tickets",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "sass resources/css/admin/styles.scss public/css/admin/styles.css && sass resources/css/client/styles.scss public/css/client/styles.css",
+    "watch": "sass --watch resources/css/admin/styles.scss:public/css/admin/styles.css resources/css/client/styles.scss:public/css/client/styles.css"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "sass": "^1.93.3"
+  }
+}

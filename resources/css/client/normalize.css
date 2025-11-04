@@ -188,8 +188,7 @@ button,
 [type="button"],
 [type="reset"],
 [type="submit"] {
-  appearance: button; /* Standard property */
-  -webkit-appearance: button; /* Webkit browsers */
+  -webkit-appearance: button;
 }
 
 /**
@@ -281,8 +280,7 @@ textarea {
  */
 
 [type="search"] {
-  appearance: textfield; /* Standard property */
-  -webkit-appearance: textfield; /* 1 - Webkit browsers */
+  -webkit-appearance: textfield; /* 1 */
   outline-offset: -2px; /* 2 */
 }
 

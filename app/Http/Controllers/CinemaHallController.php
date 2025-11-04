@@ -53,10 +53,59 @@ class CinemaHallController extends Controller
         return response()->json($cinemaHall);
     }
 
-    public function destroy(CinemaHall $cinemaHall)
+    public function destroy($hall)
     {
-        $cinemaHall->delete();
-        return response()->json(null, 204);
+        \Log::info('=== START DELETE HALL ===', ['id' => $hall]);
+
+        try {
+            // Найдем зал вручную
+            $cinemaHall = \App\Models\CinemaHall::findOrFail($hall);
+            
+            \Log::info('Found hall', [
+                'id' => $cinemaHall->id,
+                'name' => $cinemaHall->hall_name
+            ]);
+
+            // Проверим связанные записи перед удалением
+            $seatsCount = $cinemaHall->seats()->count();
+            $sessionsCount = $cinemaHall->movieSessions()->count();
+            
+            \Log::info('Hall relationships before delete', [
+                'seats' => $seatsCount,
+                'sessions' => $sessionsCount
+            ]);
+
+            $cinemaHall->delete();
+
+            \Log::info('Hall deleted successfully', ['id' => $cinemaHall->id]);
+            \Log::info('=== END DELETE HALL ===');
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Зал успешно удален'
+                ]);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Зал успешно удален!');
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting hall', [
+                'id' => $hall,
+                'error' => $e->getMessage()
+            ]);
+
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при удалении зала: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Ошибка при удалении зала: ' . $e->getMessage());
+        }
     }
 
     // Конфигурация зала

@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="{{ asset('css/admin/normalize.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin/styles.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
+  <!-- <link rel="stylesheet" href="{{ asset('css/admin/fix.css') }}" > -->
 </head>
 
 <body>
@@ -55,6 +56,7 @@
     </section>
     
     <!-- Конфигурация залов -->
+    @if($halls->count() > 0)
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация залов</h2>
@@ -73,17 +75,14 @@
         </ul>
         
         <div id="hallConfiguration">
-          <!-- Динамически загружаемая конфигурация -->
-          @if($halls->count() > 0)
-            @include('admin.modals.hall-configuration', ['hall' => $halls->first()])
-          @else
-            <p class="conf-step__paragraph">Сначала создайте зал</p>
-          @endif
+          @include('admin.modals.hall-configuration', ['hall' => $halls->first()])
         </div>                 
       </div>
     </section>
+    @endif
     
     <!-- Конфигурация цен -->
+    @if($halls->count() > 0)
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация цен</h2>
@@ -102,17 +101,14 @@
         </ul>
           
         <div id="priceConfiguration">
-          <!-- Динамически загружаемая конфигурация цен -->
-          @if($halls->count() > 0)
-            @include('admin.modals.price-configuration', ['hall' => $halls->first()])
-          @else
-            <p class="conf-step__paragraph">Сначала создайте зал</p>
-          @endif
+          @include('admin.modals.price-configuration', ['hall' => $halls->first()])
         </div>
       </div>
     </section>
+    @endif
     
     <!-- Сетка сеансов -->
+    @if($halls->count() > 0)
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Сетка сеансов</h2>
@@ -148,7 +144,6 @@
         </div>
         
         <div class="conf-step__seances" id="sessionsTimeline">
-          <!-- Динамически загружаемая сетка сеансов -->
           @include('admin.modals.sessions-timeline', ['sessions' => $sessions])
         </div>
         
@@ -158,8 +153,10 @@
         </fieldset>  
       </div>
     </section>
+    @endif
     
     <!-- Открыть продажи -->
+    @if($halls->count() > 0)
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Открыть продажи</h2>
@@ -175,7 +172,8 @@
           @endif
         </button>
       </div>
-    </section>    
+    </section>
+    @endif
   </main>
 
   <!-- Модальные окна -->
@@ -189,6 +187,6 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <script type="module" src="{{ asset('js/admin/main.js') }}"></script>
+  <script src="{{ asset('js/admin.js') }}"></script>
 </body>
 </html>

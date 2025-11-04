@@ -44,7 +44,7 @@ body {
   z-index: 10;
 }
 .page-nav .page-nav__day {
-  flex-basis: calc(100% / 8);
+  flex-basis: 12.5%;
   font-size: 1.2rem;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.9);
@@ -57,10 +57,10 @@ body {
   margin-left: 1px;
 }
 .page-nav .page-nav__day .page-nav__day-week::after {
-  content: ',';
+  content: ",";
 }
 .page-nav .page-nav__day .page-nav__day-number::before {
-  content: ' ';
+  content: " ";
 }
 .page-nav .page-nav__day .page-nav__day-week, .page-nav .page-nav__day .page-nav__day-number {
   display: block;
@@ -78,13 +78,13 @@ body {
   text-align: center;
 }
 .page-nav .page-nav__day_next::before {
-  content: '>';
+  content: ">";
   font-family: monospace;
   font-weight: 700;
   font-size: 2.4rem;
 }
 .page-nav .page-nav__day_today .page-nav__day-week::before {
-  content: 'Сегодня';
+  content: "Сегодня";
   display: block;
 }
 .page-nav .page-nav__day_today .page-nav__day-week, .page-nav .page-nav__day_today .page-nav__day-number {
@@ -115,7 +115,7 @@ body {
   height: 17.5rem;
 }
 .movie .movie__poster::after {
-  content: '';
+  content: "";
   display: block;
   position: absolute;
   right: -0.7rem;
@@ -123,7 +123,7 @@ body {
   border: 1.5rem solid transparent;
   border-bottom: 0 solid transparent;
   border-right: 0 solid transparent;
-  border-left: 0.7rem solid #772720;
+  border-left: 0.7rem solid rgb(119, 39, 32);
 }
 .movie .movie__description {
   flex-grow: 1;
@@ -220,7 +220,7 @@ body {
   width: 10rem;
 }
 .buying__info .buying__info-hint p::before {
-  content: '';
+  content: "";
   position: absolute;
   left: -1rem;
   top: calc(50% - 1.6rem);
@@ -247,7 +247,7 @@ body {
   padding-top: 3rem;
 }
 .buying-scheme__wrapper::before {
-  content: '';
+  content: "";
 }
 
 .buying-scheme__row + .buying-scheme__row {
@@ -325,7 +325,7 @@ body {
   padding-bottom: 2.5rem;
 }
 .tichet__check::before {
-  content: '';
+  content: "";
   display: block;
   position: absolute;
   top: -3px;
@@ -336,7 +336,7 @@ body {
   background-size: 10px 3px;
 }
 .tichet__check::after {
-  content: '';
+  content: "";
   display: block;
   position: absolute;
   bottom: -3px;
@@ -354,7 +354,7 @@ body {
   padding-bottom: 3rem;
 }
 .ticket__info-wrapper::before {
-  content: '';
+  content: "";
   display: block;
   position: absolute;
   top: -3px;
@@ -365,7 +365,7 @@ body {
   background-size: 10px 3px;
 }
 .ticket__info-wrapper::after {
-  content: '';
+  content: "";
   display: block;
   position: absolute;
   bottom: -3px;
@@ -421,12 +421,12 @@ body {
     width: 990px;
     margin: auto;
   }
-
   .movie, .buying {
     border-radius: 2px;
   }
-
   .buying__info-hint {
     display: none;
   }
 }
+
+/*# sourceMappingURL=styles.css.map */
