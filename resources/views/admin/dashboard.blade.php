@@ -164,23 +164,33 @@
     </section>
     @endif
     
-    <!-- Открыть продажи -->
+    <!-- Управление продажами по залам -->
     @if($halls->count() > 0)
     <section class="conf-step">
-      <header class="conf-step__header conf-step__header_opened">
-        <h2 class="conf-step__title">Открыть продажи</h2>
-      </header>
-      <div class="conf-step__wrapper text-center">
-        <p class="conf-step__paragraph">Всё готово, теперь можно:</p>
-        <button class="conf-step__button conf-step__button-accent" 
-                onclick="toggleSales()" id="salesButton">
-          @if($halls->where('is_active', true)->count() > 0)
-            Приостановить продажу билетов
-          @else
-            Открыть продажу билетов
-          @endif
-        </button>
-      </div>
+        <header class="conf-step__header conf-step__header_opened">
+            <h2 class="conf-step__title">Управление продажами</h2>
+        </header>
+        <div class="conf-step__wrapper">
+            <p class="conf-step__paragraph">Статус продаж по залам:</p>
+            <ul class="conf-step__sales-list">
+                @foreach($halls as $hall)
+                <li>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="hall-name">{{ $hall->hall_name }}</span>
+                        <span class="sales-status {{ $hall->is_active ? 'active' : 'inactive' }}">
+                            {{ $hall->is_active ? 'Продажи открыты' : 'Продажи приостановлены' }}
+                        </span>
+                    </div>
+                    <button class="conf-step__button conf-step__button-small {{ $hall->is_active ? 'conf-step__button-warning' : 'conf-step__button-accent' }}"
+                            onclick="toggleSales({{ $hall->id }}, '{{ $hall->hall_name }}', {{ $hall->is_active ? 'true' : 'false' }})"
+                            data-hall-id="{{ $hall->id }}"
+                            data-is-active="{{ $hall->is_active }}">
+                        {{ $hall->is_active ? 'Приостановить продажи' : 'Открыть продажи' }}
+                    </button>
+                </li>
+                @endforeach
+            </ul>
+        </div>
     </section>
     @endif
   </main>

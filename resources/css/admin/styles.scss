@@ -625,20 +625,25 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
   height: 40px;
   border: 1px solid rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
-  padding: 10px 2px 10px 10px;
+  padding: 8px 25px 8px 8px; // Больше правого padding для кнопок
+  min-width: 80px; // Увеличим минимальную ширину
+  overflow: hidden;
+  font-size: 1rem;
   
   .conf-step__seances-movie-title {
     overflow: hidden;
-    line-height: 10px;
+    line-height: 12px;
     height: 100%;
+    font-size: 1rem;
+    margin: 0;
   }
   
   .conf-step__seances-movie-start {
     position: absolute;
-    bottom: -33px;
-    left: -14px;
+    bottom: -25px;
+    left: -10px;
     color: $grey;
-    font-size: 1.2rem;
+    font-size: 1rem;
   }
   
   &::before {
@@ -646,12 +651,141 @@ input[type='radio'], input[type='submit'], button, .conf-step__header, select {
     position: absolute;
     display: block;
     width: 1px;
-    height: 5px;
-    bottom: -17px;
+    height: 4px;
+    bottom: -12px;
     left: 0;
     background-color: $grey;
   }
+}
+
+// Стили для управления продажами
+.conf-step__sales-list {
+  list-style: none;
+  font-size: 1.6rem;
+  margin: 14px 0 5px 0;
   
+  li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border-left: 6px solid $lilac;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+  
+  .hall-name {
+    font-weight: 700;
+    color: $lilac;
+    margin-right: 15px;
+    font-size: 1.8rem;
+  }
+  
+  .sales-status {
+    font-weight: 600;
+    font-size: 1.4rem;
+    
+    &.active {
+      color: $green;
+    }
+    
+    &.inactive {
+      color: #d32f2f;
+    }
+  }
+}
+
+.conf-step__button-warning {
+  color: $white;
+  background-color: #d32f2f;
+  padding: 8px 16px;
+  font-size: 1.2rem;
+  min-width: 160px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  
+  &:hover,
+  &:focus{
+    background-color: #f44336;
+    outline: none;
+  }
+  
+  &:active {
+    position: relative;
+    top: 2px;
+    background-color: #b71c1c;
+    color: $white;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+  }  
+}
+
+.conf-step__button-accent {
+  color: $white;
+  background-color: $green;
+  padding: 8px 16px;
+  font-size: 1.2rem;
+  min-width: 160px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  
+  &:hover,
+  &:focus{
+    background-color: #2FC9D2;
+    outline: none;
+  }
+  
+  &:active {
+    position: relative;
+    top: 2px;
+    background-color: #146C72;
+    color: $white;
+    box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
+  }  
+}
+
+// Стили для кнопок управления сеансами
+.conf-step__seances-controls {
+  display: flex;
+  gap: 2px;
+  z-index: 100;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  
+  .conf-step__button {
+    opacity: 0.9;
+    transition: opacity 0.2s;
+    width: 18px;
+    height: 18px;
+    padding: 0;
+    font-size: 10px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9);
+    
+    &:hover {
+      opacity: 1;
+      background-color: white;
+    }
+    
+    &.conf-step__button-trash {
+      background-size: 10px 10px;
+      background-position: center;
+    }
+    
+    &.conf-step__button-regular {
+      font-size: 9px;
+      padding: 0;
+    }
+  }
 }
 
 .login {

@@ -59,24 +59,29 @@ export function initSessionManager() {
         });
     }
 
-    // УДАЛЕНИЕ СЕАНСА (СТАРАЯ ФУНКЦИЯ ДЛЯ СОВМЕСТИМОСТИ)
-    window.deleteSession = function(sessionId) {
-        if (confirm('Вы уверены, что хотите удалить этот сеанс?')) {
+    // УДАЛЕНИЕ СЕАНСА
+    window.deleteSession = function(sessionId, movieTitle) {
+        if (confirm(`Вы уверены, что хотите удалить сеанс фильма "${movieTitle}"?`)) {
             fetch(`/admin/sessions/${sessionId}`, {
                 method: 'DELETE',
                 headers: {
-                    'X-CSRF-TOKEN': getCsrfToken()
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 }
             })
             .then(response => {
                 if (response.ok) {
-                    window.closeEditSessionModal();
+                    showSuccessMessage('Сеанс успешно удален!');
                     location.reload();
                 } else {
                     alert('Ошибка при удалении сеанса');
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка сети при удалении сеанса');
+            });
         }
     }
 

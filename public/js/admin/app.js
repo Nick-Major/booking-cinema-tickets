@@ -30,10 +30,14 @@ document.addEventListener('DOMContentLoaded', function() {
         initPriceManager();
         console.log('✓ Price manager initialized');
         
-        // Временно закомментируем пока не созданы
         initMovieManager();
-        initSessionManager(); 
+        console.log('✓ Movie manager initialized');
+
+        initSessionManager();
+        console.log('✓ Session manager initialized');
+
         initSalesManager();
+        console.log('✓ Sales manager initialized');
         
         console.log('🎉 Admin app initialized successfully!');
     } catch (error) {
