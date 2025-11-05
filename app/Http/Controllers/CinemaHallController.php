@@ -55,56 +55,28 @@ class CinemaHallController extends Controller
 
     public function destroy($hall)
     {
-        \Log::info('=== START DELETE HALL ===', ['id' => $hall]);
-
         try {
-            // Найдем зал вручную
-            $cinemaHall = \App\Models\CinemaHall::findOrFail($hall);
+            $cinemaHall = \App\Models\CinemaHall::find($hall);
             
-            \Log::info('Found hall', [
-                'id' => $cinemaHall->id,
-                'name' => $cinemaHall->hall_name
-            ]);
-
-            // Проверим связанные записи перед удалением
-            $seatsCount = $cinemaHall->seats()->count();
-            $sessionsCount = $cinemaHall->movieSessions()->count();
-            
-            \Log::info('Hall relationships before delete', [
-                'seats' => $seatsCount,
-                'sessions' => $sessionsCount
-            ]);
+            if (!$cinemaHall) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Зал не найден или уже удален'
+                ], 404);
+            }
 
             $cinemaHall->delete();
 
-            \Log::info('Hall deleted successfully', ['id' => $cinemaHall->id]);
-            \Log::info('=== END DELETE HALL ===');
-
-            if (request()->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Зал успешно удален'
-                ]);
-            }
-
-            return redirect()->route('admin.dashboard')
-                ->with('success', 'Зал успешно удален!');
-
-        } catch (\Exception $e) {
-            \Log::error('Error deleting hall', [
-                'id' => $hall,
-                'error' => $e->getMessage()
+            return response()->json([
+                'success' => true,
+                'message' => 'Зал успешно удален'
             ]);
 
-            if (request()->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка при удалении зала: ' . $e->getMessage()
-                ], 500);
-            }
-
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'Ошибка при удалении зала: ' . $e->getMessage());
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при удалении зала: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -112,14 +84,14 @@ class CinemaHallController extends Controller
     public function configuration($hallId)
     {
         $hall = CinemaHall::findOrFail($hallId);
-        return view('admin.modals.hall-configuration', ['hall' => $hall]);
+        return view('admin.components.hall-configuration', ['hall' => $hall]);
     }
 
     // Конфигурация цен
     public function prices($hallId)
     {
         $hall = CinemaHall::findOrFail($hallId);
-        return view('admin.modals.price-configuration', ['hall' => $hall]);
+        return view('admin.components.price-configuration', ['hall' => $hall]);
     }
 
     // Генерация схемы зала

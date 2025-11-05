@@ -19,34 +19,74 @@ class MovieSessionController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'movie_id' => 'required|exists:movies,id',
-            'cinema_hall_id' => 'required|exists:cinema_halls,id',
-            'session_start' => 'required|date|after:now',
-            'is_actual' => 'sometimes|boolean'
-        ]);
+        try {
+            $validated = $request->validate([
+                'movie_id' => 'required|exists:movies,id',
+                'cinema_hall_id' => 'required|exists:cinema_halls,id',
+                'session_start' => 'required|date|after:now',
+                'is_actual' => 'sometimes|boolean'
+            ]);
 
-        // Получаем длительность фильма
-        $movie = Movie::findOrFail($validated['movie_id']);
-        $validated['session_end'] = MovieSession::calculateSessionEnd(
-            $validated['session_start'], 
-            $movie->movie_duration
-        );
+            // Получаем длительность фильма
+            $movie = Movie::findOrFail($validated['movie_id']);
+            $validated['session_end'] = MovieSession::calculateSessionEnd(
+                $validated['session_start'],
+                $movie->movie_duration
+            );
 
-        // Создаем сеанс для проверки конфликтов
-        $session = new MovieSession($validated);
+            // Создаем сеанс для проверки конфликтов
+            $session = new MovieSession($validated);
 
-        // Проверяем конфликты по времени
-        if ($session->hasTimeConflict()) {
+            // Проверяем конфликты по времени
+            if ($session->hasTimeConflict()) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'В выбранное время в этом зале уже есть сеанс'
+                    ], 422);
+                }
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'В выбранное время в этом зале уже есть сеанс');
+            }
+
+            // Сохраняем сеанс
+            $createdSession = MovieSession::create($validated);
+
+            // Для AJAX запросов возвращаем JSON
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Сеанс успешно создан!',
+                    'session' => $createdSession
+                ]);
+            }
+
+            // Для обычных запросов - redirect
             return redirect()->route('admin.dashboard')
-                ->with('error', 'В выбранное время в этом зале уже есть сеанс');
+                ->with('success', 'Сеанс успешно создан!');
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка валидации',
+                    'errors' => $e->errors()
+                ], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Error creating session: ' . $e->getMessage());
+            
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при создании сеанса: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Ошибка при создании сеанса');
         }
-
-        // Сохраняем сеанс
-        MovieSession::create($validated);
-
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Сеанс успешно создан!');
     }
 
     public function show(MovieSession $movieSession)
@@ -93,10 +133,104 @@ class MovieSessionController extends Controller
 
     public function destroy(MovieSession $movieSession)
     {
-        $movieSession->delete();
-        
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Сеанс успешно удален!');
+        try {
+            // Проверяем есть ли связанные билеты
+            if ($movieSession->tickets()->exists()) {
+                if (request()->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Нельзя удалить сеанс с забронированными билетами'
+                    ], 422);
+                }
+                return redirect()->route('admin.dashboard')
+                    ->with('error', 'Нельзя удалить сеанс с забронированными билетами');
+            }
+
+            $movieSession->delete();
+
+            // Всегда возвращаем JSON для AJAX запросов
+            if (request()->expectsJson() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Сеанс успешно удален!'
+                ]);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Сеанс успешно удален!');
+
+        } catch (\Exception $e) {
+            // Всегда возвращаем JSON для AJAX запросов
+            if (request()->expectsJson() || request()->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при удалении сеанса: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Ошибка при удалении сеанса');
+        }
+    }
+
+    // ПЕРЕМЕЩЕНИЕ СЕАНСА В ДРУГОЙ ЗАЛ
+    public function moveToHall(MovieSession $movieSession, Request $request)
+    {
+        $validated = $request->validate([
+            'cinema_hall_id' => 'required|exists:cinema_halls,id'
+        ]);
+
+        try {
+            // Проверяем конфликты по времени в новом зале
+            $tempSession = clone $movieSession;
+            $tempSession->cinema_hall_id = $validated['cinema_hall_id'];
+            
+            if ($tempSession->hasTimeConflict()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'В выбранном зале в это время уже есть сеанс'
+                ], 422);
+            }
+
+            $movieSession->update($validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Сеанс успешно перемещен в другой зал'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при перемещении сеанса: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ИЗМЕНЕНИЕ ПОРЯДКА СЕАНСОВ
+    public function reorder(Request $request)
+    {
+        $validated = $request->validate([
+            'sessions' => 'required|array',
+            'sessions.*.id' => 'required|exists:movie_sessions,id',
+            'sessions.*.order' => 'required|integer|min:1'
+        ]);
+
+        try {
+            foreach ($validated['sessions'] as $sessionData) {
+                MovieSession::where('id', $sessionData['id'])
+                    ->update(['order_column' => $sessionData['order']]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Порядок сеансов успешно обновлен'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении порядка: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // AJAX методы для админки

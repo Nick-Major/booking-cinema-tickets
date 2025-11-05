@@ -8,14 +8,14 @@
         </h2>
       </div>
       <div class="popup__wrapper">
-        <form id="deleteMovieForm" method="POST">
+        <form id="deleteMovieForm" onsubmit="confirmMovieDeletion(event)">
           @csrf
           @method('DELETE')
           <input type="hidden" name="movie_id" id="movieIdToDelete">
           <p class="conf-step__paragraph">Вы действительно хотите удалить фильм <span id="movieNameToDelete">"Название фильма"</span>?</p>
           <div class="conf-step__buttons text-center">
-            <input type="submit" value="Удалить" class="conf-step__button conf-step__button-accent">
-            <button class="conf-step__button conf-step__button-regular" type="button" onclick="closeDeleteMovieModal()">Отменить</button>
+            <button type="submit" class="conf-step__button conf-step__button-accent">Удалить</button>
+            <button type="button" class="conf-step__button conf-step__button-regular" onclick="closeDeleteMovieModal()">Отменить</button>
           </div>
         </form>
       </div>

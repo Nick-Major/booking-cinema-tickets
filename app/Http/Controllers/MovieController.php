@@ -89,16 +89,36 @@ class MovieController extends Controller
 
     public function destroy(Movie $movie)
     {
-        // Удаляем постер если существует
-        if ($movie->movie_poster) {
-            Storage::disk('public')->delete($movie->movie_poster);
-        }
+        try {
+            // Удаляем постер если существует
+            if ($movie->movie_poster) {
+                Storage::disk('public')->delete($movie->movie_poster);
+            }
 
-        $movie->delete();
-        
-        // Редирект
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Фильм успешно удален!');
+            $movie->delete();
+
+            // Проверяем, это AJAX запрос или обычный
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Фильм успешно удален!'
+                ]);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Фильм успешно удален!');
+
+        } catch (\Exception $e) {
+            if (request()->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при удалении фильма: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Ошибка при удалении фильма');
+        }
     }
 
     // AJAX методы для админки

@@ -60,6 +60,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/sessions/cleanup', [MovieSessionController::class, 'cleanupOldSessions'])->name('sessions.cleanup');
     Route::get('/sessions/hall/{hallId}', [MovieSessionController::class, 'getHallSessions'])->name('sessions.by-hall');
 
+    // Drag & Drop функционал
+    Route::post('/sessions/{session}/move-hall', [MovieSessionController::class, 'moveToHall'])->name('sessions.move-hall');
+    Route::post('/sessions/reorder', [MovieSessionController::class, 'reorder'])->name('sessions.reorder');
+
     // Переключение продаж
     Route::post('/toggle-sales', [AdminController::class, 'toggleSales'])->name('toggle-sales');
 });

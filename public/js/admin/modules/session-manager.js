@@ -1,4 +1,5 @@
 import { getCsrfToken, showSuccessMessage } from './utils.js';
+import { validateForm } from './validation.js';
 
 // УПРАВЛЕНИЕ СЕАНСАМИ
 export function initSessionManager() {
@@ -36,18 +37,53 @@ export function initSessionManager() {
     // СОХРАНЕНИЕ СЕАНСА
     window.saveSession = function() {
         const form = document.getElementById('sessionForm');
+
+        // Валидация формы
+        if (!validateForm('sessionForm')) {
+            return;
+        }
+
         const formData = new FormData(form);
-        
+
+        // ДЕБАГ: посмотрим что в formData
+        console.log('FormData contents:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key + ': ' + value);
+        }
+
+        console.log('Saving session with data:');
+        for (let [key, value] of formData.entries()) {
+            console.log(key + ': ' + value);
+        }
+
         fetch('/admin/sessions', {
             method: 'POST',
             headers: {
-                'X-CSRF-TOKEN': getCsrfToken()
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'Accept': 'application/json', // ← Важно: говорим серверу что хотим JSON
+                'X-Requested-With': 'XMLHttpRequest' // ← Важно: указываем что это AJAX
             },
             body: formData
         })
-        .then(response => response.json())
+        .then(response => {
+            console.log('Response status:', response.status);
+            console.log('Response ok:', response.ok);
+            
+            if (!response.ok) {
+                // Если статус не 200-299, пробуем прочитать как текст для диагностики
+                return response.text().then(text => {
+                    console.log('Error response text:', text);
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                });
+            }
+            
+            return response.json();
+        })
         .then(data => {
-            if (data.id) {
+            console.log('Response data:', data);
+            
+            if (data.success) {
+                console.log('Session created successfully!');
                 window.closeAddSessionModal();
                 location.reload();
             } else {
@@ -55,35 +91,46 @@ export function initSessionManager() {
             }
         })
         .catch(error => {
-            alert('Ошибка при сохранении сеанса');
+            console.error('Fetch error:', error);
+            alert('Ошибка при сохранении сеанса: ' + error.message);
         });
     }
 
-    // УДАЛЕНИЕ СЕАНСА
-    window.deleteSession = function(sessionId, movieTitle) {
-        if (confirm(`Вы уверены, что хотите удалить сеанс фильма "${movieTitle}"?`)) {
-            fetch(`/admin/sessions/${sessionId}`, {
-                method: 'DELETE',
-                headers: {
-                    'X-CSRF-TOKEN': getCsrfToken(),
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                }
-            })
-            .then(response => {
-                if (response.ok) {
-                    showSuccessMessage('Сеанс успешно удален!');
-                    location.reload();
-                } else {
-                    alert('Ошибка при удалении сеанса');
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('Ошибка сети при удалении сеанса');
-            });
-        }
-    }
+    // // УДАЛЕНИЕ СЕАНСА
+    // window.deleteSession = function(sessionId, movieTitle) {
+    //     if (confirm(`Вы уверены, что хотите удалить сеанс фильма "${movieTitle}"?`)) {
+    //         fetch(`/admin/sessions/${sessionId}`, {
+    //             method: 'DELETE',
+    //             headers: {
+    //                 'X-CSRF-TOKEN': getCsrfToken(),
+    //                 'Content-Type': 'application/json',
+    //                 'Accept': 'application/json',
+    //                 'X-Requested-With': 'XMLHttpRequest' // Явно указываем что это AJAX
+    //             }
+    //         })
+    //         .then(response => {
+    //             if (!response.ok) {
+    //                 return response.json().then(data => {
+    //                     throw new Error(data.message || 'Ошибка сервера');
+    //                 });
+    //             }
+    //             return response.json();
+    //         })
+    //         .then(data => {
+    //             if (data.success) {
+    //                 showSuccessMessage(data.message);
+    //                 setTimeout(() => {
+    //                     location.reload();
+    //                 }, 1000);
+    //             } else {
+    //                 alert('Ошибка: ' + data.message);
+    //             }
+    //         })
+    //         .catch(error => {
+    //             alert('Ошибка при удалении сеанса: ' + error.message);
+    //         });
+    //     }
+    // }
 
     // СОХРАНЕНИЕ СЕАНСОВ (НЕДОСТАЮЩАЯ ФУНКЦИЯ)
     window.saveSessions = function() {
@@ -202,4 +249,19 @@ export function initSessionManager() {
     }
 
     console.log('✓ Session manager fully initialized');
+}
+
+// УПРАВЛЕНИЕ ОТОБРАЖЕНИЕМ КНОПОК СЕАНСОВ
+window.showSessionControls = function(element) {
+    const controls = element.querySelector('.conf-step__seances-controls');
+    if (controls) {
+        controls.style.display = 'flex';
+    }
+}
+
+window.hideSessionControls = function(element) {
+    const controls = element.querySelector('.conf-step__seances-controls');
+    if (controls) {
+        controls.style.display = 'none';
+    }
 }

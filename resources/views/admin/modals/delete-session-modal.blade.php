@@ -14,7 +14,7 @@
           <input type="hidden" name="session_id" id="sessionIdToDelete">
           <p class="conf-step__paragraph">Вы действительно хотите снять с сеанса фильм <span id="sessionMovieNameToDelete">"Название фильма"</span>?</p>
           <div class="conf-step__buttons text-center">
-            <input type="submit" value="Удалить" class="conf-step__button conf-step__button-accent">
+            <button type="submit" class="conf-step__button conf-step__button-accent">Удалить</button>
             <button class="conf-step__button conf-step__button-regular" type="button" onclick="closeDeleteSessionModal()">Отменить</button>
           </div>
         </form>

@@ -5,6 +5,7 @@ import { initPriceManager } from './modules/price-manager.js';
 import { initMovieManager } from './modules/movie-manager.js';
 import { initSessionManager } from './modules/session-manager.js';
 import { initSalesManager } from './modules/sales-manager.js';
+import { initDragDrop } from './modules/drag-drop-manager.js';
 
 // ИНИЦИАЛИЗАЦИЯ ПРИ ЗАГРУЗКЕ
 document.addEventListener('DOMContentLoaded', function() {
@@ -38,6 +39,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
         initSalesManager();
         console.log('✓ Sales manager initialized');
+
+        initDragDrop();
+        console.log('✓ Drag & Drop initialized');
         
         console.log('🎉 Admin app initialized successfully!');
     } catch (error) {

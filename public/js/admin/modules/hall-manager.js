@@ -1,4 +1,4 @@
-import { getCsrfToken, showSuccessMessage, findSectionByTitle } from './utils.js';
+import { getCsrfToken, showErrorMessage } from './utils.js';
 
 // УПРАВЛЕНИЕ ЗАЛАМИ
 export function initHallManager() {
@@ -6,6 +6,7 @@ export function initHallManager() {
 
     // ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ
     window.currentHallToDelete = null;
+    window.isDeletingHall = false;
 
     // ФУНКЦИИ УПРАВЛЕНИЯ ЗАЛАМИ
     window.deleteHall = function(id, name) {
@@ -26,8 +27,9 @@ export function initHallManager() {
     }
 
     window.performHallDeletion = function(hallId) {
-        console.log('performHallDeletion called with id:', hallId);
-        
+        if (window.isDeletingHall) return;
+        window.isDeletingHall = true;
+
         fetch(`/admin/halls/${hallId}`, {
             method: 'DELETE',
             headers: {
@@ -36,33 +38,29 @@ export function initHallManager() {
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            console.log('Delete response status:', response.status);
-            if (response.ok || response.status === 204) {
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showSuccessMessage(data.message);
                 window.closeDeleteHallModal();
-                showSuccessMessage('Зал успешно удален!');
                 
-                // Удаляем из списка залов
-                const hallListItems = document.querySelectorAll('.conf-step__list li');
-                hallListItems.forEach(li => {
-                    const deleteButton = li.querySelector(`button[onclick*="deleteHall(${hallId}"]`);
-                    if (deleteButton) {
-                        console.log('Found hall list item to remove:', li);
+                // Обновляем интерфейс
+                document.querySelectorAll('.conf-step__list li').forEach(li => {
+                    if (li.querySelector(`button[onclick*="deleteHall(${hallId}"]`)) {
                         li.remove();
                     }
                 });
-
                 window.updateHallSelectors(hallId);
                 window.checkEmptyHallList();
-
             } else {
-                return response.json().then(data => {
-                    alert('Ошибка при удалении зала: ' + (data.message || 'Неизвестная ошибка'));
-                });
+                showErrorMessage(data.message);
             }
         })
         .catch(error => {
-            alert('Ошибка сети при удалении зала');
+            showErrorMessage('Ошибка сети при удалении зала');
+        })
+        .finally(() => {
+            window.isDeletingHall = false;
         });
     }
 
@@ -159,7 +157,8 @@ export function initHallManager() {
         })
         .then(data => {
             if (data.success) {
-                showSuccessMessage('Конфигурация зала сохранена!');
+                // Уведомление покажет Blade из flash сообщения
+                location.reload();
             } else {
                 alert('Ошибка: ' + data.message);
             }
@@ -271,7 +270,7 @@ export function initHallManager() {
     if (deleteHallForm) {
         deleteHallForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (window.currentHallToDelete) {
+            if (window.currentHallToDelete && !window.isDeletingHall) {
                 window.performHallDeletion(window.currentHallToDelete);
             }
         });

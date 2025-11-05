@@ -35,7 +35,11 @@ body {
   counter-reset: num;
 }
 
-input[type=radio], input[type=submit], button, .conf-step__header, select {
+input[type=radio],
+input[type=submit],
+button,
+.conf-step__header,
+select {
   cursor: pointer;
 }
 
@@ -43,17 +47,20 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   text-align: center;
 }
 
-.conf-steps, .page-header {
+.conf-steps,
+.page-header {
   width: 972px;
   margin: 0 auto;
 }
 
-.conf-step__wrapper, .conf-step__header, .page-header {
+.conf-step__wrapper,
+.conf-step__header,
+.page-header {
   padding: 35px 42px 35px 104px;
 }
 
 .page-header {
-  color: #FFFFFF;
+  color: #ffffff;
   text-transform: uppercase;
 }
 .page-header .page-header__title {
@@ -82,33 +89,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   bottom: 0;
   display: block;
   width: 2px;
-  background-color: #BC95D6;
-}
-
-.conf-step__button-small {
-  width: 20px;
-  height: 20px;
-  padding: 2px;
-  font-size: 12px;
-  line-height: 1;
-}
-.conf-step__button-small.conf-step__button-trash {
-  background-size: 12px 12px;
-}
-
-.conf-step__movie-controls,
-.conf-step__seances-controls {
-  display: flex;
-  gap: 2px;
-}
-.conf-step__movie-controls .conf-step__button,
-.conf-step__seances-controls .conf-step__button {
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-.conf-step__movie-controls .conf-step__button:hover,
-.conf-step__seances-controls .conf-step__button:hover {
-  opacity: 1;
+  background-color: #bc95d6;
 }
 
 .conf-step__header_opened + .conf-step__wrapper {
@@ -126,8 +107,8 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 .conf-step__header {
   position: relative;
   box-sizing: border-box;
-  background-color: #63536C;
-  color: #FFFFFF;
+  background-color: #63536c;
+  color: #ffffff;
   transition-property: all;
   transition-duration: 0.6s;
   transition-timing-function: ease;
@@ -141,7 +122,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   bottom: 0;
   display: block;
   width: 2px;
-  background-color: #BC95D6;
+  background-color: #bc95d6;
 }
 .conf-step__header::after {
   content: "";
@@ -177,10 +158,10 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   width: 44px;
   height: 44px;
   border-radius: 50%;
-  border: 5px solid #BC95D6;
-  background-color: #FFFFFF;
+  border: 5px solid #bc95d6;
+  background-color: #ffffff;
   box-sizing: border-box;
-  color: #63536C;
+  color: #63536c;
   font-weight: 900;
   font-size: 2.8rem;
   text-align: center;
@@ -238,11 +219,12 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   left: -14px;
 }
 
-.conf-step__button, .login__button {
+.conf-step__button,
+.login__button {
   box-shadow: 0px 3px 3px rgba(0, 0, 0, 0.24), 0px 0px 3px rgba(0, 0, 0, 0.12);
   border-radius: 3px;
   border: none;
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   text-transform: uppercase;
   font-weight: 500;
   font-size: 1.4rem;
@@ -250,19 +232,54 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   transition-duration: 0.5s;
   transition-timing-function: ease;
 }
-.conf-step__button:hover, .conf-step__button:focus, .login__button:hover, .login__button:focus {
-  background-color: #EEEAF1;
+.conf-step__button:hover, .conf-step__button:focus,
+.login__button:hover,
+.login__button:focus {
+  background-color: #eeeaf1;
   outline: none;
 }
-.conf-step__button:active, .login__button:active {
+.conf-step__button:active,
+.login__button:active {
   position: relative;
   top: 2px;
-  background-color: #63536C;
-  color: #FFFFFF;
+  background-color: #63536c;
+  color: #ffffff;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
 }
-.conf-step__button + .conf-step__button, .conf-step__button + .login__button, .login__button + .conf-step__button, .login__button + .login__button {
+.conf-step__button + .conf-step__button,
+.conf-step__button + .login__button,
+.login__button + .conf-step__button,
+.login__button + .login__button {
   margin-left: 12px;
+}
+
+.conf-step__button-trash:not(.conf-step__button-small) {
+  position: relative;
+  width: 20px;
+  height: 20px;
+  vertical-align: text-top;
+  background: transparent !important;
+}
+.conf-step__button-trash:not(.conf-step__button-small)::before {
+  content: "";
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 12px;
+  height: 12px;
+  background-image: url("/images/admin/trash-icon.png");
+  background-size: 12px 12px;
+  background-repeat: no-repeat;
+}
+.conf-step__button-trash:not(.conf-step__button-small):active::before {
+  background-position: -12px 0;
+}
+.conf-step__button-trash:not(.conf-step__button-small) {
+  background-color: transparent !important;
+  background-image: none !important;
+}
+.conf-step__button-trash:not(.conf-step__button-small):hover {
+  background-color: #eeeaf1 !important;
 }
 
 .conf-step__buttons {
@@ -270,49 +287,31 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 }
 
 .conf-step__button-regular {
-  color: #63536C;
+  color: #63536c;
   padding: 12px 32px;
   margin-top: 17px;
 }
 
-.conf-step__button.conf-step__button-accent, .login__button {
-  color: #FFFFFF;
-  background-color: #16A6AF;
+.conf-step__button.conf-step__button-accent,
+.login__button {
+  color: #ffffff;
+  background-color: #16a6af;
   padding: 12px 32px;
   margin-top: 17px;
 }
-.conf-step__button.conf-step__button-accent:hover, .conf-step__button.conf-step__button-accent:focus, .login__button:hover, .login__button:focus {
-  background-color: #2FC9D2;
+.conf-step__button.conf-step__button-accent:hover, .conf-step__button.conf-step__button-accent:focus,
+.login__button:hover,
+.login__button:focus {
+  background-color: #2fc9d2;
   outline: none;
 }
-.conf-step__button.conf-step__button-accent:active, .login__button:active {
+.conf-step__button.conf-step__button-accent:active,
+.login__button:active {
   position: relative;
   top: 2px;
-  background-color: #146C72;
-  color: #FFFFFF;
+  background-color: #146c72;
+  color: #ffffff;
   box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
-}
-
-.conf-step__button-trash {
-  position: relative;
-  width: 20px;
-  height: 20px;
-  vertical-align: text-top;
-}
-.conf-step__button-trash::before {
-  content: "";
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 12px;
-  height: 12px;
-  background-image: url("/images/admin/trash-sprite.png");
-  background-position: 0 0;
-  background-size: 24px 12px;
-  background-repeat: no-repeat;
-}
-.conf-step__button-trash:active::before {
-  background-position: -12px 0;
 }
 
 .conf-step__legend {
@@ -333,7 +332,8 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   margin-top: 10px;
 }
 
-.conf-step__label, .login__label {
+.conf-step__label,
+.login__label {
   display: inline-block;
   font-size: 1.2rem;
   color: #848484;
@@ -350,7 +350,8 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   width: 100%;
 }
 
-.conf-step__input, .login__input {
+.conf-step__input,
+.login__input {
   display: block;
   width: 100px;
   margin-top: 1px;
@@ -359,8 +360,9 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   color: #000000;
   border: 1px solid #b7b7b7;
 }
-.conf-step__input:focus, .login__input:focus {
-  outline: 1px #CF87FF solid;
+.conf-step__input:focus,
+.login__input:focus {
+  outline: 1px #cf87ff solid;
   outline-offset: -1px;
 }
 
@@ -377,7 +379,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 
 .conf-step__chair_standart {
   border-color: #393939;
-  background-color: #C4C4C4;
+  background-color: #c4c4c4;
 }
 
 .conf-step__chair_vip {
@@ -388,7 +390,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 }
 
 .conf-step__chair_disabled {
-  border-color: #C4C4C4;
+  border-color: #c4c4c4;
 }
 
 .conf-step__selectors-box {
@@ -429,7 +431,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   z-index: 5;
 }
 .conf-step__selectors-box .conf-step__radio:checked + .conf-step__selector {
-  background-color: #FFFFFF;
+  background-color: #ffffff;
   box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.24), 0px 2px 2px rgba(0, 0, 0, 0.24), 0px 0px 2px rgba(0, 0, 0, 0.12);
   transform: scale(1.1);
   font-weight: 900;
@@ -482,7 +484,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   width: calc((100% - 30px) / 3);
   min-height: 52px;
   padding: 8px 8px 8px 48px;
-  background: #FFEB85;
+  background: #ffeb85;
   border: 1px solid rgba(0, 0, 0, 0.3);
   box-sizing: border-box;
   cursor: pointer;
@@ -555,6 +557,32 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   width: 720px;
 }
 
+.conf-step__timeline-scale {
+  position: absolute;
+  top: -25px;
+  left: 0;
+  right: 0;
+  height: 20px;
+  border-bottom: 1px solid #848484;
+}
+
+.conf-step__timeline-hour {
+  position: absolute;
+  bottom: -20px;
+  font-size: 1rem;
+  color: #848484;
+  transform: translateX(-50%);
+}
+.conf-step__timeline-hour::before {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 1px;
+  height: 5px;
+  background-color: #848484;
+}
+
 .conf-step__seances-movie {
   position: absolute;
   height: 40px;
@@ -564,6 +592,15 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   min-width: 80px;
   overflow: hidden;
   font-size: 1rem;
+  transition: all 0.2s ease;
+}
+.conf-step__seances-movie:hover {
+  z-index: 50;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+.conf-step__seances-movie:hover .conf-step__seances-controls {
+  display: flex;
 }
 .conf-step__seances-movie .conf-step__seances-movie-title {
   overflow: hidden;
@@ -571,6 +608,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   height: 100%;
   font-size: 1rem;
   margin: 0;
+  font-weight: 500;
 }
 .conf-step__seances-movie .conf-step__seances-movie-start {
   position: absolute;
@@ -590,6 +628,38 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   background-color: #848484;
 }
 
+.conf-step__seances-controls {
+  display: none;
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  z-index: 100;
+  gap: 2px;
+}
+.conf-step__seances-controls .conf-step__button {
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  padding: 0 !important;
+  font-size: 11px !important;
+  line-height: 1 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border: 1px solid rgba(0, 0, 0, 0.2) !important;
+  background-size: 12px 12px !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+.conf-step__seances-controls .conf-step__button:hover {
+  opacity: 1;
+  background-color: white !important;
+}
+.conf-step__seances-controls .conf-step__button.conf-step__button-trash {
+  background-image: url("/images/admin/trash-icon.png") !important;
+}
+
 .conf-step__sales-list {
   list-style: none;
   font-size: 1.6rem;
@@ -603,7 +673,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   background: rgba(255, 255, 255, 0.9);
   border-radius: 5px;
   margin-bottom: 10px;
-  border-left: 6px solid #63536C;
+  border-left: 6px solid #63536c;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 .conf-step__sales-list li:last-child {
@@ -611,7 +681,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 }
 .conf-step__sales-list .hall-name {
   font-weight: 700;
-  color: #63536C;
+  color: #63536c;
   margin-right: 15px;
   font-size: 1.8rem;
 }
@@ -620,86 +690,105 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   font-size: 1.4rem;
 }
 .conf-step__sales-list .sales-status.active {
-  color: #16A6AF;
+  color: #16a6af;
 }
 .conf-step__sales-list .sales-status.inactive {
   color: #d32f2f;
 }
 
-.conf-step__button-warning {
-  color: #FFFFFF;
-  background-color: #d32f2f;
-  padding: 8px 16px;
-  font-size: 1.2rem;
-  min-width: 160px;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-.conf-step__button-warning:hover, .conf-step__button-warning:focus {
-  background-color: #f44336;
-  outline: none;
-}
-.conf-step__button-warning:active {
-  position: relative;
-  top: 2px;
-  background-color: #b71c1c;
-  color: #FFFFFF;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
-}
-
-.conf-step__button-accent {
-  color: #FFFFFF;
-  background-color: #16A6AF;
-  padding: 8px 16px;
-  font-size: 1.2rem;
-  min-width: 160px;
-  white-space: nowrap;
-  text-transform: uppercase;
-}
-.conf-step__button-accent:hover, .conf-step__button-accent:focus {
-  background-color: #2FC9D2;
-  outline: none;
-}
-.conf-step__button-accent:active {
-  position: relative;
-  top: 2px;
-  background-color: #146C72;
-  color: #FFFFFF;
-  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.75);
-}
-
-.conf-step__seances-controls {
-  display: flex;
-  gap: 2px;
-  z-index: 100;
-  position: absolute;
-  top: 2px;
-  right: 2px;
-}
-.conf-step__seances-controls .conf-step__button {
-  opacity: 0.9;
-  transition: opacity 0.2s;
-  width: 18px;
-  height: 18px;
+.conf-step__button-small {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
   padding: 0;
-  font-size: 10px;
-  line-height: 1;
+  font-size: 0;
+  background-size: 14px 14px;
+  background-repeat: no-repeat;
+  background-position: center;
+  border-radius: 3px;
+}
+.conf-step__button-small:not([class*=conf-step__button-warning]):not([class*=conf-step__button-accent]) {
+  font-size: 0;
+}
+.conf-step__button-small.conf-step__button-warning, .conf-step__button-small.conf-step__button-accent {
+  font-size: 1.2rem !important;
+  width: auto !important;
+  min-width: 180px !important;
+  padding: 8px 16px !important;
+}
+.conf-step__button-small.conf-step__button-regular {
+  background-color: #63536C;
+  background-image: url("/images/admin/pencil.png");
+}
+.conf-step__button-small.conf-step__button-regular:hover {
+  background-color: #7a6785;
+}
+.conf-step__button-small.conf-step__button-trash {
+  background-color: #dc3545;
+  background-image: url("/images/admin/trash-icon.png") !important;
+}
+.conf-step__button-small.conf-step__button-trash:hover {
+  background-color: #c82333;
+}
+.conf-step__button-small.conf-step__button-warning {
+  background-color: #d32f2f;
+}
+.conf-step__button-small.conf-step__button-warning:hover {
+  background-color: #f44336;
+}
+.conf-step__button-small.conf-step__button-accent {
+  background-color: #16a6af;
+}
+.conf-step__button-small.conf-step__button-accent:hover {
+  background-color: #2fc9d2;
+}
+
+.conf-step__movie-controls {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  display: flex;
+  gap: 5px;
+}
+.conf-step__movie-controls .conf-step__button {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  margin: 0;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(255, 255, 255, 0.9);
-}
-.conf-step__seances-controls .conf-step__button:hover {
   opacity: 1;
-  background-color: white;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.3);
 }
-.conf-step__seances-controls .conf-step__button.conf-step__button-trash {
-  background-size: 10px 10px;
+.conf-step__movie-controls .conf-step__button:hover {
+  transform: scale(1.1);
+  border-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.conf-step__movie-controls .conf-step__button.conf-step__button-small {
+  background-size: 14px 14px !important;
+}
+.conf-step__movie-controls .conf-step__button.conf-step__button-regular {
+  background-color: #ffffff;
+  background-image: url("/images/admin/pencil.png");
+  background-size: 14px 14px !important;
+  background-repeat: no-repeat;
   background-position: center;
 }
-.conf-step__seances-controls .conf-step__button.conf-step__button-regular {
-  font-size: 9px;
-  padding: 0;
+.conf-step__movie-controls .conf-step__button.conf-step__button-regular:hover {
+  background-color: #f8f8f8;
+}
+.conf-step__movie-controls .conf-step__button.conf-step__button-trash {
+  background-color: #ffffff;
+  background-image: url("/images/admin/trash-icon.png") !important;
+  background-repeat: no-repeat;
+}
+.conf-step__movie-controls .conf-step__button.conf-step__button-trash:hover {
+  background-color: #fff5f5;
 }
 
 .login {
@@ -715,8 +804,8 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   position: relative;
   box-sizing: border-box;
   padding: 16px 104px;
-  background-color: #63536C;
-  color: #FFFFFF;
+  background-color: #63536c;
+  color: #ffffff;
 }
 .login__title {
   font-size: 2.2rem;
@@ -769,7 +858,7 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
   background: white;
 }
 .popup__header {
-  background: #63536C;
+  background: #63536c;
   color: white;
   padding: 20px;
   border-radius: 5px 5px 0 0;
@@ -787,6 +876,46 @@ input[type=radio], input[type=submit], button, .conf-step__header, select {
 .popup__dismiss img:hover {
   transform: scale(1.2);
   transition: 0.3s all ease;
+}
+.popup .popup__container .popup__container {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 20px;
+}
+.popup .popup__poster {
+  flex: 0 0 200px;
+}
+.popup .popup__poster #posterPreview {
+  width: 200px;
+  height: 300px;
+  border: 2px dashed #63536c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f5f5f5;
+  margin-bottom: 10px;
+  transition: border-color 0.3s ease;
+}
+.popup .popup__poster #posterPreview:hover {
+  border-color: #16a6af;
+}
+.popup .popup__poster #posterPreview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: cover;
+}
+.popup .popup__form {
+  flex: 1;
+}
+.popup .popup__form .conf-step__label-fullsize {
+  margin-bottom: 15px;
+}
+.popup .popup__form .conf-step__label-fullsize .conf-step__input {
+  width: 100%;
+}
+.popup .popup__form .conf-step__label-fullsize textarea.conf-step__input {
+  height: 100px;
+  resize: vertical;
 }
 
 /*# sourceMappingURL=styles.css.map */

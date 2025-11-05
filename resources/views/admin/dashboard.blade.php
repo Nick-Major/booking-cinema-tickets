@@ -18,7 +18,7 @@
   </header>
   
   <main class="conf-steps">
-    @if(session('success'))
+    <!-- @if(session('success'))
         <div class="conf-step__wrapper" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; margin: 10px 0;">
             {{ session('success') }}
         </div>
@@ -28,7 +28,7 @@
         <div class="conf-step__wrapper" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 10px 0;">
             {{ session('error') }}
         </div>
-    @endif
+    @endif -->
     
     <!-- Управление залами -->
     <section class="conf-step">
@@ -74,7 +74,7 @@
         </ul>
         
         <div id="hallConfiguration">
-          @include('admin.modals.hall-configuration', ['hall' => $halls->first()])
+          @include('admin.components.hall-configuration', ['hall' => $halls->first()])
         </div>                 
       </div>
     </section>
@@ -100,7 +100,7 @@
         </ul>
           
         <div id="priceConfiguration">
-          @include('admin.modals.price-configuration', ['hall' => $halls->first()])
+          @include('admin.components.price-configuration', ['hall' => $halls->first()])
         </div>
       </div>
     </section>
@@ -126,34 +126,36 @@
         
         <div class="conf-step__movies" id="moviesList">
           @forelse($movies as $movie)
-            <div class="conf-step__movie" data-movie-id="{{ $movie->id }}" style="position: relative;">
-              @if($movie->movie_poster)
-                <img class="conf-step__movie-poster" alt="{{ $movie->title }}" 
-                    src="{{ asset('storage/' . $movie->movie_poster) }}">
-              @else
-                <img class="conf-step__movie-poster" alt="Постер отсутствует" 
-                    src="{{ asset('images/admin/poster-placeholder.png') }}">
-              @endif
-              <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
-              <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
-              
-              <!-- Кнопки управления фильмом -->
-              <div class="conf-step__movie-controls" style="position: absolute; top: 5px; right: 5px;">
-                <button class="conf-step__button conf-step__button-small conf-step__button-regular" 
-                        onclick="openEditMovieModal({{ $movie->id }})"
-                        title="Редактировать фильм">✎</button>
-                <button class="conf-step__button conf-step__button-small conf-step__button-trash" 
-                        onclick="deleteMovie({{ $movie->id }}, '{{ $movie->title }}')"
-                        title="Удалить фильм"></button>
+              <div class="conf-step__movie" data-movie-id="{{ $movie->id }}" data-movie-duration="{{ $movie->movie_duration }}" style="position: relative;">
+                  @if($movie->movie_poster)
+                      <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
+                          src="{{ asset('storage/' . $movie->movie_poster) }}">
+                  @else
+                      <img class="conf-step__movie-poster" alt="Постер отсутствует"
+                          src="{{ asset('images/admin/poster-placeholder.png') }}">
+                  @endif
+                  <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
+                  <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
+
+                  <!-- Кнопки управления фильмом -->
+                  <div class="conf-step__movie-controls">
+                      <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                              onclick="openEditMovieModal({{ $movie->id }})"
+                              title="Редактировать фильм"
+                      >
+                      </button>
+                      <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                              onclick="openDeleteMovieModal({{ $movie->id }}, '{{ $movie->title }}')"
+                              title="Удалить фильм">X</button>
+                  </div>
               </div>
-            </div>
           @empty
-            <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
+              <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
           @endforelse
-        </div>
+      </div>
         
         <div class="conf-step__seances" id="sessionsTimeline">
-          @include('admin.modals.sessions-timeline', ['sessions' => $sessions])
+          @include('admin.components.sessions-timeline', ['sessions' => $sessions])
         </div>
         
         <fieldset class="conf-step__buttons text-center">

@@ -33,6 +33,153 @@ export function initMovieManager() {
         });
     }
 
+    // ОТКРЫТИЕ МОДАЛКИ РЕДАКТИРОВАНИЯ ФИЛЬМА
+    window.openEditMovieModal = function(movieId) {
+        fetch(`/admin/movies/${movieId}/edit`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Создаем временный контейнер для модалки
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                
+                // Добавляем модалку в DOM
+                document.body.appendChild(tempDiv.firstElementChild);
+                
+                // Показываем модалку
+                const modal = document.getElementById('editMovieModal');
+                if (modal) {
+                    modal.classList.add('active');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading edit movie modal:', error);
+                alert('Ошибка при загрузке формы редактирования');
+            });
+    }
+
+    // ЗАКРЫТИЕ МОДАЛКИ РЕДАКТИРОВАНИЯ ФИЛЬМА  
+    window.closeEditMovieModal = function() {
+        const modal = document.getElementById('editMovieModal');
+        if (modal) {
+            modal.classList.remove('active');
+            // Удаляем модалку из DOM после анимации
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            }, 300);
+        }
+    }
+
+    // ОБНОВЛЕНИЕ ФИЛЬМА
+    window.updateMovie = function(movieId) {
+        const form = document.getElementById('editMovieForm');
+        const formData = new FormData(form);
+        
+        fetch(`/admin/movies/${movieId}`, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': getCsrfToken(),
+                'X-HTTP-Method-Override': 'PUT'
+            },
+            body: formData
+        })
+        .then(response => {
+            if (response.ok) {
+                window.closeEditMovieModal();
+                location.reload();
+            } else {
+                alert('Ошибка при обновлении фильма');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка сети при обновлении фильма');
+        });
+    }
+
+    // ОТКРЫТИЕ МОДАЛКИ УДАЛЕНИЯ ФИЛЬМА
+    window.openDeleteMovieModal = function(movieId, movieTitle) {
+        const modal = document.getElementById('deleteMovieModal');
+        if (modal) {
+            // Заполняем данные в модалке
+            const titleElement = modal.querySelector('#movieNameToDelete');
+            if (titleElement) {
+                titleElement.textContent = `"${movieTitle}"`;
+            }
+            
+            // Заполняем скрытое поле с ID
+            const idInput = modal.querySelector('#movieIdToDelete');
+            if (idInput) {
+                idInput.value = movieId;
+            }
+            
+            // Устанавливаем ID фильма в dataset модалки
+            modal.dataset.movieId = movieId;
+            modal.classList.add('active');
+        } else {
+            // Если модалки нет, используем прямое подтверждение
+            window.deleteMovie(movieId, movieTitle);
+        }
+    }
+
+    // ЗАКРЫТИЕ МОДАЛКИ УДАЛЕНИЯ ФИЛЬМА
+    window.closeDeleteMovieModal = function() {
+        const modal = document.getElementById('deleteMovieModal');
+        if (modal) {
+            modal.classList.remove('active');
+        }
+    }
+
+    // ПОДТВЕРЖДЕНИЕ УДАЛЕНИЯ ФИЛЬМА ИЗ МОДАЛКИ (через форму)
+    window.confirmMovieDeletion = function(event) {
+        if (event) {
+            event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+        }
+        
+        const modal = document.getElementById('deleteMovieModal');
+        if (modal) {
+            const movieId = modal.dataset.movieId;
+            const movieTitle = modal.querySelector('#movieNameToDelete').textContent;
+            
+            window.deleteMovie(movieId, movieTitle.replace(/"/g, ''));
+            window.closeDeleteMovieModal();
+        }
+    }
+
+    // УДАЛЕНИЕ ФИЛЬМА (для использования в HTML onclick)
+    window.deleteMovie = function(movieId, movieTitle) {
+        if (confirm(`Вы уверены, что хотите удалить фильм "${movieTitle}"?`)) {
+            fetch(`/admin/movies/${movieId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessMessage(data.message);
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка сети при удалении фильма');
+            });
+        }
+    }
+
     // СОХРАНЕНИЕ ФИЛЬМА
     window.saveMovie = function() {
         const form = document.getElementById('movieForm');
@@ -111,23 +258,29 @@ export function initMovieManager() {
         const file = input.files[0];
         
         if (file) {
+            // Проверяем размер файла (максимум 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                alert('Размер файла не должен превышать 2MB');
+                input.value = '';
+                return;
+            }
+            
+            // Проверяем тип файла
+            if (!file.type.match('image.*')) {
+                alert('Пожалуйста, выберите изображение');
+                input.value = '';
+                return;
+            }
+            
             const reader = new FileReader();
             reader.onload = function(e) {
-                if (!preview) {
-                    // Создаем превью если его нет
-                    const previewDiv = document.createElement('div');
-                    previewDiv.id = 'posterPreview';
-                    previewDiv.style.maxWidth = '200px';
-                    previewDiv.style.marginTop = '10px';
-                    previewDiv.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px;">`;
-                    input.parentNode.appendChild(previewDiv);
-                } else {
-                    preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; border-radius: 5px;">`;
-                }
-            }
+                preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 100%; object-fit: cover;">`;
+                preview.style.border = '2px solid #16A6AF';
+            };
             reader.readAsDataURL(file);
-        } else if (preview) {
-            preview.remove();
+        } else {
+            preview.innerHTML = '<span style="color: #63536C;">Постер</span>';
+            preview.style.border = '2px dashed #63536C';
         }
     }
 
@@ -229,7 +382,7 @@ export function initMovieManager() {
                 if (moviesContainer) {
                     // Обновляем список фильмов
                     moviesContainer.innerHTML = movies.map(movie => `
-                        <div class="conf-step__movie" data-movie-id="${movie.id}" data-active="${movie.is_active}">
+                        <div class="conf-step__movie" data-movie-id="${movie.id}" data-movie-duration="${movie.movie_duration}" data-active="${movie.is_active}" style="position: relative;">
                             ${movie.movie_poster ? 
                                 `<img class="conf-step__movie-poster" alt="${movie.title}" src="/storage/${movie.movie_poster}">` :
                                 `<img class="conf-step__movie-poster" alt="Постер отсутствует" src="/images/admin/poster-placeholder.png">`
@@ -239,9 +392,10 @@ export function initMovieManager() {
                             <div class="conf-step__movie-controls" style="position: absolute; top: 5px; right: 5px;">
                                 <button class="conf-step__button conf-step__button-small conf-step__button-regular" 
                                         onclick="openEditMovieModal(${movie.id})"
-                                        title="Редактировать фильм">✎</button>
+                                        title="Редактировать фильм"
+                                        style="background-image: url('/images/admin/pencil.png'); background-size: 12px 12px; background-repeat: no-repeat; background-position: center;"></button>
                                 <button class="conf-step__button conf-step__button-small conf-step__button-trash" 
-                                        onclick="deleteMovie(${movie.id}, '${movie.title.replace(/'/g, "\\'")}')"
+                                        onclick="openDeleteMovieModal(${movie.id}, '${movie.title.replace(/'/g, "\\'")}')"
                                         title="Удалить фильм"></button>
                             </div>
                         </div>
@@ -255,4 +409,19 @@ export function initMovieManager() {
     initMovieFilters();
 
     console.log('✓ Movie manager fully initialized');
+
+    // ИНИЦИАЛИЗАЦИЯ ОБРАБОТЧИКОВ ДЛЯ МОДАЛКИ УДАЛЕНИЯ
+    document.addEventListener('DOMContentLoaded', function() {
+        const deleteModal = document.getElementById('deleteMovieModal');
+        if (deleteModal) {
+            // Обработчик для кнопки удаления в модалке
+            const deleteButton = deleteModal.querySelector('.conf-step__button-accent');
+            if (deleteButton) {
+                deleteButton.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    confirmMovieDeletion();
+                });
+            }
+        }
+    });
 }

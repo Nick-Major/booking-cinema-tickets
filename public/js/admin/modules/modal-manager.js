@@ -163,13 +163,55 @@ export function initModalManager() {
         });
     }
 
+    // Обработчик формы удаления сеанса
     const deleteSessionForm = document.getElementById('deleteSessionForm');
     if (deleteSessionForm) {
         deleteSessionForm.addEventListener('submit', function(e) {
             e.preventDefault();
-            if (window.currentSessionToDelete) {
-                window.performSessionDeletion(window.currentSessionToDelete);
+            
+            const sessionId = document.getElementById('sessionIdToDelete').value;
+            if (!sessionId) {
+                alert('Ошибка: ID сеанса не указан');
+                return;
             }
+
+            fetch(`/admin/sessions/${sessionId}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Закрываем модалку
+                    closeDeleteSessionModal();
+                    // Показываем сообщение
+                    showSuccessMessage(data.message);
+                    // Удаляем сеанс из DOM без перезагрузки
+                    removeSessionFromDOM(sessionId);
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Ошибка при удалении сеанса: ' + error.message);
+            });
         });
+    }
+
+    // Функция для удаления сеанса из DOM
+    function removeSessionFromDOM(sessionId) {
+        const sessionElement = document.querySelector(`[data-session-id="${sessionId}"]`);
+        if (sessionElement) {
+            sessionElement.remove();
+        }
+        // Если в timeline не осталось сеансов, показываем сообщение
+        const timeline = document.querySelector('.conf-step__seances-timeline');
+        if (timeline && timeline.children.length === 0) {
+            timeline.innerHTML = '<div class="conf-step__empty-seances"><p>Нет созданных сеансов</p></div>';
+        }
     }
 }
