@@ -5,9 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Spatie\EloquentSortable\Sortable;
 use Spatie\EloquentSortable\SortableTrait;
+use Carbon\Carbon; // Добавьте этот импорт
 
 class MovieSession extends Model implements Sortable
 {
@@ -15,7 +15,7 @@ class MovieSession extends Model implements Sortable
 
     protected $fillable = [
         'movie_id',
-        'cinema_hall_id',
+        'cinema_hall_id', 
         'session_start',
         'session_end',
         'is_actual',
@@ -31,99 +31,86 @@ class MovieSession extends Model implements Sortable
     public $sortable = [
         'order_column_name' => 'order_column',
         'sort_when_creating' => true,
+        'sort_on_has_many' => true,
     ];
 
-    // Связь: сеанс принадлежит фильму
+    // === ДОБАВЬТЕ ЭТИ ОТНОШЕНИЯ ===
+    
+    /**
+     * Отношение к фильму
+     */
     public function movie(): BelongsTo
     {
         return $this->belongsTo(Movie::class);
     }
 
-    // Связь: сеанс принадлежит залу
+    /**
+     * Отношение к кинозалу
+     */
     public function cinemaHall(): BelongsTo
     {
         return $this->belongsTo(CinemaHall::class);
     }
 
-    // Связь: сеанс имеет много билетов
-    public function tickets(): HasMany
+    /**
+     * Отношение к билетам (если нужно)
+     */
+    public function tickets()
     {
         return $this->hasMany(Ticket::class);
     }
 
-    // Проверка, доступен ли сеанс для бронирования
-    public function isAvailable(): bool
+    // === КОНЕЦ ОТНОШЕНИЙ ===
+
+    // Указываем группировку для сортировки (по залу и дате)
+    public function buildSortQuery()
     {
-        return $this->session_start > now();
+        return static::query()
+            ->where('cinema_hall_id', $this->cinema_hall_id)
+            ->whereDate('session_start', $this->session_start->format('Y-m-d'));
     }
 
-    // Расчет времени окончания сеанса
-    public static function calculateSessionEnd($sessionStart, $movieDuration): string
+    // Полная длительность сеанса (фильм + реклама + уборка)
+    public function getTotalDuration(): int
     {
-        $start = \Carbon\Carbon::parse($sessionStart);
-        return $start->addMinutes($movieDuration)->toDateTimeString();
+        // Добавляем проверку на существование отношения
+        if (!$this->movie) {
+            return 0;
+        }
+        return $this->movie->movie_duration + 25; // +25 минут
     }
 
-    // Проверка конфликтов по времени в зале
-    public function hasTimeConflict(): bool
+    public function getCleaningEndTime(): Carbon
     {
-        return self::where('cinema_hall_id', $this->cinema_hall_id)
-            ->where('id', '!=', $this->id ?? 0)
-            ->where(function ($query) {
-                $query->whereBetween('session_start', [$this->session_start, $this->session_end])
-                    ->orWhereBetween('session_end', [$this->session_start, $this->session_end])
-                    ->orWhere(function ($query) {
-                        $query->where('session_start', '<=', $this->session_start)
-                            ->where('session_end', '>=', $this->session_end);
-                    });
-            })
-            ->exists();
+        return $this->session_end->addMinutes(15);
     }
 
-    // Scope: активные сеансы
-    public function scopeActual($query)
+    // Проверка пересечения сеансов через полночь
+    public function spansMultipleDays(): bool
     {
-        return $query->where('is_actual', true);
+        return !$this->session_start->isSameDay($this->getCleaningEndTime());
     }
 
-    // Scope: будущие сеансы
-    public function scopeFuture($query)
+    // Расчет позиции для таймлайна
+    public function getTimelinePosition(): array
     {
-        return $query->where('session_start', '>=', now());
-    }
-
-    // Scope: по дате
-    public function scopeByDate($query, $date)
-    {
-        return $query->whereDate('session_start', $date);
-    }
-
-    // Scope: по залу
-    public function scopeByHall($query, $hallId)
-    {
-        return $query->where('cinema_hall_id', $hallId);
-    }
-
-    // Получить доступные места
-    public function getAvailableSeats()
-    {
-        $occupiedSeatIds = $this->tickets()
-            ->whereIn('status', ['reserved', 'paid'])
-            ->pluck('seat_id');
-
-        return $this->cinemaHall->seats()
-            ->whereNotIn('id', $occupiedSeatIds)
-            ->active()
-            ->get();
-    }
-
-    // Получить занятые места
-    public function getOccupiedSeats()
-    {
-        return $this->tickets()
-            ->with('seat')
-            ->whereIn('status', ['reserved', 'paid'])
-            ->get()
-            ->pluck('seat');
+        $start = $this->session_start;
+        $end = $this->getCleaningEndTime();
+        
+        $startMinutes = $start->hour * 60 + $start->minute;
+        $endMinutes = $end->hour * 60 + $end->minute;
+        
+        // Если сеанс через полночь, корректируем расчет
+        if ($endMinutes < $startMinutes) {
+            $endMinutes += 1440; // добавляем сутки в минутах
+        }
+        
+        $duration = $endMinutes - $startMinutes;
+        
+        return [
+            'left' => ($startMinutes / 1440) * 100,
+            'width' => ($duration / 1440) * 100,
+            'spans_days' => $this->spansMultipleDays()
+        ];
     }
 }

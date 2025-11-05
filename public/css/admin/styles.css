@@ -917,5 +917,172 @@ select {
   height: 100px;
   resize: vertical;
 }
+.popup .conf-step__seances-timeline-wrapper {
+  margin-top: 20px;
+}
+.popup .conf-step__timeline-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+.popup .conf-step__current-date {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 500;
+}
+.popup .conf-step__date-display {
+  font-size: 16px;
+  color: #63536C;
+}
+.popup .conf-step__timeline-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-height: 600px;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+.popup .conf-step__timeline-vertical::-webkit-scrollbar {
+  width: 8px;
+}
+.popup .conf-step__timeline-vertical::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+.popup .conf-step__timeline-vertical::-webkit-scrollbar-thumb {
+  background: #63536C;
+  border-radius: 4px;
+}
+.popup .conf-step__timeline-hall {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 15px;
+  padding: 20px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  background: white;
+  transition: all 0.3s ease;
+  position: relative;
+}
+.popup .conf-step__timeline-hall:hover {
+  border-color: #63536C;
+  box-shadow: 0 2px 8px rgba(99, 83, 108, 0.1);
+}
+.popup .conf-step__timeline-hall[data-drag-over=true] {
+  border-color: #63536C;
+  background: #f8f6ff;
+}
+.popup .conf-step__hall-header {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.popup .conf-step__hall-sessions-count {
+  font-size: 14px;
+  color: #6c757d;
+}
+.popup .conf-step__seances-movie--draggable {
+  cursor: move;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  min-width: 80px;
+}
+.popup .conf-step__seances-movie--draggable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+}
+.popup .conf-step__seances-movie--draggable:hover .conf-step__seances-controls {
+  display: flex;
+}
+.popup .conf-step__seances-movie--draggable[draggable=true]:active {
+  opacity: 0.7;
+  transform: scale(0.95);
+}
+.popup .conf-step__seances-movie--long {
+  background: #8B6990 !important;
+}
+.popup .conf-step__seances-movie--overnight {
+  background: linear-gradient(45deg, #63536C 0%, #8B6990 50%, #63536C 100%) !important;
+  border: 2px solid #dc3545 !important;
+}
+.popup .conf-step__seances-movie-content {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.popup .conf-step__seances-drag-handle {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  cursor: move;
+}
+.popup .conf-step__sessions-track {
+  position: relative;
+  height: 80px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px dashed #dee2e6;
+}
+.popup .conf-step__empty-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6c757d;
+  gap: 10px;
+}
+.popup .conf-step__timeline-hour--overnight {
+  color: #dc3545;
+  font-weight: 600;
+}
+.popup .conf-step__timeline-hour--overnight::before {
+  background: #dc3545 !important;
+}
+.popup .conf-step__timeline-hall.drag-over {
+  border-color: #63536C;
+  background: #f0e6ff;
+}
+.popup .conf-step__timeline-hall.drag-over .conf-step__sessions-track {
+  background: #e6f7ff;
+  border-color: #63536C;
+  border-style: solid;
+}
+.popup .conf-step__seances-hall {
+  margin: 20px 0;
+}
+.popup .conf-step__seances-hall:last-child {
+  margin-bottom: 0;
+}
+.popup .conf-step__seances-movie--draggable {
+  position: relative;
+}
+.popup .conf-step__seances-movie--draggable:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 1000;
+  pointer-events: none;
+}
 
 /*# sourceMappingURL=styles.css.map */

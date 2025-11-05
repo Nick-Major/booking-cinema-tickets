@@ -18,7 +18,8 @@
   </header>
   
   <main class="conf-steps">
-    <!-- @if(session('success'))
+    <!-- Уведомления -->
+    @if(session('success'))
         <div class="conf-step__wrapper" style="background: #d4edda; border: 1px solid #c3e6cb; color: #155724; padding: 15px; margin: 10px 0;">
             {{ session('success') }}
         </div>
@@ -28,7 +29,7 @@
         <div class="conf-step__wrapper" style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; margin: 10px 0;">
             {{ session('error') }}
         </div>
-    @endif -->
+    @endif
     
     <!-- Управление залами -->
     <section class="conf-step">
@@ -39,16 +40,18 @@
         <p class="conf-step__paragraph">Доступные залы:</p>
         <ul class="conf-step__list">
           @forelse($halls as $hall)
-            <li>{{ $hall->hall_name }}
+            <li>
+              {{ $hall->hall_name }}
               <button class="conf-step__button conf-step__button-trash" 
-                      onclick="deleteHall({{ $hall->id }}, '{{ $hall->hall_name }}')"></button>
+                      data-delete-hall="{{ $hall->id }}"
+                      data-hall-name="{{ $hall->hall_name }}"></button>
             </li>
           @empty
             <li class="conf-step__empty">Нет созданных залов</li>
           @endforelse
         </ul>
         <button class="conf-step__button conf-step__button-accent" 
-                onclick="openAddHallModal()">
+                data-open-modal="addHallModal">
           Создать зал
         </button>
       </div>
@@ -115,11 +118,11 @@
       <div class="conf-step__wrapper">
         <p class="conf-step__paragraph">
           <button class="conf-step__button conf-step__button-accent" 
-                  onclick="openAddMovieModal()">
+                  data-open-modal="addMovieModal">
             Добавить фильм
           </button>
           <button class="conf-step__button conf-step__button-accent" 
-                 onclick="openAddSessionModal()">
+                  data-open-modal="addSessionModal">
             Добавить сеанс
           </button>
         </p>
@@ -141,18 +144,18 @@
                   <div class="conf-step__movie-controls">
                       <button class="conf-step__button conf-step__button-small conf-step__button-regular"
                               onclick="openEditMovieModal({{ $movie->id }})"
-                              title="Редактировать фильм"
-                      >
+                              title="Редактировать фильм">
                       </button>
                       <button class="conf-step__button conf-step__button-small conf-step__button-trash"
-                              onclick="openDeleteMovieModal({{ $movie->id }}, '{{ $movie->title }}')"
-                              title="Удалить фильм">X</button>
+                              data-delete-movie="{{ $movie->id }}"
+                              data-movie-name="{{ $movie->title }}"
+                              title="Удалить фильм"></button>
                   </div>
               </div>
           @empty
               <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
           @endforelse
-      </div>
+        </div>
         
         <div class="conf-step__seances" id="sessionsTimeline">
           @include('admin.components.sessions-timeline', ['sessions' => $sessions])
@@ -184,8 +187,7 @@
                         </span>
                     </div>
                     <button class="conf-step__button conf-step__button-small {{ $hall->is_active ? 'conf-step__button-warning' : 'conf-step__button-accent' }}"
-                            onclick="toggleSales({{ $hall->id }}, '{{ $hall->hall_name }}', {{ $hall->is_active ? 'true' : 'false' }})"
-                            data-hall-id="{{ $hall->id }}"
+                            data-toggle-sales="{{ $hall->id }}"
                             data-is-active="{{ $hall->is_active }}">
                         {{ $hall->is_active ? 'Приостановить продажи' : 'Открыть продажи' }}
                     </button>
@@ -211,6 +213,6 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <script type="module" src="{{ asset('js/admin/app.js') }}"></script>
+  <script src="{{ asset('js/admin/app.js') }}"></script>
 </body>
 </html>

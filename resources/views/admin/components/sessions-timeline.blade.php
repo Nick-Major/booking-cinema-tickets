@@ -1,50 +1,115 @@
-@if($sessions->count() > 0)
-    @foreach($sessions->groupBy('cinema_hall_id') as $hallId => $hallSessions)
-        @php
-            $hall = $hallSessions->first()->cinemaHall;
-        @endphp
-        <div class="conf-step__seances-hall">
-            <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
-            <div class="conf-step__seances-timeline">
-                <!-- Шкала времени 0-24 часа -->
-                <div class="conf-step__timeline-scale">
-                    @for($i = 0; $i <= 24; $i += 2)
-                        <div class="conf-step__timeline-hour" style="left: {{ ($i / 24) * 100 }}%;">
-                            {{ sprintf('%02d:00', $i) }}
-                        </div>
-                    @endfor
+@php
+    use Carbon\Carbon;
+    $currentDate = request('date', now()->format('Y-m-d'));
+    $selectedDate = Carbon::parse($currentDate);
+@endphp
+
+<div class="conf-step__seances-timeline-wrapper">
+    <!-- Навигация по датам -->
+    <div class="conf-step__timeline-nav">
+        <button class="conf-step__button conf-step__button-regular" 
+                onclick="changeTimelineDate('{{ $selectedDate->copy()->subDay()->format('Y-m-d') }}')">
+            ← Назад
+        </button>
+        
+        <div class="conf-step__current-date">
+            <input type="date" 
+                   value="{{ $currentDate }}" 
+                   onchange="changeTimelineDate(this.value)"
+                   class="conf-step__input"
+                   style="width: 150px; display: inline-block;">
+            <span class="conf-step__date-display" style="margin-left: 10px; font-size: 1.6rem;">
+                {{ $selectedDate->translatedFormat('d F Y') }}
+            </span>
+        </div>
+        
+        <button class="conf-step__button conf-step__button-regular"
+                onclick="changeTimelineDate('{{ $selectedDate->copy()->addDay()->format('Y-m-d') }}')">
+            Вперед →
+        </button>
+        
+        <button class="conf-step__button conf-step__button-accent"
+                onclick="changeTimelineDate('{{ now()->format('Y-m-d') }}')">
+            Сегодня
+        </button>
+    </div>
+
+    <!-- Вертикальный таймлайн -->
+    <div class="conf-step__timeline-vertical" id="sessionsTimeline">
+        @forelse($halls as $hall)
+            @php
+                $hallSessions = $sessions->where('cinema_hall_id', $hall->id)
+                    ->sortBy('order_column');
+            @endphp
+            
+            <div class="conf-step__timeline-hall" 
+                 data-hall-id="{{ $hall->id }}"
+                 ondrop="dropSession(event, {{ $hall->id }})"
+                 ondragover="allowDrop(event)">
+                
+                <!-- Заголовок зала -->
+                <div class="conf-step__hall-header">
+                    <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+                    <span class="conf-step__hall-sessions-count" style="font-size: 1.4rem; color: #848484;">
+                        {{ $hallSessions->count() }} сеансов
+                    </span>
                 </div>
                 
-                @foreach($hallSessions as $session)
-                    @php
-                        $startTime = $session->session_start;
-                        $endTime = $session->session_end;
-                        $startMinutes = $startTime->hour * 60 + $startTime->minute;
-                        $durationMinutes = $session->movie->movie_duration;
-                        $left = ($startMinutes / 1440) * 100; // 1440 минут в сутках
-                        $width = ($durationMinutes / 1440) * 100;
-                    @endphp
-                    <div class="conf-step__seances-movie"
-                         style="width: {{ max($width, 2) }}%; left: {{ $left }}%; background-color: #{{ substr(md5($session->movie_id), 0, 6) }};"
-                         data-session-id="{{ $session->id }}"
-                         onmouseover="showSessionControls(this)"
-                         onmouseout="hideSessionControls(this)">
-                        <p class="conf-step__seances-movie-title">{{ $session->movie->title }}</p>
-                        <p class="conf-step__seances-movie-start">{{ $startTime->format('H:i') }}</p>
-                        
-                        <!-- Кнопка удаления (показывается при наведении) -->
-                        <div class="conf-step__seances-controls" style="display: none;">
-                            <button class="conf-step__button conf-step__button-small conf-step__button-trash"
-                                    onclick="deleteSession({{ $session->id }}, '{{ $session->movie->title }}')"
-                                    title="Удалить сеанс"></button>
-                        </div>
+                <!-- Шкала времени -->
+                <div class="conf-step__seances-timeline">
+                    <div class="conf-step__timeline-scale">
+                        @for($hour = 8; $hour <= 24; $hour += 2)
+                            <div class="conf-step__timeline-hour" style="left: {{ (($hour - 8) / 16) * 100 }}%;">
+                                {{ sprintf('%02d:00', $hour > 24 ? $hour - 24 : $hour) }}
+                            </div>
+                        @endfor
+                        @if($hour <= 26)
+                            <div class="conf-step__timeline-hour conf-step__timeline-hour--overnight" style="left: 100%;">
+                                02:00
+                            </div>
+                        @endif
                     </div>
-                @endforeach
+                    
+                    <!-- Трек сеансов -->
+                    <div class="conf-step__sessions-track">
+                        @foreach($hallSessions as $session)
+                            @include('admin.components.session-block', [
+                                'session' => $session,
+                                'selectedDate' => $selectedDate
+                            ])
+                        @endforeach
+                        
+                        <!-- Пустой state -->
+                        @if($hallSessions->count() == 0)
+                            <div class="conf-step__empty-track" style="text-align: center; padding: 20px; color: #848484;">
+                                <p style="font-size: 1.4rem; margin-bottom: 10px;">Нет сеансов на эту дату</p>
+                                <button class="conf-step__button conf-step__button-accent conf-step__button-small"
+                                        onclick="openAddSessionModal({{ $hall->id }}, '{{ $currentDate }}')"
+                                        style="padding: 8px 16px; font-size: 1.2rem;">
+                                    Добавить сеанс
+                                </button>
+                            </div>
+                        @endif
+                    </div>
+                </div>
             </div>
-        </div>
-    @endforeach
-@else
-    <div class="conf-step__empty-seances">
-        <p>Нет созданных сеансов</p>
+        @empty
+            <div class="conf-step__empty-halls" style="text-align: center; padding: 40px; color: #848484;">
+                <p style="font-size: 1.6rem; margin-bottom: 20px;">Нет доступных залов</p>
+                <button class="conf-step__button conf-step__button-accent"
+                        onclick="openAddHallModal()">
+                    Создать первый зал
+                </button>
+            </div>
+        @endforelse
     </div>
-@endif
+</div>
+
+<!-- Подсказка по управлению -->
+<div class="conf-step__legend" style="margin-top: 20px; background: #eae9eb; padding: 15px; border-radius: 4px;">
+    <p class="conf-step__paragraph" style="margin-bottom: 0; font-size: 1.4rem;">
+        💡 <strong>Управление сеансами:</strong> 
+        Перетаскивайте для изменения времени • Двойной клик для удаления • 
+        Наведите для подробной информации
+    </p>
+</div>
