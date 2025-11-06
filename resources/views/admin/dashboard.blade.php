@@ -31,7 +31,7 @@
         </div>
     @endif
     
-    <!-- Управление залами -->
+    <!-- Управление залами - обновленная секция -->
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Управление залами</h2>
@@ -40,7 +40,7 @@
         <p class="conf-step__paragraph">Доступные залы:</p>
         <ul class="conf-step__list">
           @forelse($halls as $hall)
-            <li>
+            <li data-hall-id="{{ $hall->id }}">
               {{ $hall->hall_name }}
               <button class="conf-step__button conf-step__button-trash" 
                       data-delete-hall="{{ $hall->id }}"
