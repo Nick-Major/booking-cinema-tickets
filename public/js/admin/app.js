@@ -717,6 +717,25 @@ function initSessions(csrfToken) {
             createSession(this, csrfToken);
         });
     }
+
+    // Инициализация Drag & Drop
+    initSessionDragHandlers();
+    
+    // Загрузка начальных данных timeline
+    loadSessionsTimeline();
+}
+
+// Функция для загрузки timeline
+async function loadSessionsTimeline() {
+    const currentDate = document.querySelector('input[type="date"]')?.value || new Date().toISOString().split('T')[0];
+    
+    try {
+        const response = await fetch(`/admin/sessions?date=${currentDate}`);
+        const sessions = await response.json();
+        updateSessionsTimeline(sessions);
+    } catch (error) {
+        console.error('Error loading sessions timeline:', error);
+    }
 }
 
 async function deleteSession(sessionId, movieName, csrfToken) {
@@ -764,6 +783,216 @@ async function createSession(form, csrfToken) {
     } catch (error) {
         showNotification('Ошибка при создании сеанса', 'error');
     }
+}
+
+// ============================================================================
+// DRAG & DROP ДЛЯ СЕАНСОВ
+// ============================================================================
+
+function allowDrop(event) {
+    event.preventDefault();
+}
+
+function dragSession(event, sessionId) {
+    console.log('=== DRAG START ===');
+    console.log('Event target:', event.target);
+    console.log('Session ID from parameter:', sessionId);
+    console.log('Dataset:', event.target.dataset);
+    
+    // Принудительно получаем sessionId из data-атрибута
+    const actualSessionId = event.target.getAttribute('data-session-id');
+    console.log('Session ID from data attribute:', actualSessionId);
+    
+    if (!actualSessionId) {
+        console.error('No sessionId found in data attributes!');
+        return;
+    }
+    
+    event.dataTransfer.setData('sessionId', actualSessionId);
+    
+    const hallElement = event.target.closest('.conf-step__timeline-hall');
+    console.log('Hall element:', hallElement);
+    
+    if (hallElement && hallElement.dataset.hallId) {
+        event.dataTransfer.setData('sourceHallId', hallElement.dataset.hallId);
+        console.log('Source hall set to:', hallElement.dataset.hallId);
+    }
+    
+    console.log('=== DRAG END ===');
+}
+
+async function dropSession(event, targetHallId) {
+    event.preventDefault();
+    
+    const sessionId = event.dataTransfer.getData('sessionId');
+    const sourceHallId = event.dataTransfer.getData('sourceHallId');
+    
+    console.log('Drop data:', { sessionId, sourceHallId, targetHallId });
+    
+    if (!sessionId) {
+        showNotification('Ошибка: не удалось определить сеанс', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/admin/sessions/${sessionId}/move-hall`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            },
+            body: JSON.stringify({
+                cinema_hall_id: parseInt(targetHallId)
+            })
+        });
+
+        const result = await response.json();
+        console.log('Move response:', result);
+
+        if (result.success) {
+            showNotification('Сеанс перемещен', 'success');
+            // Обновляем timeline
+            setTimeout(() => window.location.reload(), 500); // Просто перезагружаем для простоты
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Drop session error:', error);
+        showNotification('Ошибка при перемещении сеанса', 'error');
+    }
+}
+
+// Функция для изменения времени сеанса перетаскиванием по timeline
+function initSessionDragHandlers() {
+    const sessions = document.querySelectorAll('.conf-step__seances-movie--draggable');
+    
+    sessions.forEach(session => {
+        session.addEventListener('dragstart', function(e) {
+            e.dataTransfer.setData('sessionId', this.dataset.sessionId);
+            e.dataTransfer.setData('currentPosition', this.style.left);
+            this.classList.add('dragging');
+        });
+        
+        session.addEventListener('dragend', function() {
+            this.classList.remove('dragging');
+        });
+    });
+}
+
+// ============================================================================
+// TIMELINE УПРАВЛЕНИЕ
+// ============================================================================
+
+async function changeTimelineDate(date) {
+    try {
+        const response = await fetch(`/admin/sessions?date=${date}`);
+        const sessions = await response.json();
+        
+        // Обновляем отображение сеансов
+        updateSessionsTimeline(sessions);
+        
+        // Обновляем отображаемую дату
+        const dateDisplay = document.querySelector('.conf-step__date-display');
+        if (dateDisplay) {
+            dateDisplay.textContent = new Date(date).toLocaleDateString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+        }
+        
+        showNotification(`Загружены сеансы на ${date}`, 'success');
+    } catch (error) {
+        showNotification('Ошибка загрузки сеансов', 'error');
+    }
+}
+
+function updateSessionsTimeline(sessions) {
+    const timeline = document.getElementById('sessionsTimeline');
+    if (!timeline) return;
+
+    // Группируем сеансы по залам
+    const sessionsByHall = sessions.reduce((acc, session) => {
+        const hallId = session.cinema_hall_id;
+        if (!acc[hallId]) acc[hallId] = [];
+        acc[hallId].push(session);
+        return acc;
+    }, {});
+
+    // Обновляем каждый зал
+    document.querySelectorAll('.conf-step__timeline-hall').forEach(hallElement => {
+        const hallId = hallElement.dataset.hallId;
+        const hallSessions = sessionsByHall[hallId] || [];
+        const sessionsTrack = hallElement.querySelector('.conf-step__sessions-track');
+        
+        if (sessionsTrack) {
+            sessionsTrack.innerHTML = '';
+            
+            if (hallSessions.length === 0) {
+                sessionsTrack.innerHTML = `
+                    <div class="conf-step__empty-track">
+                        <p>Нет сеансов на эту дату</p>
+                        <button class="conf-step__button conf-step__button-accent conf-step__button-small"
+                                onclick="openAddSessionModal(${hallId}, '${document.querySelector('input[type="date"]').value}')">
+                            Добавить сеанс
+                        </button>
+                    </div>
+                `;
+            } else {
+                hallSessions.forEach(session => {
+                    sessionsTrack.innerHTML += generateSessionBlockHTML(session);
+                });
+            }
+        }
+    });
+
+    // Инициализируем обработчики для новых сеансов
+    initSessionDragHandlers();
+}
+
+function generateSessionBlockHTML(session) {
+    const startTime = new Date(session.session_start);
+    const endTime = new Date(session.session_end);
+    const position = calculateTimelinePosition(startTime, endTime);
+    
+    return `
+        <div class="conf-step__seances-movie conf-step__seances-movie--draggable"
+             style="width: ${position.width}%; left: ${position.left}%;"
+             data-session-id="${session.id}"
+             draggable="true"
+             ondragstart="dragSession(event, ${session.id})"
+             ondblclick="openDeleteSessionModal(${session.id}, '${session.movie.title}')"
+             title="${session.movie.title} | ${startTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}">
+            <div class="conf-step__seances-movie-content">
+                <p class="conf-step__seances-movie-title">
+                    ${session.movie.title.length > 15 ? session.movie.title.substring(0, 15) + '...' : session.movie.title}
+                </p>
+                <p class="conf-step__seances-movie-start">
+                    ${startTime.toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})}
+                </p>
+            </div>
+        </div>
+    `;
+}
+
+function calculateTimelinePosition(startTime, endTime) {
+    const start = new Date(startTime);
+    const end = new Date(endTime);
+    
+    const startMinutes = start.getHours() * 60 + start.getMinutes();
+    const endMinutes = end.getHours() * 60 + end.getMinutes();
+    
+    // Расчет для timeline с 8:00 до 2:00 следующего дня
+    const timelineStart = 8 * 60; // 8:00
+    const timelineEnd = 26 * 60;  // 2:00 следующего дня
+    
+    const left = ((startMinutes - timelineStart) / (timelineEnd - timelineStart)) * 100;
+    const width = ((endMinutes - startMinutes) / (timelineEnd - timelineStart)) * 100;
+    
+    return {
+        left: Math.max(0, Math.min(100, left)),
+        width: Math.max(1.5, Math.min(100, width))
+    };
 }
 
 // ============================================================================

@@ -73,11 +73,25 @@ class MovieSession extends Model implements Sortable
     // Полная длительность сеанса (фильм + реклама + уборка)
     public function getTotalDuration(): int
     {
-        // Добавляем проверку на существование отношения
         if (!$this->movie) {
             return 0;
         }
-        return $this->movie->movie_duration + 25; // +25 минут
+        
+        // фильм + реклама (15 мин) + уборка (10 мин)
+        return $this->movie->movie_duration + 25;
+    }
+
+    // Дополнительный метод для удобства
+    public function getTotalDurationInHours(): float
+    {
+        return round($this->getTotalDuration() / 60, 1);
+    }
+
+    // Расчет времени окончания сеанса
+    public static function calculateSessionEnd($startTime, $movieDuration): Carbon
+    {
+        $start = Carbon::parse($startTime);
+        return $start->copy()->addMinutes($movieDuration + 25); // фильм + реклама + уборка
     }
 
     public function getCleaningEndTime(): Carbon
@@ -85,10 +99,34 @@ class MovieSession extends Model implements Sortable
         return $this->session_end->addMinutes(15);
     }
 
+    // Проверка пересечения сеансов
+    public function hasTimeConflict(): bool
+    {
+        return MovieSession::where('cinema_hall_id', $this->cinema_hall_id)
+            ->where('id', '!=', $this->id ?? 0)
+            ->where(function($query) {
+                $query->whereBetween('session_start', [$this->session_start, $this->session_end])
+                    ->orWhereBetween('session_end', [$this->session_start, $this->session_end])
+                    ->orWhere(function($q) {
+                        $q->where('session_start', '<', $this->session_start)
+                            ->where('session_end', '>', $this->session_end);
+                    });
+            })
+            ->exists();
+    }
+
     // Проверка пересечения сеансов через полночь
     public function spansMultipleDays(): bool
     {
         return !$this->session_start->isSameDay($this->getCleaningEndTime());
+    }
+
+    // Проверка доступности сеанса
+    public function isAvailable(): bool
+    {
+        return $this->is_actual && 
+            $this->session_start > now() &&
+            $this->cinemaHall->is_active;
     }
 
     // Расчет позиции для таймлайна

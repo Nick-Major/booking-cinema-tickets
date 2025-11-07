@@ -12,17 +12,15 @@
     ";
 @endphp
 
-<div class="conf-step__seances-movie conf-step__seances-movie--draggable
-    {{ $isLong ? 'conf-step__seances-movie--long' : '' }} 
-    {{ $spansDays ? 'conf-step__seances-movie--overnight' : '' }}"
-    style="width: {{ max($position['width'], 1.5) }}%; left: {{ $position['left'] }}%;"
-    data-session-id="{{ $session->id }}"
-    data-session-start="{{ $session->session_start->format('Y-m-d H:i:s') }}"
-    data-movie-duration="{{ $session->movie->movie_duration }}"
-    draggable="true"
-    ondragstart="dragSession(event, {{ $session->id }})"
-    ondblclick="openDeleteSessionModal({{ $session->id }}, '{{ $session->movie->title }}')"
-    title="{{ $session->movie->title }} | {{ $session->session_start->format('H:i') }}">
+<div class="conf-step__seances-movie conf-step__seances-movie--draggable"
+     style="width: {{ max($position['width'], 1.5) }}%; left: {{ $position['left'] }}%;"
+     data-session-id="{{ $session->id }}"
+     data-session-start="{{ $session->session_start->format('Y-m-d H:i:s') }}"
+     data-movie-duration="{{ $session->movie->movie_duration }}"
+     draggable="true"
+     ondragstart="dragSession(event, {{ $session->id }})"
+     ondblclick="openDeleteSessionModal({{ $session->id }}, '{{ $session->movie->title }}')"
+     title="{{ $session->movie->title }} | {{ $session->session_start->format('H:i') }}">
     
     <!-- Основной контент блока -->
     <div class="conf-step__seances-movie-content">

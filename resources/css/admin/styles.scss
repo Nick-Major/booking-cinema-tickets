@@ -1236,4 +1236,33 @@ select {
           pointer-events: none;
       }
   }
+
+  .conf-step__seances-movie--draggable {
+      cursor: grab;
+      
+      &.dragging {
+          opacity: 0.5;
+          cursor: grabbing;
+      }
+  }
+
+  .conf-step__timeline-hall {
+      min-height: 100px;
+      
+      &.drag-over {
+          background-color: rgba(22, 166, 175, 0.1);
+          border: 2px dashed #16a6af;
+      }
+  }
+
+  .conf-step__seances-drag-handle {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 2px;
+      cursor: grab;
+  }
 }

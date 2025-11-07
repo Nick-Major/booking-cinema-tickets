@@ -176,29 +176,41 @@ class MovieSessionController extends Controller
     // ПЕРЕМЕЩЕНИЕ СЕАНСА В ДРУГОЙ ЗАЛ
     public function moveToHall(MovieSession $movieSession, Request $request)
     {
+        \Log::info('MoveToHall called', [
+            'session_id' => $movieSession->id,
+            'current_hall' => $movieSession->cinema_hall_id,
+            'request_data' => $request->all()
+        ]);
+
         $validated = $request->validate([
             'cinema_hall_id' => 'required|exists:cinema_halls,id'
         ]);
 
         try {
-            // Проверяем конфликты по времени в новом зале
-            $tempSession = clone $movieSession;
-            $tempSession->cinema_hall_id = $validated['cinema_hall_id'];
+            // ВРЕМЕННО КОММЕНТИРУЕМ ПРОВЕРКУ КОНФЛИКТОВ
+            // $tempSession = clone $movieSession;
+            // $tempSession->cinema_hall_id = $validated['cinema_hall_id'];
             
-            if ($tempSession->hasTimeConflict()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'В выбранном зале в это время уже есть сеанс'
-                ], 422);
-            }
+            // if ($tempSession->hasTimeConflict()) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'В выбранном зале в это время уже есть сеанс'
+            //     ], 422);
+            // }
 
             $movieSession->update($validated);
+            
+            \Log::info('Session moved successfully', [
+                'from_hall' => $movieSession->getOriginal('cinema_hall_id'),
+                'to_hall' => $validated['cinema_hall_id']
+            ]);
             
             return response()->json([
                 'success' => true,
                 'message' => 'Сеанс успешно перемещен в другой зал'
             ]);
         } catch (\Exception $e) {
+            \Log::error('Error in moveToHall: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при перемещении сеанса: ' . $e->getMessage()
