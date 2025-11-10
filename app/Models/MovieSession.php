@@ -135,20 +135,83 @@ class MovieSession extends Model implements Sortable
         $start = $this->session_start;
         $end = $this->getCleaningEndTime();
         
-        $startMinutes = $start->hour * 60 + $start->minute;
-        $endMinutes = $end->hour * 60 + $end->minute;
+        // Определяем рабочие часы кинотеатра (8:00 - 4:00 следующего дня)
+        $workStart = $start->copy()->setTime(8, 0);
+        $workEnd = $start->copy()->addDay()->setTime(4, 0);
         
-        // Если сеанс через полночь, корректируем расчет
-        if ($endMinutes < $startMinutes) {
-            $endMinutes += 1440; // добавляем сутки в минутах
-        }
+        // Если сеанс начинается до рабочего времени, обрезаем
+        $sessionStart = $start->greaterThan($workStart) ? $start : $workStart;
+        // Если сеанс заканчивается после рабочего времени, обрезаем
+        $sessionEnd = $end->lessThan($workEnd) ? $end : $workEnd;
         
-        $duration = $endMinutes - $startMinutes;
+        // Рассчитываем позиции в процентах
+        $totalWorkMinutes = $workStart->diffInMinutes($workEnd);
+        $startOffset = $workStart->diffInMinutes($sessionStart);
+        $duration = $sessionStart->diffInMinutes($sessionEnd);
+        
+        $left = ($startOffset / $totalWorkMinutes) * 100;
+        $width = ($duration / $totalWorkMinutes) * 100;
+        
+        // Ограничиваем значения
+        $left = max(0, min(100, $left));
+        $width = max(1, min(100 - $left, $width));
         
         return [
-            'left' => ($startMinutes / 1440) * 100,
-            'width' => ($duration / 1440) * 100,
+            'left' => $left,
+            'width' => $width,
+            'spans_days' => !$start->isSameDay($end),
+            'start_time' => $start->format('H:i'),
+            'end_time' => $end->format('H:i')
+        ];
+    }
+
+    // Расчет позиции для таймлайна в пикселях
+    public function getTimelinePositionPixels(): array
+    {
+        $start = $this->session_start;
+        $end = $this->getCleaningEndTime();
+        
+        // Время начала в минутах от 0:00
+        $startMinutes = $start->hour * 60 + $start->minute;
+        
+        // Общая длительность в минутах
+        $totalDuration = $this->getTotalDuration();
+        
+        return [
+            'left' => $startMinutes, // в пикселях (1 минута = 1 пиксель)
+            'width' => $totalDuration, // в пикселях
             'spans_days' => $this->spansMultipleDays()
+        ];
+    }
+
+    // Расчет позиции для отображения (с учетом перехода через полночь)
+    public function getDisplayPosition($currentDate): array
+    {
+        $start = $this->session_start;
+        $end = $this->getCleaningEndTime();
+        
+        // Если сеанс полностью в текущем дне
+        if ($start->isSameDay($end)) {
+            $startMinutes = $start->hour * 60 + $start->minute;
+            $duration = $this->getTotalDuration();
+            
+            return [
+                'left' => $startMinutes,
+                'width' => $duration,
+                'spans_days' => false
+            ];
+        }
+        
+        // Если сеанс переходит через полночь
+        $dayEnd = $currentDate->copy()->endOfDay();
+        $minutesInFirstDay = $dayEnd->diffInMinutes($start);
+        $minutesInSecondDay = $end->diffInMinutes($dayEnd);
+        
+        return [
+            'left' => $start->hour * 60 + $start->minute,
+            'width' => $minutesInFirstDay,
+            'spans_days' => true,
+            'next_day_width' => $minutesInSecondDay
         ];
     }
 }

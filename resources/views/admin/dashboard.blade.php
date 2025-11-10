@@ -163,7 +163,7 @@
         
         <fieldset class="conf-step__buttons text-center">
           <button class="conf-step__button conf-step__button-regular" onclick="resetSessions()">Отмена</button>
-          <button class="conf-step__button conf-step__button-accent" onclick="saveSessions()">Сохранить</button>
+          <button class="conf-step__button conf-step__button-accent" onclick="updateSession()">Сохранить</button>
         </fieldset>  
       </div>
     </section>
@@ -206,6 +206,7 @@
   @include('admin.modals.delete-hall-modal')
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
+  @include('admin.modals.edit-session-simple-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">

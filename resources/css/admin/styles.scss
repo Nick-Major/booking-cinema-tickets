@@ -357,22 +357,6 @@ select {
   }
 }
 
-.conf-step__legend {
-  color: $grey;
-  font-size: 1.4rem;
-  margin-bottom: 12px;
-
-  .multiplier {
-    font-family: monospace;
-    font-size: 18px;
-    padding: 0 10px;
-  }
-
-  .conf-step__chair:not(:first-of-type) {
-    margin-left: 20px;
-  }
-}
-
 .conf-step__hint {
   margin-top: 10px;
 }
@@ -533,55 +517,6 @@ select {
   }
 }
 
-.conf-step__movies {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-
-  .conf-step__movie {
-    position: relative;
-    width: calc((100% - 30px) / 3);
-    min-height: 52px;
-    padding: 8px 8px 8px 48px;
-    background: $startyellow;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-    box-sizing: border-box;
-    cursor: pointer;
-
-    &:nth-of-type(3n + 2) {
-      margin: 0 15px;
-    }
-
-    &:nth-of-type(n + 4) {
-      margin-top: 15px;
-    }
-
-    @for $i from 1 to $colors {
-      &:nth-of-type(#{$i}) {
-        background-color: adjust-hue($startyellow, $i * $degrees);
-      }
-    }
-  }
-
-  .conf-step__movie-poster {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 38px;
-    height: 50px;
-  }
-
-  .conf-step__movie-title {
-    font-weight: 500;
-    font-size: 1.4rem;
-  }
-
-  .conf-step__movie-duration {
-    font-size: 1.4rem;
-    color: rgba(0, 0, 0, 0.7);
-  }
-}
-
 .conf-step__seances-hall {
   margin: 35px;
 }
@@ -603,81 +538,42 @@ select {
 
 // ===== ШКАЛА ВРЕМЕНИ СЕАНСОВ =====
 .conf-step__timeline-scale {
-  position: absolute;
-  top: -25px;
-  left: 0;
-  right: 0;
-  height: 20px;
-  border-bottom: 1px solid $grey;
+    position: relative;
+    height: 30px;
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        #f0f0f0 4.17%, 
+        transparent 8.33%,
+        #f0f0f0 12.5%,
+        transparent 16.67%,
+        #f0f0f0 20.83%,
+        transparent 25%,
+        #f0f0f0 29.17%,
+        transparent 33.33%,
+        #f0f0f0 37.5%,
+        transparent 41.67%,
+        #f0f0f0 45.83%,
+        transparent 50%,
+        #f0f0f0 54.17%,
+        transparent 58.33%,
+        #f0f0f0 62.5%,
+        transparent 66.67%,
+        #f0f0f0 70.83%,
+        transparent 75%,
+        #f0f0f0 79.17%,
+        transparent 83.33%,
+        #f0f0f0 87.5%,
+        transparent 91.67%,
+        #f0f0f0 95.83%,
+        transparent 100%);
 }
 
 .conf-step__timeline-hour {
-  position: absolute;
-  bottom: -20px;
-  font-size: 1rem;
-  color: $grey;
-  transform: translateX(-50%);
-
-  &::before {
-    content: "";
     position: absolute;
-    top: -5px;
-    left: 50%;
-    width: 1px;
-    height: 5px;
-    background-color: $grey;
-  }
-}
-
-// ===== УПРАВЛЕНИЕ СЕАНСАМИ С КНОПКАМИ ПРИ НАВЕДЕНИИ =====
-.conf-step__seances-movie {
-  position: absolute;
-  height: 40px;
-  border: 1px solid rgba(0, 0, 0, 0.3);
-  box-sizing: border-box;
-  padding: 8px 25px 8px 8px;
-  min-width: 80px;
-  overflow: hidden;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-
-  &:hover {
-    z-index: 50;
-    transform: scale(1.05);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-
-    .conf-step__seances-controls {
-      display: flex;
-    }
-  }
-
-  .conf-step__seances-movie-title {
-    overflow: hidden;
-    line-height: 12px;
-    height: 100%;
-    font-size: 1rem;
-    margin: 0;
-    font-weight: 500;
-  }
-
-  .conf-step__seances-movie-start {
-    position: absolute;
-    bottom: -25px;
-    left: -10px;
-    color: $grey;
-    font-size: 1rem;
-  }
-
-  &::before {
-    content: "";
-    position: absolute;
-    display: block;
-    width: 1px;
-    height: 4px;
-    bottom: -12px;
-    left: 0;
-    background-color: $grey;
-  }
+    top: 0;
+    font-size: 1.2rem;
+    color: #848484;
+    transform: translateX(-50%);
 }
 
 .conf-step__seances-controls {
@@ -775,10 +671,9 @@ select {
     font-size: 0;
   }
   
-  // Для кнопок продаж оставляем текст видимым
   &.conf-step__button-warning,
   &.conf-step__button-accent {
-    font-size: 1.2rem !important; // Делаем текст видимым
+    font-size: 1.2rem !important;
     width: auto !important;
     min-width: 180px !important;
     padding: 8px 16px !important;
@@ -819,6 +714,506 @@ select {
   }
 }
 
+// ===== ИСПРАВЛЕННАЯ СЕТКА СЕАНСОВ =====
+.conf-step__seances-timeline-wrapper {
+  margin: 20px 0;
+}
+
+.conf-step__timeline-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 20px;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  min-height: 60px;
+  
+  .conf-step__button {
+    width: 120px;
+    height: 40px;
+    padding: 10px 15px;
+    font-size: 1.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+  }
+  
+  input[type="date"] {
+    width: 160px;
+    height: 40px;
+    padding: 8px 12px;
+    font-size: 1.4rem;
+    border: 1px solid #b7b7b7;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+  }
+
+  .date-selector {
+    display: flex;
+    align-items: center;
+    height: 40px;
+  }
+}
+
+.conf-step__timeline-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+// ===== ГОРИЗОНТАЛЬНАЯ ПРОКРУТКА ДЛЯ TIMELINE =====
+.conf-step__timeline-hall {
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+    
+    // Контейнер для горизонтальной прокрутки
+    .conf-step__timeline-scroll-container {
+        overflow-x: auto;
+        overflow-y: hidden;
+        padding-bottom: 10px; // место для скроллбара
+        
+        // Стилизация скроллбара для Webkit браузеров
+        &::-webkit-scrollbar {
+            height: 8px;
+        }
+        
+        &::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+        
+        &::-webkit-scrollbar-thumb {
+            background: #63536C;
+            border-radius: 4px;
+            
+            &:hover {
+                background: #7a6785;
+            }
+        }
+    }
+    
+    // Контейнер с фиксированной шириной для контента
+    .conf-step__timeline-content {
+        min-width: 1200px; // Минимальная ширина для комфортного просмотра
+        padding-left: 24px;
+        // box-sizing: border-box;
+        position: relative;
+    }
+}
+
+.conf-step__hall-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #63536c;
+  
+  .conf-step__seances-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #63536c;
+    margin: 0;
+  }
+  
+  .conf-step__hall-sessions-count {
+    font-size: 1.4rem;
+    color: #848484;
+    background: #f0f0f0;
+    padding: 4px 8px;
+    border-radius: 12px;
+  }
+}
+
+// ===== ИСПРАВЛЕННАЯ ШКАЛА ВРЕМЕНИ =====
+.conf-step__seances-timeline {
+  position: relative;
+  height: 80px;
+  background: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 59px,
+      #f0f0f0 59px,
+      #f0f0f0 60px
+    );
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  margin-top: 10px;
+}
+
+.conf-step__timeline-scale {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 25px;
+  background: rgba(248, 249, 250, 0.9);
+  border-bottom: 1px solid #ddd;
+}
+
+.conf-step__timeline-hour {
+  position: absolute;
+  top: 2px;
+  font-size: 1.2rem;
+  color: #63536c;
+  font-weight: 500;
+  transform: translateX(-50%);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    width: 1px;
+    height: 10px;
+    background: #ddd;
+    transform: translateX(-50%);
+  }
+}
+
+// ===== ИСПРАВЛЕННЫЕ СЕАНСЫ =====
+.conf-step__sessions-track {
+  position: relative;
+  height: 60px;
+  margin-top: 25px;
+}
+
+.conf-step__seances-movie-start {
+  font-size: 1.1rem;
+  margin: 0;
+  opacity: 0.9;
+  font-weight: 500;
+}
+
+// ===== ПУСТЫЕ СОСТОЯНИЯ =====
+.conf-step__empty-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #848484;
+  gap: 15px;
+  text-align: center;
+  
+  p {
+    font-size: 1.6rem;
+    margin: 0;
+  }
+  
+  .conf-step__button {
+    padding: 10px 20px;
+    font-size: 1.4rem;
+  }
+}
+
+.conf-step__empty-halls {
+  text-align: center;
+  padding: 40px 20px;
+  color: #848484;
+  
+  p {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+  }
+  
+  .conf-step__button {
+    padding: 12px 24px;
+    font-size: 1.6rem;
+  }
+}
+
+// ===== ИСПРАВЛЕННЫЕ ФИЛЬМЫ =====
+.conf-step__movies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.conf-step__movie {
+  position: relative;
+  background: $startyellow;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px 12px 12px 60px;
+  min-height: 70px;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  }
+}
+
+.conf-step__movie-poster {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 40px;
+  height: 50px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.conf-step__movie-title {
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin: 0 0 5px 0;
+  color: #333;
+}
+
+.conf-step__movie-duration {
+  font-size: 1.4rem;
+  color: #666;
+  margin: 0;
+}
+
+// ===== ЛЕГЕНДА И ПОДСКАЗКИ =====
+.conf-step__legend {
+  background: #eae9eb;
+  padding: 15px 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  
+  .conf-step__paragraph {
+    font-size: 1.4rem;
+    margin: 0;
+    color: #63536c;
+    font-weight: 500;
+    
+    strong {
+      color: #333;
+    }
+  }
+}
+
+// ===== ДИНАМИЧЕСКАЯ ШКАЛА ВРЕМЕНИ =====
+.conf-step__dynamic-timeline {
+    position: relative;
+    height: 100px;
+    background: #f8f9fa;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-top: 15px;
+}
+
+.conf-step__scroll-hint {
+    text-align: center;
+    color: #848484;
+    font-size: 1.2rem;
+    margin-top: 8px;
+    opacity: 0.7;
+    animation: fadeInOut 2s infinite;
+    
+    &::before {
+        content: "↔ ";
+        font-weight: bold;
+    }
+}
+
+@keyframes fadeInOut {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+}
+
+.conf-step__timeline-scale {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    background: 
+        repeating-linear-gradient(
+            90deg,
+            transparent,
+            transparent 4.16%,
+            #e8e8e8 4.16%,
+            #e8e8e8 4.17%,
+            transparent 4.17%,
+            transparent 8.33%
+        );
+    border-bottom: 1px solid #d0d0d0;
+}
+
+.conf-step__timeline-mark {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    text-align: center;
+    
+    .conf-step__timeline-label {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #63536c;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 2px 6px;
+        border-radius: 4px;
+        border: 1px solid #d0d0d0;
+    }
+    
+    .conf-step__timeline-line {
+        height: 10px;
+        width: 1px;
+        background: #d0d0d0;
+        margin: 2px auto 0;
+    }
+    
+    &.conf-step__timeline-mark--overnight {
+        .conf-step__timeline-label {
+            color: #dc3545;
+            border-color: #dc3545;
+        }
+        
+        .conf-step__timeline-line {
+            background: #dc3545;
+        }
+    }
+}
+
+.conf-step__timeline-minor-mark {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    height: 6px;
+    width: 1px;
+    background: #e8e8e8;
+}
+
+.conf-step__sessions-area {
+    position: relative;
+    height: 60px;
+    margin-top: 25px;
+}
+
+// ===== УЛУЧШЕННЫЕ СЕАНСЫ =====
+.conf-step__seances-movie {
+    position: absolute;
+    top: 5px;
+    height: 50px;
+    background: #16a6af;
+    color: white;
+    border-radius: 6px;
+    padding: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    
+    &:hover {
+        background: #13868f;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        z-index: 100;
+    }
+    
+    &--long {
+        background: linear-gradient(135deg, #8B6990, #7a5a7f);
+    }
+    
+    &--overnight {
+        background: linear-gradient(135deg, #dc3545, #c82333);
+    }
+
+    &.very-short {
+        padding: 4px;
+        .conf-step__seances-movie-title {
+            font-size: 1rem;
+        }
+    }
+
+    &--very-long {
+        min-width: 150px; // Минимальная ширина для читаемости
+        background: linear-gradient(135deg, #5a4b63, #4a3b53) !important;
+        
+        .conf-step__seances-movie-title {
+            font-size: 1.1rem;
+            white-space: normal; // Разрешаем перенос текста
+            line-height: 1.3;
+        }
+    }
+}
+
+.conf-step__seances-movie-content {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.conf-step__seances-movie-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.conf-step__seances-movie-time {
+    font-size: 1rem;
+    margin: 0;
+    opacity: 0.9;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.conf-step__overnight-indicator {
+    font-size: 0.9rem;
+}
+
+.conf-step__duration-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 4px;
+    font-size: 0.8rem;
+    opacity: 0.8;
+    background: rgba(0,0,0,0.2);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+// ===== ПУСТЫЕ СОСТОЯНИЯ =====
+.conf-step__empty-sessions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #848484;
+    gap: 10px;
+    
+    p {
+        font-size: 1.4rem;
+        margin: 0;
+    }
+}
+
+.conf-step__empty-halls {
+    text-align: center;
+    padding: 40px 20px;
+    color: #848484;
+    
+    p {
+        font-size: 1.6rem;
+        margin-bottom: 20px;
+    }
+}
+
 // Стили для кнопок управления фильмами
 .conf-step__movie-controls {
   position: absolute;
@@ -837,14 +1232,14 @@ select {
     display: flex;
     align-items: center;
     justify-content: center;
-    opacity: 1; // ← ИЗМЕНЕНО: всегда видимые
+    opacity: 1;
     transition: all 0.2s ease;
     border: 1px solid rgba(0, 0, 0, 0.3);
     
     &:hover {
-      transform: scale(1.1); // ← ДОБАВЛЕНО: легкое увеличение при наведении
+      transform: scale(1.1);
       border-color: rgba(0, 0, 0, 0.6);
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); // ← ДОБАВЛЕНО: тень при наведении
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
     }
     
     &.conf-step__button-small {
@@ -869,7 +1264,7 @@ select {
       background-repeat: no-repeat;
       
       &:hover {
-        background-color: #fff5f5; // ← ДОБАВЛЕНО: легкий красный оттенок
+        background-color: #fff5f5;
       }
     }
   }
@@ -1019,6 +1414,7 @@ select {
 
       .conf-step__input {
         width: 100%;
+        margin: 0 auto;
       }
 
       textarea.conf-step__input {
@@ -1026,243 +1422,5 @@ select {
         resize: vertical;
       }
     }
-  }
-
-  // Timeline Vertical Styles
-  .conf-step {
-      &__seances-timeline-wrapper {
-          margin-top: 20px;
-      }
-
-      &__timeline-nav {
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-          gap: 15px;
-          margin-bottom: 20px;
-          padding: 15px;
-          background: #f8f9fa;
-          border-radius: 8px;
-      }
-
-      &__current-date {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          font-weight: 500;
-      }
-
-      &__date-display {
-          font-size: 16px;
-          color: #63536C;
-      }
-
-      &__timeline-vertical {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          max-height: 600px;
-          overflow-y: auto;
-          padding-right: 10px;
-          
-          &::-webkit-scrollbar {
-              width: 8px;
-          }
-          
-          &::-webkit-scrollbar-track {
-              background: #f1f1f1;
-              border-radius: 4px;
-          }
-          
-          &::-webkit-scrollbar-thumb {
-              background: #63536C;
-              border-radius: 4px;
-          }
-      }
-
-      &__timeline-hall {
-          display: grid;
-          grid-template-columns: 200px 1fr;
-          gap: 15px;
-          padding: 20px;
-          border: 2px solid #e9ecef;
-          border-radius: 8px;
-          background: white;
-          transition: all 0.3s ease;
-          position: relative;
-          
-          &:hover {
-              border-color: #63536C;
-              box-shadow: 0 2px 8px rgba(99, 83, 108, 0.1);
-          }
-          
-          &[data-drag-over="true"] {
-              border-color: #63536C;
-              background: #f8f6ff;
-          }
-      }
-
-      &__hall-header {
-          display: flex;
-          flex-direction: column;
-          gap: 5px;
-      }
-
-      &__hall-sessions-count {
-          font-size: 14px;
-          color: #6c757d;
-      }
-
-      // Модификации для существующих сеансов
-      &__seances-movie {
-          &--draggable {
-              cursor: move;
-              transition: all 0.2s ease;
-              border: 2px solid transparent;
-              min-width: 80px;
-              
-              &:hover {
-                  transform: translateY(-2px);
-                  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-                  z-index: 50;
-                  
-                  .conf-step__seances-controls {
-                      display: flex;
-                  }
-              }
-              
-              &[draggable="true"]:active {
-                  opacity: 0.7;
-                  transform: scale(0.95);
-              }
-          }
-          
-          &--long {
-              background: #8B6990 !important;
-          }
-          
-          &--overnight {
-              background: linear-gradient(45deg, #63536C 0%, #8B6990 50%, #63536C 100%) !important;
-              border: 2px solid #dc3545 !important;
-          }
-          
-          &-content {
-              height: 100%;
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-          }
-      }
-
-      &__seances-drag-handle {
-          position: absolute;
-          top: 2px;
-          right: 2px;
-          width: 12px;
-          height: 12px;
-          background: rgba(255, 255, 255, 0.3);
-          border-radius: 2px;
-          cursor: move;
-      }
-
-      &__sessions-track {
-          position: relative;
-          height: 80px;
-          background: #f8f9fa;
-          border-radius: 6px;
-          border: 1px dashed #dee2e6;
-      }
-
-      &__empty-track {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          height: 100%;
-          color: #6c757d;
-          gap: 10px;
-      }
-
-      &__timeline-hour {
-          &--overnight {
-              color: #dc3545;
-              font-weight: 600;
-              
-              &::before {
-                  background: #dc3545 !important;
-              }
-          }
-      }
-  }
-
-  // Drag and Drop States
-  .conf-step__timeline-hall.drag-over {
-      border-color: #63536C;
-      background: #f0e6ff;
-      
-      .conf-step__sessions-track {
-          background: #e6f7ff;
-          border-color: #63536C;
-          border-style: solid;
-      }
-  }
-
-  // Адаптация под существующий дизайн
-  .conf-step__seances-hall {
-      margin: 20px 0;
-      
-      &:last-child {
-          margin-bottom: 0;
-      }
-  }
-
-  // Улучшенные тултипы
-  .conf-step__seances-movie--draggable {
-      position: relative;
-      
-      &:hover::after {
-          content: attr(title);
-          position: absolute;
-          bottom: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          background: #333;
-          color: white;
-          padding: 8px 12px;
-          border-radius: 4px;
-          font-size: 12px;
-          white-space: nowrap;
-          z-index: 1000;
-          pointer-events: none;
-      }
-  }
-
-  .conf-step__seances-movie--draggable {
-      cursor: grab;
-      
-      &.dragging {
-          opacity: 0.5;
-          cursor: grabbing;
-      }
-  }
-
-  .conf-step__timeline-hall {
-      min-height: 100px;
-      
-      &.drag-over {
-          background-color: rgba(22, 166, 175, 0.1);
-          border: 2px dashed #16a6af;
-      }
-  }
-
-  .conf-step__seances-drag-handle {
-      position: absolute;
-      top: 2px;
-      right: 2px;
-      width: 12px;
-      height: 12px;
-      background: rgba(255, 255, 255, 0.7);
-      border-radius: 2px;
-      cursor: grab;
   }
 }

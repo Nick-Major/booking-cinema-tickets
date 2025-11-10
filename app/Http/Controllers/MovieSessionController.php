@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\MovieSession;
 use App\Models\Movie;
 use App\Models\CinemaHall;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,73 +20,57 @@ class MovieSessionController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('Store method called with data:', $request->all());
+        
         try {
             $validated = $request->validate([
                 'movie_id' => 'required|exists:movies,id',
                 'cinema_hall_id' => 'required|exists:cinema_halls,id',
-                'session_start' => 'required|date|after:now',
-                'is_actual' => 'sometimes|boolean'
+                'session_start' => 'required|date',
             ]);
 
-            // Получаем длительность фильма
+            \Log::info('Validation passed', $validated);
+
+            // Вычисляем session_end на основе длительности фильма
             $movie = Movie::findOrFail($validated['movie_id']);
-            $validated['session_end'] = MovieSession::calculateSessionEnd(
-                $validated['session_start'],
-                $movie->movie_duration
-            );
+            $sessionStart = Carbon::parse($validated['session_start']);
+            $sessionEnd = $sessionStart->copy()->addMinutes($movie->movie_duration + 25); // +25 минут на уборку
 
-            // Создаем сеанс для проверки конфликтов
-            $session = new MovieSession($validated);
+            // Добавляем session_end в данные
+            $validated['session_end'] = $sessionEnd;
 
-            // Проверяем конфликты по времени
-            if ($session->hasTimeConflict()) {
-                if ($request->expectsJson()) {
-                    return response()->json([
-                        'success' => false,
-                        'message' => 'В выбранное время в этом зале уже есть сеанс'
-                    ], 422);
-                }
-                return redirect()->route('admin.dashboard')
-                    ->with('error', 'В выбранное время в этом зале уже есть сеанс');
-            }
+            \Log::info('Calculated session end:', ['session_end' => $sessionEnd]);
 
-            // Сохраняем сеанс
-            $createdSession = MovieSession::create($validated);
+            // Создаем сеанс
+            $session = MovieSession::create($validated);
 
-            // Для AJAX запросов возвращаем JSON
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => true,
-                    'message' => 'Сеанс успешно создан!',
-                    'session' => $createdSession
-                ]);
-            }
+            \Log::info('Session created successfully', ['session_id' => $session->id]);
 
-            // Для обычных запросов - redirect
-            return redirect()->route('admin.dashboard')
-                ->with('success', 'Сеанс успешно создан!');
+            return response()->json([
+                'success' => true,
+                'message' => 'Сеанс успешно создан',
+                'session' => $session
+            ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка валидации',
-                    'errors' => $e->errors()
-                ], 422);
-            }
-            return redirect()->back()->withErrors($e->errors())->withInput();
+            \Log::error('Validation error', ['errors' => $e->errors()]);
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+            
         } catch (\Exception $e) {
-            \Log::error('Error creating session: ' . $e->getMessage());
+            \Log::error('Error creating session: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $request->all()
+            ]);
             
-            if ($request->expectsJson()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка при создании сеанса: ' . $e->getMessage()
-                ], 500);
-            }
-            
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'Ошибка при создании сеанса');
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка сервера при создании сеанса: ' . $e->getMessage()
+            ], 500);
         }
     }
 
@@ -96,39 +81,43 @@ class MovieSessionController extends Controller
 
     public function update(Request $request, MovieSession $movieSession)
     {
-        $validated = $request->validate([
-            'movie_id' => 'sometimes|exists:movies,id',
-            'cinema_hall_id' => 'sometimes|exists:cinema_halls,id',
-            'session_start' => 'sometimes|date',
-            'is_actual' => 'sometimes|boolean'
-        ]);
+        try {
+            $validated = $request->validate([
+                'movie_id' => 'required|exists:movies,id',
+                'cinema_hall_id' => 'required|exists:cinema_halls,id',
+                'session_start' => 'required|date',
+                'is_actual' => 'sometimes|boolean'
+            ]);
 
-        // Если меняется фильм или время - пересчитываем окончание
-        if (isset($validated['movie_id']) || isset($validated['session_start'])) {
-            $movieId = $validated['movie_id'] ?? $movieSession->movie_id;
-            $sessionStart = $validated['session_start'] ?? $movieSession->session_start;
-            
-            $movie = Movie::findOrFail($movieId);
-            $validated['session_end'] = MovieSession::calculateSessionEnd(
-                $sessionStart, 
-                $movie->movie_duration
-            );
+            // Вычисляем session_end на основе длительности фильма
+            $movie = Movie::findOrFail($validated['movie_id']);
+            $sessionStart = Carbon::parse($validated['session_start']);
+            $sessionEnd = $sessionStart->copy()->addMinutes($movie->movie_duration + 25);
+
+            // Добавляем session_end в данные
+            $validated['session_end'] = $sessionEnd;
+
+            $movieSession->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Сеанс успешно обновлен',
+                'session' => $movieSession
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error updating session: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при обновлении сеанса: ' . $e->getMessage()
+            ], 500);
         }
-
-        // Создаем временный объект для проверки конфликтов
-        $tempSession = clone $movieSession;
-        $tempSession->fill($validated);
-
-        // Проверяем конфликты по времени (кроме текущего сеанса)
-        if ($tempSession->hasTimeConflict()) {
-            return redirect()->route('admin.dashboard')
-                ->with('error', 'В выбранное время в этом зале уже есть сеанс');
-        }
-
-        $movieSession->update($validated);
-
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Сеанс успешно обновлен!');
     }
 
     public function destroy(MovieSession $movieSession)
@@ -249,10 +238,27 @@ class MovieSessionController extends Controller
     
     public function edit(MovieSession $movieSession)
     {
-        $movies = Movie::active()->get();
-        $halls = CinemaHall::active()->get();
-        
-        return view('admin.modals.edit-session-modal', compact('movieSession', 'movies', 'halls'));
+        // Загружаем необходимые отношения
+        $movieSession->load(['movie', 'cinemaHall']);
+
+        // Возвращаем данные в JSON
+        return response()->json([
+            'id' => $movieSession->id,
+            'movie_id' => $movieSession->movie_id,
+            'cinema_hall_id' => $movieSession->cinema_hall_id,
+            'session_start' => $movieSession->session_start->format('Y-m-d H:i:s'),
+            'session_end' => $movieSession->session_end->format('Y-m-d H:i:s'),
+            'is_actual' => $movieSession->is_actual,
+            'movie' => [
+                'id' => $movieSession->movie->id,
+                'title' => $movieSession->movie->title,
+                'movie_duration' => $movieSession->movie->movie_duration,
+            ],
+            'cinema_hall' => [
+                'id' => $movieSession->cinemaHall->id,
+                'hall_name' => $movieSession->cinemaHall->hall_name,
+            ]
+        ]);
     }
 
     public function toggleActual(MovieSession $movieSession)

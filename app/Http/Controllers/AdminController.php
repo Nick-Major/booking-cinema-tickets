@@ -5,17 +5,26 @@ namespace App\Http\Controllers;
 use App\Models\CinemaHall;
 use App\Models\Movie;
 use App\Models\MovieSession;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
     public function dashboard()
     {
-        return view('admin.dashboard', [
-            'halls' => CinemaHall::all(),
-            'movies' => Movie::all(), 
-            'sessions' => MovieSession::with(['movie', 'cinemaHall'])->get()
-        ]);
+        $halls = CinemaHall::all();
+        $movies = Movie::all();
+        
+        $currentDate = request('date', now()->format('Y-m-d'));
+        $selectedDate = Carbon::parse($currentDate);
+        
+        // Получаем сеансы для выбранной даты
+        $sessions = MovieSession::with(['movie', 'cinemaHall'])
+            ->whereDate('session_start', $selectedDate)
+            ->orderBy('session_start')
+            ->get();
+
+        return view('admin.dashboard', compact('halls', 'movies', 'sessions', 'currentDate', 'selectedDate'));
     }
 
     public function toggleSales(Request $request)

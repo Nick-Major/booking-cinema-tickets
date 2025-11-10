@@ -5,7 +5,11 @@
   "main": "index.js",
   "scripts": {
     "dev": "sass resources/css/admin/styles.scss public/css/admin/styles.css && sass resources/css/client/styles.scss public/css/client/styles.css",
-    "watch": "sass --watch resources/css/admin/styles.scss:public/css/admin/styles.css resources/css/client/styles.scss:public/css/client/styles.css"
+    "watch": "sass --watch resources/css/admin/styles.scss:public/css/admin/styles.css resources/css/client/styles.scss:public/css/client/styles.css",
+    "css:analyze": "node create-css-analyzer.js",
+    "css:clean": "node clean-reports.js",
+    "css:analyze-fresh": "yarn css:clean && yarn css:analyze",
+    "dev:css-watch": "yarn css:analyze && echo 'Запускайте при изменениях в SCSS/CSS'"
   },
   "keywords": [],
   "author": "",

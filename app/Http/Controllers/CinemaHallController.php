@@ -119,10 +119,12 @@ class CinemaHallController extends Controller
     // Сохранение конфигурации зала
     public function saveConfiguration(Request $request, $hallId)
     {
-        // Найдем зал вручную
+        \Log::info('=== START SAVE CONFIGURATION ===');
+        
         $cinemaHall = CinemaHall::find($hallId);
         
         if (!$cinemaHall) {
+            \Log::error('Hall not found', ['hall_id' => $hallId]);
             return response()->json(['success' => false, 'message' => 'Ошибка: зал не найден'], 500);
         }
 
@@ -133,26 +135,56 @@ class CinemaHallController extends Controller
             'seats.*.type' => 'required|in:regular,vip,blocked'
         ]);
 
+        \Log::info('Validated data', [
+            'hall_id' => $hallId,
+            'seats_count' => count($validated['seats']),
+            'sample_seats' => array_slice($validated['seats'], 0, 3) // первые 3 места для примера
+        ]);
+
         try {
-            // Принудительное удаление
-            Seat::where('cinema_hall_id', $cinemaHall->id)->delete();
+            // Логируем существующие места перед удалением
+            $existingSeats = Seat::where('cinema_hall_id', $cinemaHall->id)->get();
+            \Log::info('Existing seats before delete', [
+                'count' => $existingSeats->count(),
+                'seats' => $existingSeats->pluck('id', 'row_number', 'row_seat_number')
+            ]);
 
-            // Создаем новые места
-            foreach ($validated['seats'] as $seatData) {
-                $seat = new Seat();
-                $seat->cinema_hall_id = $cinemaHall->id;
-                $seat->row_number = (int)$seatData['row'];
-                $seat->row_seat_number = (int)$seatData['seat'];
-                $seat->seat_status = $seatData['type'];
-                $seat->save();
-            }
+            DB::transaction(function () use ($cinemaHall, $validated) {
+                // Удаляем ВСЕ места этого зала
+                $deletedCount = Seat::where('cinema_hall_id', $cinemaHall->id)->delete();
+                \Log::info('Deleted seats', ['count' => $deletedCount]);
 
+                // Создаем новые места
+                foreach ($validated['seats'] as $index => $seatData) {
+                    \Log::info('Creating seat', [
+                        'index' => $index,
+                        'row' => $seatData['row'],
+                        'seat' => $seatData['seat'],
+                        'type' => $seatData['type']
+                    ]);
+
+                    $seat = Seat::create([
+                        'cinema_hall_id' => $cinemaHall->id,
+                        'row_number' => (int)$seatData['row'],
+                        'row_seat_number' => (int)$seatData['seat'],
+                        'seat_status' => $seatData['type'],
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ]);
+
+                    \Log::info('Seat created', ['seat_id' => $seat->id]);
+                }
+            });
+
+            \Log::info('=== SUCCESS: Configuration saved ===');
             return response()->json(['success' => true, 'message' => 'Конфигурация сохранена']);
 
         } catch (\Exception $e) {
-            \Log::error('Error saving hall configuration', [
+            \Log::error('=== ERROR: Save configuration failed ===', [
                 'hall_id' => $cinemaHall->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'request_data' => $validated['seats'] // логируем ВСЕ места из запроса
             ]);
             return response()->json(['success' => false, 'message' => 'Ошибка при сохранении: ' . $e->getMessage()], 500);
         }
@@ -161,6 +193,11 @@ class CinemaHallController extends Controller
     // Обновление цен
     public function updatePrices(Request $request, $hallId)
     {
+        \Log::info('Update prices request received', [
+            'hall_id' => $hallId,
+            'request_data' => $request->all()
+        ]);
+
         $hall = CinemaHall::findOrFail($hallId);
         
         $validated = $request->validate([
@@ -168,7 +205,15 @@ class CinemaHallController extends Controller
             'vip_price' => 'required|numeric|min:0'
         ]);
 
+        \Log::info('Validated data', $validated);
+
         $hall->update($validated);
+
+        \Log::info('Prices updated successfully', [
+            'hall_id' => $hallId,
+            'new_regular_price' => $validated['regular_price'],
+            'new_vip_price' => $validated['vip_price']
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Цены обновлены']);
     }

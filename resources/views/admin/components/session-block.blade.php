@@ -1,42 +1,32 @@
 @php
     $position = $session->getTimelinePosition();
     $isLong = $session->getTotalDuration() > 180;
-    $spansDays = $position['spans_days'];
-    $tooltipContent = "
-        <strong>{$session->movie->title}</strong><br>
-        Начало: {$session->session_start->format('d.m.Y H:i')}<br>
-        Фильм: {$session->movie->movie_duration} мин<br>
-        Реклама: 10 мин<br> 
-        Уборка: 15 мин<br>
-        <em>Двойной клик - удалить</em>
-    ";
+    $tooltip = "{$session->movie->title}\nНачало: {$position['start_time']}\nОкончание: {$position['end_time']}\nДлительность: {$session->getTotalDuration()} мин";
 @endphp
 
-<div class="conf-step__seances-movie conf-step__seances-movie--draggable"
-     style="width: {{ max($position['width'], 1.5) }}%; left: {{ $position['left'] }}%;"
+<div class="conf-step__seances-movie 
+    {{ $isLong ? 'conf-step__seances-movie--long' : '' }}
+    {{ $position['spans_days'] ? 'conf-step__seances-movie--overnight' : '' }}"
+     style="width: {{ $position['width'] }}%; left: {{ $position['left'] }}%;"
      data-session-id="{{ $session->id }}"
-     data-session-start="{{ $session->session_start->format('Y-m-d H:i:s') }}"
-     data-movie-duration="{{ $session->movie->movie_duration }}"
-     draggable="true"
-     ondragstart="dragSession(event, {{ $session->id }})"
-     ondblclick="openDeleteSessionModal({{ $session->id }}, '{{ $session->movie->title }}')"
-     title="{{ $session->movie->title }} | {{ $session->session_start->format('H:i') }}">
+     ondblclick="openEditSessionModal({{ $session->id }})"
+     title="{{ $tooltip }}">
     
-    <!-- Основной контент блока -->
     <div class="conf-step__seances-movie-content">
         <p class="conf-step__seances-movie-title">
-            {{ \Illuminate\Support\Str::limit($session->movie->title, $isLong ? 25 : 15) }}
+            {{ \Illuminate\Support\Str::limit($session->movie->title, $isLong ? 20 : 12) }}
         </p>
-        <p class="conf-step__seances-movie-start">
-            {{ $session->session_start->format('H:i') }}
-            @if($spansDays)
-                <span style="font-size: 0.8rem; opacity: 0.8;">
-                    → {{ $session->getCleaningEndTime()->format('H:i') }}
-                </span>
+        <p class="conf-step__seances-movie-time">
+            {{ $position['start_time'] }}
+            @if($position['spans_days'])
+                <span class="conf-step__overnight-indicator">🌙</span>
             @endif
         </p>
     </div>
     
-    <!-- Индикатор перетаскивания -->
-    <div class="conf-step__seances-drag-handle"></div>
+    <!-- Индикатор длительности -->
+    <div class="conf-step__duration-indicator" 
+         title="Общая длительность: {{ $session->getTotalDuration() }} мин">
+        {{ $session->movie->movie_duration }}′
+    </div>
 </div>
