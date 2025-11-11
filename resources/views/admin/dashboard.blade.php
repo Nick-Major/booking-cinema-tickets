@@ -6,7 +6,7 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>ИдёмВКино</title>
-  <link rel="stylesheet" href="{{ asset('css/admin/normalize.css') }}">
+  <link rel="stylesheet" href="{{ asset('css/common/normalize.css') }}">
   <link rel="stylesheet" href="{{ asset('css/admin/styles.css') }}">
   <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
 </head>
@@ -206,7 +206,7 @@
   @include('admin.modals.delete-hall-modal')
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
-  @include('admin.modals.edit-session-simple-modal')
+  @include('admin.modals.edit-session-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">

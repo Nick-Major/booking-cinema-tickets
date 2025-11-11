@@ -189,6 +189,7 @@ body {
 .buying {
   background-color: rgba(241, 235, 230, 0.95);
   padding-bottom: 3rem;
+  border-radius: 2px;
 }
 
 .buying__info {
@@ -420,9 +421,6 @@ body {
   .page-header, nav, main {
     width: 990px;
     margin: auto;
-  }
-  .movie, .buying {
-    border-radius: 2px;
   }
   .buying__info-hint {
     display: none;

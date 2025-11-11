@@ -39,7 +39,6 @@
                 });
             @endphp
             
-            <!-- ДОБАВЛЕН data-hall-id АТРИБУТ -->
             <div class="conf-step__timeline-hall" data-hall-id="{{ $hall->id }}">
                 <!-- Заголовок зала -->
                 <div class="conf-step__hall-header">

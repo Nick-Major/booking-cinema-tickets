@@ -470,27 +470,15 @@ select {
   text-transform: uppercase;
 }
 
-.conf-step__seances-timeline {
-  position: relative;
-  outline: 1px solid #848484;
-  padding: 10px 0;
-  height: 40px;
-  box-sizing: content-box;
-  width: 720px;
-}
-
-.conf-step__timeline-scale {
-  position: relative;
-  height: 30px;
-  background: linear-gradient(90deg, transparent 0%, #f0f0f0 4.17%, transparent 8.33%, #f0f0f0 12.5%, transparent 16.67%, #f0f0f0 20.83%, transparent 25%, #f0f0f0 29.17%, transparent 33.33%, #f0f0f0 37.5%, transparent 41.67%, #f0f0f0 45.83%, transparent 50%, #f0f0f0 54.17%, transparent 58.33%, #f0f0f0 62.5%, transparent 66.67%, #f0f0f0 70.83%, transparent 75%, #f0f0f0 79.17%, transparent 83.33%, #f0f0f0 87.5%, transparent 91.67%, #f0f0f0 95.83%, transparent 100%);
-}
-
 .conf-step__timeline-hour {
   position: absolute;
   top: 0;
-  font-size: 1.2rem;
-  color: #848484;
-  transform: translateX(-50%);
+  height: 20px;
+  width: 1px;
+  background: #999;
+  line-height: 20px;
+  font-size: 10px;
+  text-align: center;
 }
 
 .conf-step__seances-controls {
@@ -612,6 +600,15 @@ select {
   margin: 20px 0;
 }
 
+.conf-step__seances-timeline {
+  position: relative;
+  height: 120px;
+  background: #f5f5f5;
+  border: 1px solid #ddd;
+  overflow-y: visible;
+  min-width: 1200px; /* 20 часов * 60 минут */
+}
+
 .conf-step__timeline-nav {
   display: flex;
   align-items: center;
@@ -710,44 +707,6 @@ select {
   border-radius: 12px;
 }
 
-.conf-step__seances-timeline {
-  position: relative;
-  height: 80px;
-  background: repeating-linear-gradient(90deg, transparent, transparent 59px, #f0f0f0 59px, #f0f0f0 60px);
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  margin-top: 10px;
-}
-
-.conf-step__timeline-scale {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 25px;
-  background: rgba(248, 249, 250, 0.9);
-  border-bottom: 1px solid #ddd;
-}
-
-.conf-step__timeline-hour {
-  position: absolute;
-  top: 2px;
-  font-size: 1.2rem;
-  color: #63536c;
-  font-weight: 500;
-  transform: translateX(-50%);
-}
-.conf-step__timeline-hour::before {
-  content: "";
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  width: 1px;
-  height: 10px;
-  background: #ddd;
-  transform: translateX(-50%);
-}
-
 .conf-step__sessions-track {
   position: relative;
   height: 60px;
@@ -780,18 +739,9 @@ select {
   font-size: 1.4rem;
 }
 
-.conf-step__empty-halls {
-  text-align: center;
-  padding: 40px 20px;
-  color: #848484;
-}
-.conf-step__empty-halls p {
-  font-size: 1.8rem;
-  margin-bottom: 20px;
-}
-.conf-step__empty-halls .conf-step__button {
-  padding: 12px 24px;
-  font-size: 1.6rem;
+.no-seances {
+  position: relative;
+  top: 25px;
 }
 
 .conf-step__movies {
@@ -891,7 +841,6 @@ select {
   left: 0;
   right: 0;
   height: 30px;
-  background: repeating-linear-gradient(90deg, transparent, transparent 4.16%, #e8e8e8 4.16%, #e8e8e8 4.17%, transparent 4.17%, transparent 8.33%);
   border-bottom: 1px solid #d0d0d0;
 }
 
@@ -943,42 +892,41 @@ select {
   position: absolute;
   top: 5px;
   height: 50px;
-  background: #16a6af;
+  background: linear-gradient(135deg, #16a6af, #13868f);
   color: white;
   border-radius: 6px;
   padding: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
   overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   border: 1px solid rgba(255, 255, 255, 0.3);
+  min-width: 80px;
 }
 .conf-step__seances-movie:hover {
-  background: #13868f;
+  background: linear-gradient(135deg, #13868f, #117880);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   transform: translateY(-1px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   z-index: 100;
 }
 .conf-step__seances-movie--long {
-  background: linear-gradient(135deg, #8B6990, #7a5a7f);
+  background: linear-gradient(135deg, #f9953a, #e8852a);
 }
-.conf-step__seances-movie--overnight {
-  background: linear-gradient(135deg, #dc3545, #c82333);
-}
-.conf-step__seances-movie.very-short {
-  padding: 4px;
-}
-.conf-step__seances-movie.very-short .conf-step__seances-movie-title {
-  font-size: 1rem;
+.conf-step__seances-movie--long:hover {
+  background: linear-gradient(135deg, #e8852a, #d6751a);
 }
 .conf-step__seances-movie--very-long {
+  background: linear-gradient(135deg, #5a4b63, #4a3b53);
   min-width: 150px;
-  background: linear-gradient(135deg, #5a4b63, #4a3b53) !important;
 }
 .conf-step__seances-movie--very-long .conf-step__seances-movie-title {
   font-size: 1.1rem;
   white-space: normal;
   line-height: 1.3;
+}
+.conf-step__seances-movie--overnight {
+  background: linear-gradient(135deg, #6a5b73, #5a4b63);
+  border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .conf-step__seances-movie-content {
@@ -1008,19 +956,21 @@ select {
   gap: 4px;
 }
 
-.conf-step__overnight-indicator {
-  font-size: 0.9rem;
-}
-
 .conf-step__duration-indicator {
   position: absolute;
-  bottom: 2px;
-  right: 4px;
+  top: -8px;
+  right: -8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 10px;
   font-size: 0.8rem;
-  opacity: 0.8;
-  background: rgba(0, 0, 0, 0.2);
-  padding: 1px 4px;
-  border-radius: 3px;
+  font-weight: 500;
+  z-index: 10;
+}
+
+.conf-step__overnight-indicator {
+  font-size: 0.9rem;
 }
 
 .conf-step__empty-sessions {

@@ -23,11 +23,11 @@ Route::get('/movies/{movie}', [MovieController::class, 'show'])->name('movies.sh
 
 // Сеансы
 Route::get('/sessions', [MovieSessionController::class, 'listSessions'])->name('sessions.index');
-Route::get('/sessions/{session}', [MovieSessionController::class, 'show'])->name('sessions.show');
-Route::get('/sessions/{session}/seats', [MovieSessionController::class, 'availableSeats'])->name('sessions.seats');
+Route::get('/sessions/{movieSession}', [MovieSessionController::class, 'show'])->name('sessions.show');
+Route::get('/sessions/{movieSession}/seats', [MovieSessionController::class, 'availableSeats'])->name('sessions.seats');
 
 // Билеты и бронирование
-Route::get('/sessions/{session}/booking', [TicketController::class, 'showBookingPage'])->name('sessions.booking');
+Route::get('/sessions/{movieSession}/booking', [TicketController::class, 'showBookingPage'])->name('sessions.booking');
 Route::post('/tickets/book', [TicketController::class, 'bookTicket'])->name('tickets.book');
 Route::get('/tickets/{ticket}/confirmation', [TicketController::class, 'showConfirmation'])->name('tickets.confirmation');
 Route::get('/tickets/{code}', [TicketController::class, 'showTicket'])->name('tickets.show');
@@ -41,7 +41,14 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Основные CRUD ресурсы
     Route::resource('halls', CinemaHallController::class);
     Route::resource('movies', MovieController::class);
-    Route::resource('sessions', MovieSessionController::class);
+    
+    // ЯВНЫЕ МАРШРУТЫ ДЛЯ СЕАНСОВ (вместо Route::resource)
+    Route::get('/sessions', [MovieSessionController::class, 'index'])->name('sessions.index');
+    Route::post('/sessions', [MovieSessionController::class, 'store'])->name('sessions.store');
+    Route::get('/sessions/{movieSession}', [MovieSessionController::class, 'show'])->name('sessions.show');
+    Route::put('/sessions/{movieSession}', [MovieSessionController::class, 'update'])->name('sessions.update');
+    Route::delete('/sessions/{movieSession}', [MovieSessionController::class, 'destroy'])->name('sessions.destroy');
+    Route::get('/sessions/{movieSession}/edit', [MovieSessionController::class, 'edit'])->name('sessions.edit');
 
     // Управление залами
     Route::get('/halls/{hall}/configuration', [CinemaHallController::class, 'configuration'])->name('halls.configuration');
@@ -55,7 +62,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/movies/{movie}/toggle-active', [MovieController::class, 'toggleActive'])->name('movies.toggle-active');
 
     // Управление сеансами
-    Route::get('/sessions/{movieSession}/edit', [MovieSessionController::class, 'edit'])->name('sessions.edit');
     Route::post('/sessions/{movieSession}/toggle-actual', [MovieSessionController::class, 'toggleActual'])->name('sessions.toggle-actual');
     Route::post('/sessions/cleanup', [MovieSessionController::class, 'cleanupOldSessions'])->name('sessions.cleanup');
     Route::get('/sessions/hall/{hallId}', [MovieSessionController::class, 'getHallSessions'])->name('sessions.by-hall');

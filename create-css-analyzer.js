@@ -1,3 +1,4 @@
+const IGNORE_CONFLICTS = require('./css-analyzer-ignore.js');
 const fs = require('fs');
 const path = require('path');
 const sass = require('sass'); // Добавляем компилятор SASS
@@ -106,24 +107,44 @@ class CSSConflictFinder {
         
         rules.forEach(rule => {
             rule.selectors.forEach(selector => {
-                if (!selectorMap.has(selector)) {
-                    selectorMap.set(selector, []);
+                // Игнорируем известные false-positive конфликты
+                if (IGNORE_CONFLICTS.includes(selector)) {
+                    return; // Пропускаем этот селектор
                 }
-                selectorMap.get(selector).push({
+                
+                // Нормализуем селектор для лучшего сравнения
+                const normalizedSelector = selector.trim();
+                
+                if (!selectorMap.has(normalizedSelector)) {
+                    selectorMap.set(normalizedSelector, []);
+                }
+                selectorMap.get(normalizedSelector).push({
                     file: filePath,
                     properties: rule.properties,
-                    fullRule: rule.fullRule
+                    fullRule: rule.fullRule,
+                    originalSelectors: rule.selectors // Сохраняем все селекторы правила
                 });
             });
         });
 
+        // Находим конфликты только для селекторов с несколькими вхождениями
         selectorMap.forEach((occurrences, selector) => {
             if (occurrences.length > 1) {
+                // Дополнительная проверка: игнорируем если все вхождения в одном файле 
+                // И это normalize.css (что нормально)
+                const uniqueFiles = new Set(occurrences.map(o => o.file));
+                
+                // Если все конфликты в normalize.css - это нормально, пропускаем
+                if (uniqueFiles.size === 1 && occurrences[0].file.includes('normalize.css')) {
+                    return;
+                }
+                
                 this.conflicts.push({
                     type: 'CONFLICT',
                     selector,
                     occurrences,
-                    severity: this.calculateSeverity(occurrences)
+                    severity: this.calculateSeverity(occurrences),
+                    uniqueFilesCount: uniqueFiles.size
                 });
             }
         });

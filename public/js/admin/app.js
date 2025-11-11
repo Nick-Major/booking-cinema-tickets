@@ -65,6 +65,24 @@ function initModals() {
     });
 }
 
+// Функция закрытия модальных окон
+function closeModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+        modal.style.display = 'none';
+        console.log('✅ Modal closed:', modalId);
+    }
+}
+
+// Закрытие по клику вне модального окна
+document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('popup')) {
+            closeModal(e.target.id);
+        }
+    });
+});
+
 function closeAllModals() {
     document.querySelectorAll('.popup.active').forEach(modal => {
         modal.classList.remove('active');
@@ -914,6 +932,159 @@ function previewMoviePoster(input) {
 // ============================================================================
 // УПРАВЛЕНИЕ СЕАНСАМИ
 // ============================================================================
+function openAddSessionModal(hallId = null, date = null) {
+    console.log('Opening add session modal with hallId:', hallId, 'and date:', date);
+    
+    const modal = document.getElementById('addSessionModal');
+    if (!modal) {
+        console.error('Add session modal not found!');
+        return;
+    }
+    
+    // Очищаем форму
+    const form = modal.querySelector('form');
+    if (form) {
+        form.reset();
+    }
+    
+    // Устанавливаем зал, если передан
+    if (hallId) {
+        const hallSelect = modal.querySelector('select[name="cinema_hall_id"]');
+        if (hallSelect) {
+            hallSelect.value = hallId;
+            console.log('Set hall select value to:', hallId);
+        } else {
+            console.warn('Hall select element not found in modal');
+        }
+    }
+    
+    // Устанавливаем дату и время, если переданы
+    if (date) {
+        // date в формате YYYY-MM-DD, нам нужно установить в datetime-local, который требует YYYY-MM-DDThh:mm
+        // По умолчанию время можно установить на 12:00
+        const dateTimeValue = date + 'T12:00';
+        const sessionStartInput = modal.querySelector('input[name="session_start"]');
+        if (sessionStartInput) {
+            sessionStartInput.value = dateTimeValue;
+            console.log('Set session_start input value to:', dateTimeValue);
+        } else {
+            console.warn('Session start input element not found in modal');
+        }
+    }
+    
+    // Показываем модальное окно
+    modal.style.display = 'flex';
+    modal.classList.add('active');
+    
+    console.log('Add session modal opened successfully');
+}
+
+function openEditSessionModal(sessionId) {
+    currentEditingSessionId = sessionId;
+    
+    console.log('🚀 Opening edit modal for session:', sessionId);
+    
+    showLoadingIndicator(true);
+    
+    fetch(`/admin/sessions/${sessionId}/edit`)
+        .then(response => {
+            console.log('📡 Response status:', response.status, response.statusText);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('📦 Full response data:', data);
+            
+            if (data.success === false) {
+                throw new Error(data.message || 'Ошибка загрузки данных');
+            }
+            
+            console.log('✅ Loaded session data successfully:', data);
+            
+            const modal = document.getElementById('editSessionModal');
+            if (!modal) {
+                throw new Error('Модальное окно редактирования не найдено');
+            }
+            
+            // Заполняем форму данными
+            const movieSelect = document.getElementById('edit_movie_id');
+            const hallSelect = document.getElementById('edit_cinema_hall_id');
+            const sessionStartInput = document.getElementById('edit_session_start');
+            const isActualCheckbox = document.getElementById('edit_is_actual');
+            const deleteButton = document.getElementById('edit_delete_button');
+            
+            if (movieSelect) {
+                movieSelect.value = data.movie_id;
+                console.log('🎬 Set movie_id to:', data.movie_id);
+            }
+            
+            if (hallSelect) {
+                hallSelect.value = data.cinema_hall_id;
+                console.log('🏛️ Set cinema_hall_id to:', data.cinema_hall_id);
+            }
+            
+            if (sessionStartInput && data.session_start) {
+                sessionStartInput.value = data.session_start;
+                console.log('⏰ Set session_start to:', data.session_start);
+            }
+            
+            if (isActualCheckbox) {
+                isActualCheckbox.checked = data.is_actual;
+                console.log('🔔 Set is_actual to:', data.is_actual);
+            }
+            
+            if (deleteButton) {
+                deleteButton.onclick = function() {
+                    deleteSession(sessionId);
+                };
+            }
+            
+            // Обновляем action формы
+            const form = document.getElementById('editSessionForm');
+            if (form) {
+                form.action = `/admin/sessions/${sessionId}`;
+            }
+            
+            // Показываем модальное окно
+            modal.style.display = 'block';
+            console.log('✅ Edit session modal opened successfully');
+        })
+        .catch(error => {
+            console.error('❌ Error loading session data:', error);
+            showNotification('Ошибка загрузки данных сеанса: ' + error.message, 'error');
+        })
+        .finally(() => {
+            showLoadingIndicator(false);
+        });
+}
+
+// Функция для показа индикатора загрузки
+function showLoadingIndicator(show) {
+    let loader = document.getElementById('loadingIndicator');
+    if (!loader && show) {
+        loader = document.createElement('div');
+        loader.id = 'loadingIndicator';
+        loader.innerHTML = 'Загрузка...';
+        loader.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 20px;
+            border-radius: 5px;
+            z-index: 10000;
+        `;
+        document.body.appendChild(loader);
+    } else if (loader && !show) {
+        loader.remove();
+    }
+}
+
 function initSessions(csrfToken) {
     console.log('Initializing sessions handlers');
     
@@ -1003,7 +1174,23 @@ function initSessionForms(csrfToken) {
     }
 }
 
-async function deleteSession(sessionId, movieName, csrfToken) {
+async function deleteSession(sessionId, movieName = null, csrfToken = null) {
+    // Если movieName не передан, получаем его из формы
+    if (!movieName) {
+        const movieSelect = document.getElementById('edit_movie_id');
+        if (movieSelect) {
+            const selectedOption = movieSelect.options[movieSelect.selectedIndex];
+            movieName = selectedOption ? selectedOption.text.split(' (')[0] : 'сеанс';
+        } else {
+            movieName = 'сеанс';
+        }
+    }
+    
+    // Если csrfToken не передан, получаем из мета-тега
+    if (!csrfToken) {
+        csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    }
+
     if (!confirm(`Удалить сеанс фильма "${movieName}"?`)) return;
 
     try {
@@ -1016,6 +1203,7 @@ async function deleteSession(sessionId, movieName, csrfToken) {
 
         if (result.success) {
             showNotification('Сеанс удален', 'success');
+            
             // Удаляем элемент сеанса из DOM
             const sessionElement = document.querySelector(`[data-session-id="${sessionId}"]`);
             if (sessionElement) {
@@ -1023,8 +1211,14 @@ async function deleteSession(sessionId, movieName, csrfToken) {
                 // Обновляем счетчик сеансов если нужно
                 updateSessionCount(sessionElement.closest('.conf-step__timeline-hall'));
             }
-            // Если это было в модальном окне, закрываем его
-            closeAllModals();
+            
+            // Закрываем модальное окно редактирования
+            closeModal('editSessionModal');
+            
+            // Если нужно, обновляем всю страницу
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
         } else {
             showNotification(result.message, 'error');
         }
@@ -1034,14 +1228,14 @@ async function deleteSession(sessionId, movieName, csrfToken) {
     }
 }
 
+// Функция для обновления счетчика сеансов (если нужно)
 function updateSessionCount(hallElement) {
-    if (!hallElement) return;
-    
-    const sessionsCount = hallElement.querySelectorAll('.conf-step__seances-movie').length;
-    const countElement = hallElement.querySelector('.conf-step__hall-sessions-count');
-    
-    if (countElement) {
-        countElement.textContent = `${sessionsCount} сеансов`;
+    if (hallElement) {
+        const sessionsCount = hallElement.querySelectorAll('.conf-step__seances-movie').length;
+        const countElement = hallElement.querySelector('.conf-step__hall-sessions-count');
+        if (countElement) {
+            countElement.textContent = `${sessionsCount} сеансов`;
+        }
     }
 }
 
@@ -1157,63 +1351,6 @@ function removeHallFromSessionsSection(hallId, hallName) {
 // УПРАВЛЕНИЕ СЕАНСАМИ - НОВЫЙ ФУНКЦИОНАЛ
 // ============================================================================
 
-
-
-function openEditSessionModal(sessionId) {
-    currentEditingSessionId = sessionId;
-    
-    console.log('Opening edit modal for session:', sessionId);
-    
-    // Загружаем данные сеанса
-    fetch(`/admin/sessions/${sessionId}/edit`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
-        .then(session => {
-            console.log('Loaded session data:', session);
-            
-            if (!session) {
-                throw new Error('Данные сеанса не получены');
-            }
-            
-            const modal = document.getElementById('editSessionModal');
-            if (!modal) {
-                throw new Error('Модальное окно редактирования не найдено');
-            }
-            
-            // Заполняем форму данными
-            const movieSelect = modal.querySelector('select[name="movie_id"]');
-            const hallSelect = modal.querySelector('select[name="cinema_hall_id"]');
-            const sessionStartInput = modal.querySelector('input[name="session_start"]');
-            const isActualCheckbox = modal.querySelector('input[name="is_actual"]');
-            
-            if (movieSelect) movieSelect.value = session.movie_id;
-            if (hallSelect) hallSelect.value = session.cinema_hall_id;
-            if (sessionStartInput && session.session_start) {
-                // Форматируем дату и время для datetime-local
-                const sessionStart = new Date(session.session_start);
-                const formattedDate = sessionStart.toISOString().slice(0, 16); // YYYY-MM-DDTHH:MM
-                sessionStartInput.value = formattedDate;
-                console.log('Set session_start to:', formattedDate);
-            }
-            if (isActualCheckbox) {
-                isActualCheckbox.checked = session.is_actual;
-            }
-            
-            // Показываем модальное окно
-            modal.style.display = 'flex';
-            modal.classList.add('active');
-            
-            console.log('Edit session modal opened successfully');
-        })
-        .catch(error => {
-            console.error('Error loading session data:', error);
-            showNotification('Ошибка загрузки данных сеанса: ' + error.message, 'error');
-        });
-}
 
 async function updateSession(form, sessionId) {
     const formData = new FormData(form);
@@ -1425,54 +1562,7 @@ function showNotification(message, type) {
     setTimeout(() => notification.remove(), 3000);
 }
 
-function openAddSessionModal(hallId = null, date = null) {
-    console.log('Opening add session modal with hallId:', hallId, 'and date:', date);
-    
-    const modal = document.getElementById('addSessionModal');
-    if (!modal) {
-        console.error('Add session modal not found!');
-        return;
-    }
-    
-    // Очищаем форму
-    const form = modal.querySelector('form');
-    if (form) {
-        form.reset();
-    }
-    
-    // Устанавливаем зал, если передан
-    if (hallId) {
-        const hallSelect = modal.querySelector('select[name="cinema_hall_id"]');
-        if (hallSelect) {
-            hallSelect.value = hallId;
-            console.log('Set hall select value to:', hallId);
-        } else {
-            console.warn('Hall select element not found in modal');
-        }
-    }
-    
-    // Устанавливаем дату и время, если переданы
-    if (date) {
-        // date в формате YYYY-MM-DD, нам нужно установить в datetime-local, который требует YYYY-MM-DDThh:mm
-        // По умолчанию время можно установить на 12:00
-        const dateTimeValue = date + 'T12:00';
-        const sessionStartInput = modal.querySelector('input[name="session_start"]');
-        if (sessionStartInput) {
-            sessionStartInput.value = dateTimeValue;
-            console.log('Set session_start input value to:', dateTimeValue);
-        } else {
-            console.warn('Session start input element not found in modal');
-        }
-    }
-    
-    // Показываем модальное окно
-    modal.style.display = 'flex';
-    modal.classList.add('active');
-    
-    console.log('Add session modal opened successfully');
-}
-
-// Обработчик формы редактирования сеанса
+// Обработчик формы редактирования сеанса (ВАШ ВАРИАНТ - ОСТАВЛЯЕМ)
 document.addEventListener('DOMContentLoaded', function() {
     const editSessionForm = document.getElementById('editSessionForm');
     if (editSessionForm) {
