@@ -20,6 +20,10 @@
     "js:analyze-common": "node scripts/module-analysis/find-common-functions.js",
     "js:remove-unused-safe": "node scripts/js-analysis/remove-unused-functions-safe.js",
     "js:preview-removal-safe": "node scripts/js-analysis/remove-unused-functions-safe.js",
+
+    "analyze:blade-js-relations": "node scripts/view-analysis/analyze-blade-js-relations.js",
+    "create:view-js-files": "node scripts/view-analysis/create-view-js-files.js",
+    "update:blade-templates": "node scripts/view-analysis/update-blade-templates.js",
     
     "analyze:all": "yarn css:analyze && yarn js:analyze-duplicates",
     "clean:all-reports": "yarn css:clean"

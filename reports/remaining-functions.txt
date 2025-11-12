@@ -1,0 +1,38 @@
+ОСТАВШИЕСЯ ФУНКЦИИ В APP.JS
+==================================================
+
+Всего функций: 33
+
+- initConfigurationHandlers
+- initAccordeon
+- initModals
+- initHalls
+- openDeleteHallModal
+- openAddHallModal
+- confirmDeleteHall
+- removeHallFromAllSections
+- removeHallFromRadioGroup
+- updateConfigurationSections
+- updateHallsCount
+- createHall
+- initHallConfigurationHandlers
+- initPriceConfigurationHandlers
+- initRadioHandlers
+- initSeatHandlers
+- getNextSeatType
+- getSeatClass
+- initMovies
+- deleteMovie
+- createMovie
+- openEditSessionModal
+- showLoadingIndicator
+- initSessions
+- initSessionForms
+- deleteSession
+- updateSessionCount
+- createSession
+- removeHallFromSessionsSection
+- initScrollHints
+- initSales
+- toggleSales
+- showNotification

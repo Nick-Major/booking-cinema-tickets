@@ -61,5 +61,3 @@
     </div>
   </div>
 </div>
-
-<script src="{{ asset('js/admin/modals/edit-movie-modal.js') }}"></script>

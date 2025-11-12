@@ -1,3 +1,8 @@
+@extends('layouts.base')
+
+@section('title', 'Главная страница')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,9 +10,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>ИдёмВКино - Электронный билет</title>
-  <link rel="stylesheet" href="{{ asset('css/common/normalize.css') }}">
-  <link rel="stylesheet" href="{{ asset('css/client/styles.css') }}">
-  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
 </head>
 
 <body>
@@ -28,7 +30,7 @@
         <p class="ticket__info">Начало сеанса: <span class="ticket__details ticket__start">{{ $ticket->movieSession->session_start->format('H:i') }}</span></p>
 
         <!-- QR-код с уникальным кодом бронирования -->
-        <img class="ticket__info-qr" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ urlencode($ticket->unique_code) }}">
+        <img class="ticket__info-qr" src="{{ $ticket->getQrCodeBase64() }}" alt="QR Code билета">
 
         <p class="ticket__hint">Покажите QR-код нашему контроллеру для подтверждения бронирования.</p>
         <p class="ticket__hint">Приятного просмотра!</p>
@@ -41,3 +43,4 @@
   </main>
 </body>
 </html>
+@endsection

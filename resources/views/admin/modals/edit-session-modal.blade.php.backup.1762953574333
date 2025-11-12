@@ -63,5 +63,3 @@
     </div>
   </div>
 </div>
-
-<script src="{{ asset('js/admin/modals/edit-session-modal.js') }}"></script>

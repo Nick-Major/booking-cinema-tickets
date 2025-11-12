@@ -92,5 +92,3 @@
         Используйте горизонтальную прокрутку для длинных сеансов
     </p>
 </div>
-
-<script src="{{ asset('js/admin/components/sessions-timeline.js') }}"></script>

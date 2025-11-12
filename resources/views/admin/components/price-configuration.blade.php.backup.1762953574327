@@ -24,5 +24,3 @@
     </fieldset>  
 </div>
 @endif
-
-<script src="{{ asset('js/admin/components/price-configuration.js') }}"></script>

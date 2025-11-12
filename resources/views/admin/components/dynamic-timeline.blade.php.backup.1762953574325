@@ -82,5 +82,3 @@
         @endforelse
     </div>
 </div>
-
-<script src="{{ asset('js/admin/components/dynamic-timeline.js') }}"></script>

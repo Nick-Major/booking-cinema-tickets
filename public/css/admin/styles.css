@@ -1103,6 +1103,8 @@ select {
   max-width: 600px;
   width: 90%;
   margin: 0 auto;
+  max-height: 50vh;
+  overflow-y: auto;
 }
 .popup__content {
   position: relative;
@@ -1131,7 +1133,7 @@ select {
   transform: scale(1.2);
   transition: 0.3s all ease;
 }
-.popup .popup__container .popup__container {
+.popup .popup__form-layout {
   display: flex;
   gap: 20px;
   margin-bottom: 20px;

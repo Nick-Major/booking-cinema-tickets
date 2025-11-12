@@ -1,3 +1,8 @@
+@extends('layouts.base')
+
+@section('title', 'Главная страница')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -5,9 +10,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>ИдёмВКино - Подтверждение</title>
-  <link rel="stylesheet" href="{{ asset('css/common/normalize.css') }}">
-  <link rel="stylesheet" href="{{ asset('css/client/styles.css') }}">
-  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
 </head>
 
 <body>
@@ -39,3 +41,4 @@
   </main>
 </body>
 </html>
+@endsection

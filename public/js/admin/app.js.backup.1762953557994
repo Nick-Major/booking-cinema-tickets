@@ -2,21 +2,6 @@
 // ГЛАВНАЯ ИНИЦИАЛИЗАЦИЯ
 // ============================================================================
 
-console.log('=== APP.JS LOADED ===');
-
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('=== DOM CONTENT LOADED ===');
-    
-    // Простой тест - вешаем обработчик на body
-    document.body.addEventListener('click', function() {
-        console.log('Body clicked - app.js works!');
-    });
-    
-    // Проверяем наличие CSRF токена
-    const csrfToken = document.querySelector('meta[name="csrf-token"]');
-    console.log('CSRF Token exists:', !!csrfToken);
-});
-
 document.addEventListener('DOMContentLoaded', function() {
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
     

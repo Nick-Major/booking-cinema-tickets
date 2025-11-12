@@ -1,0 +1,81 @@
+ПЛАН РАСПРЕДЕЛЕНИЯ JS ФУНКЦИЙ ПО ФАЙЛАМ
+============================================================
+
+VIEW-SPECIFIC ФАЙЛЫ:
+
+admin/components/dynamic-timeline.js:
+  - openAddSessionModal
+
+admin/components/hall-configuration.js:
+  - generateHallLayout
+  - changeSeatType
+  - resetHallLayout
+  - saveHallConfiguration
+
+admin/components/price-configuration.js:
+  - savePrices
+
+admin/components/sessions-timeline.js:
+  - changeTimelineDate
+  - openModal
+
+admin/dashboard.js:
+  - updateSession
+  - loadHallConfiguration
+  - loadPriceConfiguration
+
+admin/modals/add-hall-modal.js:
+  - closeAddHallModal
+
+admin/modals/add-movie-modal.js:
+  - closeAddMovieModal
+  - previewMoviePoster
+
+admin/modals/add-session-modal.js:
+  - closeAllModals
+
+admin/modals/edit-movie-modal.js:
+  - closeEditMovieModal
+
+admin/modals/edit-session-modal.js:
+  - closeModal
+
+ОБЩИЕ ФУНКЦИИ (оставить в app.js):
+
+  - initConfigurationHandlers
+  - initAccordeon
+  - initModals
+  - initHalls
+  - openDeleteHallModal
+  - openAddHallModal
+  - confirmDeleteHall
+  - removeHallFromAllSections
+  - removeHallFromRadioGroup
+  - updateConfigurationSections
+  - updateHallsCount
+  - createHall
+  - initHallConfigurationHandlers
+  - initPriceConfigurationHandlers
+  - initRadioHandlers
+  - initSeatHandlers
+  - getNextSeatType
+  - getSeatClass
+  - initMovies
+  - deleteMovie
+  - createMovie
+  - openEditSessionModal
+  - showLoadingIndicator
+  - initSessions
+  - initSessionForms
+  - deleteSession
+  - updateSessionCount
+  - createSession
+  - removeHallFromSessionsSection
+  - initScrollHints
+  - initSales
+  - toggleSales
+  - showNotification
+
+Всего view-файлов: 10
+Всего функций в view-файлах: 17
+Функций в общем файле: 33
