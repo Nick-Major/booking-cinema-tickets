@@ -37,7 +37,6 @@ class User extends Authenticatable
         return $this->hasMany(Ticket::class);
     }
 
-    // Проверка, является ли пользователь администратором
     public function isAdmin(): bool
     {
         return $this->is_admin === true;

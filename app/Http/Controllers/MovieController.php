@@ -10,7 +10,8 @@ class MovieController extends Controller
 {
     public function index()
     {
-        return Movie::withCount('movieSessions')->get();
+        $movies = Movie::listAllActiveMovies();
+        return view('client.home', compact('movies'));
     }
 
     public function create()

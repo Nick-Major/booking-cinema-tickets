@@ -1,0 +1,125 @@
+ДЕТАЛЬНЫЙ ОТЧЕТ О JS ФУНКЦИЯХ
+==================================================
+
+Всего найдено функций: 86
+Уникальных имен функций: 57
+Дубликатов: 29
+
+ДУБЛИКАТЫ ФУНКЦИЙ:
+
+1. Функция: "initConfigurationHandlers"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+2. Функция: "initAccordeon"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+3. Функция: "initModals"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+4. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+5. Функция: "closeAllModals"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+6. Функция: "closeAddMovieModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+7. Функция: "closeEditMovieModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+8. Функция: "closeAddSessionModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+9. Функция: "closeEditSessionModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+10. Функция: "closeAddHallModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+11. Функция: "closeDeleteHallModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+12. Функция: "openAddHallModal"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+13. Функция: "updateConfigurationSections"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+14. Функция: "updateHallsCount"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+15. Функция: "initHallConfigurationHandlers"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+16. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+17. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+18. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+19. Функция: "initPriceConfigurationHandlers"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+20. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+21. Функция: "initRadioHandlers"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+22. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+23. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+24. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+25. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+26. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+27. Функция: "initScrollHints"
+   1. function declaration в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+28. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+
+29. Функция: "function"
+   1. class method в /var/www/html/public/js/admin/app.js
+   2. class method в /var/www/html/public/js/admin/app.js
+

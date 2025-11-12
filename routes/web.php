@@ -35,6 +35,11 @@ Route::post('/tickets/check-availability', [TicketController::class, 'checkSeatA
 
 // Админка
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    // Редирект с /admin на /admin/dashboard
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard');
+    })->name('admin.index');
+
     // Дашборд
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     

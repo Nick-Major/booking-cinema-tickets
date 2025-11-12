@@ -14,6 +14,7 @@ class AdminUserSeeder extends Seeder
             'name' => 'Администратор',
             'email' => 'admin@cinema.ru',
             'password' => Hash::make('password123'),
+            'is_admin' => true,
         ]);
     }
 }

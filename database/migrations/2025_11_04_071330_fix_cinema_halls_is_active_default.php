@@ -1,5 +1,4 @@
 <?php
-// database/migrations/2025_xx_xx_xxxxxx_fix_cinema_halls_is_active_default.php
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;

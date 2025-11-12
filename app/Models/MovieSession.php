@@ -40,6 +40,38 @@ class MovieSession extends Model
         return $this->hasMany(Ticket::class);
     }
 
+    // Получить доступные места для сеанса
+    public function getAvailableSeats()
+    {
+        $occupiedSeatIds = $this->tickets()
+            ->whereIn('status', ['reserved', 'paid'])
+            ->pluck('seat_id')
+            ->toArray();
+
+        return $this->cinemaHall->seats()
+            ->whereNotIn('id', $occupiedSeatIds)
+            ->where('seat_status', '!=', 'blocked')
+            ->orderBy('row_number')
+            ->orderBy('row_seat_number')
+            ->get();
+    }
+
+    // Получить занятые места для сеанса
+    public function getOccupiedSeats()
+    {
+        return $this->tickets()
+            ->whereIn('status', ['reserved', 'paid'])
+            ->with('seat')
+            ->get()
+            ->map(function ($ticket) {
+                return [
+                    'seat' => $ticket->seat,
+                    'ticket_status' => $ticket->status,
+                    'ticket_code' => $ticket->unique_code
+                ];
+            });
+    }
+
     // Длительность фильма с рекламой (для отображения элемента)
     public function getDisplayDuration(): int
     {

@@ -1,0 +1,56 @@
+ОТЧЕТ О НЕИСПОЛЬЗУЕМЫХ JS ФУНКЦИЯХ
+==================================================
+
+Всего функций: 56
+Неиспользуемых функций: 10
+
+1. closeAddMovieModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 97
+
+2. closeEditMovieModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 113
+
+3. closeAddSessionModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 121
+
+4. closeEditSessionModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 129
+
+5. closeAddHallModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 137
+
+6. closeDeleteHallModal
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 147
+
+7. handleAddSessionSubmit
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 1130
+
+8. handleEditSessionSubmit
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 1136
+
+9. changeTimelineDate
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 1415
+
+10. scrollToSession
+   Тип: declaration
+   Файл: /var/www/html/public/js/admin/app.js
+   Строка: 1438
+
