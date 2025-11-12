@@ -118,8 +118,20 @@ function closeEditMovieModal() {
     }
 }
 
+function closeAddSessionModal() {
+    const modal = document.getElementById('addSessionModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
 }
 
+function closeEditSessionModal() {
+    const modal = document.getElementById('editSessionModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
 }
 
 function closeAddHallModal() {
@@ -132,6 +144,12 @@ function closeAddHallModal() {
     }
 }
 
+function closeDeleteHallModal() {
+    const modal = document.getElementById('deleteHallModal');
+    if (modal) {
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+    }
 }
 
 // ============================================================================
@@ -1109,8 +1127,17 @@ function initSessions(csrfToken) {
 let currentEditingSessionId = null;
 
 // Обработчик отправки формы добавления сеанса
+function handleAddSessionSubmit(e) {
+    e.preventDefault();
+    createSession(this);
+}
+
 // Обработчик отправки формы редактирования сеанса
-else {
+function handleEditSessionSubmit(e) {
+    e.preventDefault();
+    if (currentEditingSessionId) {
+        updateSession(this, currentEditingSessionId);
+    } else {
         showNotification('Ошибка: сеанс не выбран', 'error');
     }
 }
@@ -1408,7 +1435,8 @@ document.addEventListener('DOMContentLoaded', function() {
 // ============================================================================
 
 // Функция для автоматической прокрутки к активному сеансу
-"]`);
+function scrollToSession(sessionId) {
+    const sessionElement = document.querySelector(`[data-session-id="${sessionId}"]`);
     if (sessionElement) {
         const scrollContainer = sessionElement.closest('.conf-step__timeline-scroll-container');
         if (scrollContainer) {

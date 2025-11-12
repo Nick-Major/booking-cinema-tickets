@@ -1,0 +1,7 @@
+Удаленные функции (2025-11-12T10:46:49.619Z):
+closeAddSessionModal
+closeEditSessionModal
+closeDeleteHallModal
+handleAddSessionSubmit
+handleEditSessionSubmit
+scrollToSession

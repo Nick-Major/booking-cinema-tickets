@@ -1,11 +1,11 @@
 УЛУЧШЕННЫЙ ОТЧЕТ О ИСПОЛЬЗОВАНИИ JS ФУНКЦИЙ
 ============================================================
 
-Всего функций: 56
+Всего функций: 50
 Используются только в Blade: 4
 Используются только в JS: 33
 Используются в обоих: 13
-Полностью неиспользуемых: 6
+Полностью неиспользуемых: 0
 
 ФУНКЦИИ, ИСПОЛЬЗУЕМЫЕ ТОЛЬКО В BLADE:
 1. closeAddMovieModal
@@ -24,35 +24,4 @@
    📍 /var/www/html/resources/views/admin/components/sessions-timeline.blade.php:11 (/onclick)
    📍 /var/www/html/resources/views/admin/components/sessions-timeline.blade.php:23 (/onclick)
    📍 /var/www/html/resources/views/admin/components/sessions-timeline.blade.php:18 (/onchange)
-
-ПОЛНОСТЬЮ НЕИСПОЛЬЗУЕМЫЕ ФУНКЦИИ:
-1. closeAddSessionModal
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 121
-
-2. closeEditSessionModal
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 129
-
-3. closeDeleteHallModal
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 147
-
-4. handleAddSessionSubmit
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 1130
-
-5. handleEditSessionSubmit
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 1136
-
-6. scrollToSession
-   Тип: declaration
-   Файл: /var/www/html/public/js/admin/app.js
-   Строка: 1438
 
