@@ -61,7 +61,7 @@
     
     <!-- Конфигурация залов -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="hallConfigurationSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация залов</h2>
       </header>
@@ -87,7 +87,7 @@
     
     <!-- Конфигурация цен -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="priceConfigurationSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация цен</h2>
       </header>
@@ -113,7 +113,7 @@
     
     <!-- Сетка сеансов -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="sessionsSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Сетка сеансов</h2>
       </header>
@@ -173,7 +173,7 @@
     
     <!-- Управление продажами по залам -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="salesManagementSection">
         <header class="conf-step__header conf-step__header_opened">
             <h2 class="conf-step__title">Управление продажами</h2>
         </header>
@@ -216,9 +216,7 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <!-- <script src="{{ asset('js/admin/app.js') }}"></script> -->
-
-  <script src="{{ asset('js/admin/dashboard.js') }}"></script>
+  <script type="module" src="{{ asset('js/views/admin/dashboard.bundle.js') }}"></script>
 </body>
 </html>
 @endsection

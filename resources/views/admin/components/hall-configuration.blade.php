@@ -60,5 +60,3 @@
     </fieldset>
 </div>
 @endif
-
-<script src="{{ asset('js/admin/components/hall-configuration.js') }}"></script>

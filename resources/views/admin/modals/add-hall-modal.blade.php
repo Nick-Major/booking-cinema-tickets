@@ -32,4 +32,3 @@
     </div>
   </div>
 </div>
-<script src="{{ asset('js/admin/modals/add-hall-modal.js') }}"></script>
