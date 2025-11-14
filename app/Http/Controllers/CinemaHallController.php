@@ -190,6 +190,44 @@ class CinemaHallController extends Controller
         }
     }
 
+    // Сброс конфигурации зала
+    public function resetConfiguration(Request $request, $hallId)
+    {
+        try {
+            $cinemaHall = CinemaHall::findOrFail($hallId);
+            
+            \Log::info('Resetting configuration for hall:', ['hall_id' => $hallId]);
+
+            // Удаляем все места зала
+            $deletedSeats = $cinemaHall->seats()->delete();
+            \Log::info('Deleted seats:', ['count' => $deletedSeats]);
+
+            // Сбрасываем размеры зала
+            $cinemaHall->update([
+                'row_count' => 0,
+                'max_seats_number_in_row' => 0
+            ]);
+
+            \Log::info('Hall configuration reset successfully');
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Конфигурация зала сброшена успешно'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error resetting hall configuration:', [
+                'hall_id' => $hallId,
+                'error' => $e->getMessage()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при сбросе конфигурации: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     // Обновление цен
     public function updatePrices(Request $request, $hallId)
     {

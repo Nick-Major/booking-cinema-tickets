@@ -1,6 +1,7 @@
 // Модуль для управления залами
 class HallsManager {
-    constructor() {
+    constructor(notificationSystem) {
+        this.notificationSystem = notificationSystem;
         this.init();
     }
 
@@ -100,7 +101,7 @@ class HallsManager {
         }
     }
 
-    // НОВЫЙ МЕТОД: Обновление всех секций
+    // Обновление всех секций
     updateAllSections(deletedHallId) {
         // 1. Обновляем секцию "Конфигурация залов"
         this.updateHallConfigurationSection(deletedHallId);
@@ -111,7 +112,10 @@ class HallsManager {
         // 3. Обновляем секцию "Управление продажами"
         this.updateSalesManagementSection(deletedHallId);
         
-        // 4. Проверяем, нужно ли скрыть секции если залов не осталось
+        // 4. Обновляем секцию "Сетка сеансов"
+        this.updateSessionsSection(deletedHallId);
+        
+        // 5. Проверяем, нужно ли скрыть секции если залов не осталось
         this.checkAndHideSections();
     }
 
@@ -168,6 +172,57 @@ class HallsManager {
         }
     }
 
+    // Обновление секции сеансов
+    updateSessionsSection(deletedHallId) {
+        const sessionsSection = document.getElementById('sessionsSection');
+        if (!sessionsSection) {
+            console.log('Sessions section not found');
+            return;
+        }
+
+        console.log('Looking for hall timeline with hall-id:', deletedHallId);
+        
+        // Удаляем весь блок зала (включая все его сеансы)
+        const hallTimeline = sessionsSection.querySelector(`.conf-step__timeline-hall[data-hall-id="${deletedHallId}"]`);
+        if (hallTimeline) {
+            console.log('Removing hall timeline:', hallTimeline);
+            hallTimeline.remove();
+        } else {
+            console.log('Hall timeline not found for hall:', deletedHallId);
+        }
+
+        // Обновляем список фильмов (удаляем те, что были только в удаленном зале)
+        this.updateMoviesList(deletedHallId);
+    }
+
+    // Обновление списка фильмов
+    updateMoviesList(deletedHallId) {
+        const moviesList = document.getElementById('moviesList');
+        if (!moviesList) return;
+
+        // Находим фильмы, которые были привязаны только к удаленному залу
+        const movies = moviesList.querySelectorAll('.conf-step__movie');
+        movies.forEach(movie => {
+            const movieId = movie.getAttribute('data-movie-id');
+            
+            // Проверяем, есть ли еще сеансы этого фильма в других залах
+            const remainingSessions = document.querySelectorAll(`.session-block[data-movie-id="${movieId}"]`);
+            if (remainingSessions.length === 0) {
+                // Если сеансов не осталось, удаляем фильм
+                movie.remove();
+            }
+        });
+
+        // Если фильмов не осталось, показываем сообщение
+        const remainingMovies = moviesList.querySelectorAll('.conf-step__movie');
+        if (remainingMovies.length === 0) {
+            const emptyMessage = document.createElement('div');
+            emptyMessage.className = 'conf-step__empty-movies';
+            emptyMessage.textContent = 'Нет добавленных фильмов';
+            moviesList.appendChild(emptyMessage);
+        }
+    }
+
     checkAndHideSections() {
         const hallsList = document.querySelector('.conf-step__list');
         const hasHalls = hallsList && hallsList.children.length > 0;
@@ -199,8 +254,12 @@ class HallsManager {
     }
 
     showNotification(message, type = 'info') {
-        // Используем существующую систему уведомлений или создаем простую
-        alert(message); // Временное решение
+        if (this.notificationSystem) {
+            this.notificationSystem.show(message, type);
+        } else {
+            // Fallback только для разработки
+            console.log(`[${type}] ${message}`);
+        }
     }
 }
 

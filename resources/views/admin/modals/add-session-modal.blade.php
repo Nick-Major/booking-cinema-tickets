@@ -4,7 +4,7 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Добавление сеанса
-          <a class="popup__dismiss" href="#" onclick="closeAllModals()">
+          <a class="popup__dismiss" href="#" onclick="closeAllModals(event)">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
@@ -31,10 +31,18 @@
               @endforeach
             </select>
           </label>
-          
-          <label class="conf-step__label conf-step__label-fullsize" for="session_start">
-            Время начала
-            <input class="conf-step__input" type="datetime-local" name="session_start" id="session_start" required>
+
+          <label class="conf-step__label conf-step__label-fullsize" for="session_date">
+              Дата
+              <input class="conf-step__input" type="date" name="session_date" id="session_date" 
+                     value="{{ date('Y-m-d') }}" required>
+          </label>
+
+          <label class="conf-step__label conf-step__label-fullsize" for="session_time">
+              Время (ЧЧ:ММ)
+              <input class="conf-step__input" type="text" name="session_time" id="session_time" 
+                    placeholder="14:30" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" required>
+              <small>Формат: ЧЧ:ММ (например, 14:30)</small>
           </label>
           
           <div class="conf-step__buttons text-center">
@@ -42,7 +50,7 @@
               Добавить сеанс
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeAllModals()">
+                    onclick="closeAllModals(event)">
               Отменить
             </button>
           </div>

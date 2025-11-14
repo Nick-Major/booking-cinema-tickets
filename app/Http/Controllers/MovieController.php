@@ -53,9 +53,9 @@ class MovieController extends Controller
         }]);
     }
 
-    public function edit(Movie $movie)
+    public function edit($id)
     {
-        // Возвращаем view для редактирования
+        $movie = Movie::findOrFail($id);
         return view('admin.modals.edit-movie-modal', compact('movie'));
     }
 
@@ -67,7 +67,6 @@ class MovieController extends Controller
             'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
             'movie_duration' => 'sometimes|integer|min:1',
             'country' => 'nullable|string|max:100',
-            'is_active' => 'sometimes|boolean'
         ]);
 
         // Обработка загрузки постера
@@ -80,6 +79,8 @@ class MovieController extends Controller
             $path = $request->file('movie_poster')->store('posters', 'public');
             $validated['movie_poster'] = $path;
         }
+
+        $validated['is_active'] = $request->has('is_active');
 
         $movie->update($validated);
 

@@ -1,6 +1,7 @@
 // public/js/modules/halls.js
 var HallsManager = class {
-  constructor() {
+  constructor(notificationSystem) {
+    this.notificationSystem = notificationSystem;
     this.init();
   }
   init() {
@@ -75,11 +76,12 @@ var HallsManager = class {
       hallElement.remove();
     }
   }
-  // НОВЫЙ МЕТОД: Обновление всех секций
+  // Обновление всех секций
   updateAllSections(deletedHallId) {
     this.updateHallConfigurationSection(deletedHallId);
     this.updatePriceConfigurationSection(deletedHallId);
     this.updateSalesManagementSection(deletedHallId);
+    this.updateSessionsSection(deletedHallId);
     this.checkAndHideSections();
   }
   updateHallConfigurationSection(deletedHallId) {
@@ -123,6 +125,43 @@ var HallsManager = class {
       salesItem.closest("li").remove();
     }
   }
+  // Обновление секции сеансов
+  updateSessionsSection(deletedHallId) {
+    const sessionsSection = document.getElementById("sessionsSection");
+    if (!sessionsSection) {
+      console.log("Sessions section not found");
+      return;
+    }
+    console.log("Looking for hall timeline with hall-id:", deletedHallId);
+    const hallTimeline = sessionsSection.querySelector(`.conf-step__timeline-hall[data-hall-id="${deletedHallId}"]`);
+    if (hallTimeline) {
+      console.log("Removing hall timeline:", hallTimeline);
+      hallTimeline.remove();
+    } else {
+      console.log("Hall timeline not found for hall:", deletedHallId);
+    }
+    this.updateMoviesList(deletedHallId);
+  }
+  // Обновление списка фильмов
+  updateMoviesList(deletedHallId) {
+    const moviesList = document.getElementById("moviesList");
+    if (!moviesList) return;
+    const movies = moviesList.querySelectorAll(".conf-step__movie");
+    movies.forEach((movie) => {
+      const movieId = movie.getAttribute("data-movie-id");
+      const remainingSessions = document.querySelectorAll(`.session-block[data-movie-id="${movieId}"]`);
+      if (remainingSessions.length === 0) {
+        movie.remove();
+      }
+    });
+    const remainingMovies = moviesList.querySelectorAll(".conf-step__movie");
+    if (remainingMovies.length === 0) {
+      const emptyMessage = document.createElement("div");
+      emptyMessage.className = "conf-step__empty-movies";
+      emptyMessage.textContent = "\u041D\u0435\u0442 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u0444\u0438\u043B\u044C\u043C\u043E\u0432";
+      moviesList.appendChild(emptyMessage);
+    }
+  }
   checkAndHideSections() {
     const hallsList = document.querySelector(".conf-step__list");
     const hasHalls = hallsList && hallsList.children.length > 0;
@@ -146,51 +185,14 @@ var HallsManager = class {
     console.log("No halls remaining");
   }
   showNotification(message, type = "info") {
-    alert(message);
+    if (this.notificationSystem) {
+      this.notificationSystem.show(message, type);
+    } else {
+      console.log(`[${type}] ${message}`);
+    }
   }
 };
 var halls_default = HallsManager;
-
-// public/js/core/api-client.js
-var ApiClient = class {
-  async request(url, options = {}) {
-    const config = {
-      headers: {
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        ...options.headers
-      },
-      ...options
-    };
-    const response = await fetch(url, config);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  }
-  get(url) {
-    return this.request(url);
-  }
-  post(url, data) {
-    return this.request(url, {
-      method: "POST",
-      body: JSON.stringify(data)
-    });
-  }
-  put(url, data) {
-    return this.request(url, {
-      method: "PUT",
-      body: JSON.stringify(data)
-    });
-  }
-  delete(url) {
-    return this.request(url, {
-      method: "DELETE"
-    });
-  }
-};
-var api_client_default = new ApiClient();
 
 // public/js/core/notifications.js
 var NotificationSystem = class {
@@ -329,166 +331,672 @@ style.textContent = `
 document.head.appendChild(style);
 var notifications_default = NotificationSystem;
 
+// public/js/views/admin/hall-configuration.js
+document.addEventListener("DOMContentLoaded", function() {
+  function showSafeNotification(message, type = "info") {
+    if (window.notifications && typeof window.notifications.show === "function") {
+      try {
+        window.notifications.show(message, type);
+      } catch (notificationError) {
+        console.error("Notification system error:", notificationError);
+        alert(message);
+      }
+    } else {
+      console.log(`[${type}] ${message}`);
+      alert(message);
+    }
+  }
+  async function generateHallLayout(hallId) {
+    try {
+      const rowsInput = document.querySelector(`.hall-configuration[data-hall-id="${hallId}"] .rows-input`);
+      const seatsInput = document.querySelector(`.hall-configuration[data-hall-id="${hallId}"] .seats-input`);
+      if (!rowsInput || !seatsInput) {
+        throw new Error("\u041F\u043E\u043B\u044F \u0432\u0432\u043E\u0434\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+      }
+      const rows = parseInt(rowsInput.value);
+      const seatsPerRow = parseInt(seatsInput.value);
+      if (!rows || !seatsPerRow || rows < 1 || seatsPerRow < 1) {
+        throw new Error("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F \u0434\u043B\u044F \u0440\u044F\u0434\u043E\u0432 \u0438 \u043C\u0435\u0441\u0442");
+      }
+      const response = await fetch(`/admin/halls/${hallId}/generate-layout`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({
+          rows,
+          seats_per_row: seatsPerRow
+        })
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      const html = await response.text();
+      const container = document.getElementById("hallLayout-" + hallId);
+      if (container) {
+        container.innerHTML = html;
+        showSafeNotification("\u0421\u0445\u0435\u043C\u0430 \u0437\u0430\u043B\u0430 \u0441\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u043E\u0432\u0430\u043D\u0430", "success");
+      } else {
+        throw new Error("\u041A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440 \u0434\u043B\u044F \u0441\u0445\u0435\u043C\u044B \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D");
+      }
+    } catch (error) {
+      console.error("Error generating layout:", error);
+      showSafeNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0433\u0435\u043D\u0435\u0440\u0430\u0446\u0438\u0438 \u0441\u0445\u0435\u043C\u044B: " + error.message, "error");
+    }
+  }
+  function changeSeatType(element) {
+    const currentType = element.getAttribute("data-type");
+    const types = ["regular", "vip", "blocked"];
+    const currentIndex = types.indexOf(currentType);
+    const nextType = types[(currentIndex + 1) % types.length];
+    element.setAttribute("data-type", nextType);
+    element.className = `conf-step__chair ${getSeatClass(nextType)}`;
+  }
+  function getSeatClass(type) {
+    switch (type) {
+      case "regular":
+        return "conf-step__chair_standart";
+      case "vip":
+        return "conf-step__chair_vip";
+      case "blocked":
+        return "conf-step__chair_disabled";
+      default:
+        return "conf-step__chair_standart";
+    }
+  }
+  function openResetHallConfigurationModal(hallId, hallName) {
+    const modal = document.getElementById("resetHallConfigurationModal");
+    if (!modal) {
+      console.error("Reset hall configuration modal not found");
+      showSafeNotification("\u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0441\u0431\u0440\u043E\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E", "error");
+      return;
+    }
+    modal.querySelector('input[name="hall_id"]').value = hallId;
+    modal.querySelector("#hallNameToReset").textContent = hallName;
+    modal.classList.add("active");
+  }
+  function closeResetHallConfigurationModal() {
+    const modal = document.getElementById("resetHallConfigurationModal");
+    if (modal) {
+      modal.classList.remove("active");
+    }
+  }
+  async function resetHallConfiguration(hallId) {
+    try {
+      console.log("Resetting configuration for hall:", hallId);
+      const response = await fetch(`/admin/halls/${hallId}/reset-configuration`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          "Accept": "application/json"
+        }
+      });
+      const result = await response.json();
+      if (result.success) {
+        showSafeNotification(result.message, "success");
+        const container = document.getElementById("hallLayout-" + hallId);
+        if (container) {
+          container.innerHTML = '<div class="conf-step__empty-track"><p>\u0421\u0445\u0435\u043C\u0430 \u0437\u0430\u043B\u0430 \u0441\u0431\u0440\u043E\u0448\u0435\u043D\u0430. \u0421\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u043D\u043E\u0432\u0443\u044E \u0441\u0445\u0435\u043C\u0443.</p></div>';
+        }
+        const rowsInput = document.querySelector(`.hall-configuration[data-hall-id="${hallId}"] .rows-input`);
+        const seatsInput = document.querySelector(`.hall-configuration[data-hall-id="${hallId}"] .seats-input`);
+        if (rowsInput) rowsInput.value = "";
+        if (seatsInput) seatsInput.value = "";
+        closeResetHallConfigurationModal();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      console.error("Error resetting hall configuration:", error);
+      showSafeNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438: " + error.message, "error");
+    }
+  }
+  async function saveHallConfiguration(hallId) {
+    try {
+      const seats = [];
+      const hallContainer = document.getElementById("hallLayout-" + hallId);
+      if (!hallContainer) {
+        throw new Error("\u041A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440 \u0441\u0445\u0435\u043C\u044B \u0437\u0430\u043B\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D");
+      }
+      hallContainer.querySelectorAll(".conf-step__chair").forEach((seat) => {
+        const row = seat.getAttribute("data-row");
+        const seatNum = seat.getAttribute("data-seat");
+        const type = seat.getAttribute("data-type");
+        if (row && seatNum && !isNaN(row) && !isNaN(seatNum)) {
+          seats.push({
+            row: parseInt(row),
+            seat: parseInt(seatNum),
+            type
+          });
+        }
+      });
+      console.log("Saving configuration for hall:", hallId, "Valid seats:", seats);
+      if (seats.length === 0) {
+        throw new Error("\u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u0434\u0435\u0439\u0441\u0442\u0432\u0438\u0442\u0435\u043B\u044C\u043D\u044B\u0445 \u043C\u0435\u0441\u0442 \u0434\u043B\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F");
+      }
+      const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+      const response = await fetch(`/admin/halls/${hallId}/save-configuration`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": csrfToken,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ seats })
+      });
+      const responseText = await response.text();
+      console.log("Response status:", response.status, "Response:", responseText);
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error("Failed to parse JSON:", e);
+        throw new Error(`\u0421\u0435\u0440\u0432\u0435\u0440 \u0432\u0435\u0440\u043D\u0443\u043B \u043D\u0435\u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0439 \u043E\u0442\u0432\u0435\u0442: ${responseText.substring(0, 100)}...`);
+      }
+      if (result.success) {
+        showSafeNotification("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0430 \u0443\u0441\u043F\u0435\u0448\u043D\u043E!", "success");
+      } else {
+        throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0438");
+      }
+    } catch (error) {
+      console.error("Error saving configuration:", error);
+      showSafeNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0438 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438: " + error.message, "error");
+    }
+  }
+  const resetForm = document.getElementById("resetHallConfigurationForm");
+  if (resetForm) {
+    resetForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      const hallId = this.querySelector('input[name="hall_id"]').value;
+      resetHallConfiguration(hallId);
+    });
+  }
+  window.generateHallLayout = generateHallLayout;
+  window.changeSeatType = changeSeatType;
+  window.openResetHallConfigurationModal = openResetHallConfigurationModal;
+  window.closeResetHallConfigurationModal = closeResetHallConfigurationModal;
+  window.resetHallConfiguration = resetHallConfiguration;
+  window.saveHallConfiguration = saveHallConfiguration;
+});
+
+// public/js/modules/pricing.js
+document.addEventListener("DOMContentLoaded", function() {
+  function showSafeNotification(message, type = "info") {
+    if (window.notifications && typeof window.notifications.show === "function") {
+      try {
+        window.notifications.show(message, type);
+      } catch (error) {
+        console.error("Notification error:", error);
+        alert(message);
+      }
+    } else {
+      console.log(`[${type}] ${message}`);
+      alert(message);
+    }
+  }
+  async function savePrices(hallId) {
+    try {
+      console.log("Saving prices for hall:", hallId);
+      const regularPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .regular-price-input`);
+      const vipPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .vip-price-input`);
+      if (!regularPriceInput || !vipPriceInput) {
+        throw new Error("\u041F\u043E\u043B\u044F \u0432\u0432\u043E\u0434\u0430 \u0446\u0435\u043D \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+      }
+      const regularPrice = parseFloat(regularPriceInput.value);
+      const vipPrice = parseFloat(vipPriceInput.value);
+      if (isNaN(regularPrice) || isNaN(vipPrice) || regularPrice < 0 || vipPrice < 0) {
+        throw new Error("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F \u0446\u0435\u043D");
+      }
+      const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          regular_price: regularPrice,
+          vip_price: vipPrice
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        showSafeNotification("\u0426\u0435\u043D\u044B \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B \u0443\u0441\u043F\u0435\u0448\u043D\u043E!", "success");
+      } else {
+        throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D");
+      }
+    } catch (error) {
+      console.error("Error updating prices:", error);
+      showSafeNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D: " + error.message, "error");
+    }
+  }
+  async function resetPrices(hallId) {
+    try {
+      const regularPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .regular-price-input`);
+      const vipPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .vip-price-input`);
+      if (!regularPriceInput || !vipPriceInput) {
+        throw new Error("\u041F\u043E\u043B\u044F \u0432\u0432\u043E\u0434\u0430 \u0446\u0435\u043D \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+      }
+      const baseRegularPrice = 350;
+      const baseVipPrice = 500;
+      regularPriceInput.value = baseRegularPrice.toFixed(2);
+      vipPriceInput.value = baseVipPrice.toFixed(2);
+      const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({
+          regular_price: baseRegularPrice,
+          vip_price: baseVipPrice
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        showSafeNotification("\u0426\u0435\u043D\u044B \u0441\u0431\u0440\u043E\u0448\u0435\u043D\u044B \u0434\u043E \u0431\u0430\u0437\u043E\u0432\u044B\u0445 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B", "success");
+      } else {
+        throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D");
+      }
+    } catch (error) {
+      console.error("Error resetting prices:", error);
+      showSafeNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D: " + error.message, "error");
+    }
+  }
+  window.savePrices = savePrices;
+  window.resetPrices = resetPrices;
+});
+
+// public/js/views/admin/modals/add-movie-modal.js
+document.addEventListener("DOMContentLoaded", function() {
+  function closeAddMovieModal2() {
+    const modal = document.getElementById("addMovieModal");
+    if (modal) {
+      modal.style.display = "none";
+    }
+  }
+  function previewMoviePoster(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        const preview = document.getElementById("posterPreview");
+        preview.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.style.maxWidth = "100%";
+        img.style.maxHeight = "100%";
+        preview.appendChild(img);
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+  window.closeAddMovieModal = closeAddMovieModal2;
+  window.previewMoviePoster = previewMoviePoster;
+});
+
 // public/js/views/admin/dashboard.js
 function initAccordeon() {
   const headers = document.querySelectorAll(".conf-step__header");
-  console.log(`Found ${headers.length} accordeon headers`);
-  headers.forEach((header, index) => {
-    console.log(`Header ${index}:`, header.className);
+  headers.forEach((header) => {
     if (header.hasAttribute("data-accordeon-initialized")) {
       return;
     }
     header.setAttribute("data-accordeon-initialized", "true");
     header.addEventListener("click", () => {
-      console.log(`Accordeon header ${index} clicked`);
       header.classList.toggle("conf-step__header_closed");
       header.classList.toggle("conf-step__header_opened");
     });
   });
 }
-function initConfigurationHandlers() {
-  initHallConfigurationHandlers();
-  initPriceConfigurationHandlers();
-  initRadioHandlers();
-}
-function initHallConfigurationHandlers() {
-  console.log("Hall configuration handlers initialized");
-}
-function initPriceConfigurationHandlers() {
-  console.log("Price configuration handlers initialized");
-}
-function initRadioHandlers() {
-  console.log("Radio handlers initialized");
-}
 function resetSessions() {
-  console.log("Reset sessions called");
-  alert("\u0424\u0443\u043D\u043A\u0446\u0438\u044F resetSessions \u0432\u044B\u0437\u0432\u0430\u043D\u0430");
+  if (window.notifications) {
+    window.notifications.show("\u0424\u0443\u043D\u043A\u0446\u0438\u044F resetSessions \u0432\u044B\u0437\u0432\u0430\u043D\u0430", "info");
+  }
 }
-function openEditMovieModal(movieId) {
-  console.log("Open edit movie modal for:", movieId);
-  alert(`\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u043A\u0438 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0444\u0438\u043B\u044C\u043C\u0430 ID: ${movieId}`);
+function updateSession() {
+  if (window.notifications) {
+    window.notifications.show("\u0424\u0443\u043D\u043A\u0446\u0438\u044F updateSession \u0432\u044B\u0437\u0432\u0430\u043D\u0430", "info");
+  }
+}
+async function openEditMovieModal(movieId) {
+  try {
+    console.log("Opening edit movie modal for:", movieId);
+    const response = await fetch(`/admin/movies/${movieId}/edit`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    const tempDiv = document.createElement("div");
+    tempDiv.innerHTML = html;
+    const modalContent = tempDiv.querySelector(".popup");
+    if (!modalContent) {
+      throw new Error("\u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E \u0432 \u043E\u0442\u0432\u0435\u0442\u0435");
+    }
+    const existingModal = document.getElementById("editMovieModal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+    document.body.appendChild(modalContent);
+    openModal("editMovieModal");
+  } catch (error) {
+    console.error("Error opening edit movie modal:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0438\u0438 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0444\u0438\u043B\u044C\u043C\u0430", "error");
+    }
+  }
+}
+async function loadHallConfiguration2(hallId) {
+  try {
+    const response = await fetch(`/admin/halls/${hallId}/configuration`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const html = await response.text();
+    const container = document.getElementById("hallConfiguration");
+    if (container) {
+      container.innerHTML = html;
+      if (window.notifications) {
+        window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0437\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
+      }
+    }
+  } catch (error) {
+    console.error("Error loading hall configuration:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0437\u0430\u043B\u0430", "error");
+    }
+  }
+}
+async function loadPriceConfiguration2(hallId) {
+  try {
+    const response = await fetch(`/admin/halls/${hallId}/prices`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const html = await response.text();
+    const container = document.getElementById("priceConfiguration");
+    if (container) {
+      container.innerHTML = html;
+      if (window.notifications) {
+        window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0446\u0435\u043D \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
+      }
+    }
+  } catch (error) {
+    console.error("Error loading price configuration:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D", "error");
+    }
+  }
+}
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.add("active");
+}
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) modal.classList.remove("active");
+}
+function initModalHandlers() {
+  document.querySelectorAll("[data-open-modal]").forEach((button) => {
+    button.addEventListener("click", function(e) {
+      e.preventDefault();
+      const modalId = this.getAttribute("data-open-modal");
+      openModal(modalId);
+    });
+  });
+  document.querySelectorAll("[data-close-modal]").forEach((button) => {
+    button.addEventListener("click", function(e) {
+      e.preventDefault();
+      const modalId = this.getAttribute("data-close-modal");
+      closeModal(modalId);
+    });
+  });
+  document.querySelectorAll(".popup").forEach((modal) => {
+    modal.addEventListener("click", function(e) {
+      if (e.target === this) {
+        e.preventDefault();
+        this.classList.remove("active");
+      }
+    });
+  });
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      document.querySelectorAll(".popup.active").forEach((modal) => {
+        modal.classList.remove("active");
+      });
+    }
+  });
+}
+function closeAddHallModal(event) {
+  if (event) event.preventDefault();
+  closeModal("addHallModal");
+}
+function closeAddMovieModal(event) {
+  if (event) event.preventDefault();
+  closeModal("addMovieModal");
+}
+function closeEditMovieModal(event) {
+  if (event) event.preventDefault();
+  closeModal("editMovieModal");
+}
+function closeAddSessionModal(event) {
+  if (event) event.preventDefault();
+  closeModal("addSessionModal");
+}
+function closeEditSessionModal(event) {
+  if (event) event.preventDefault();
+  closeModal("editSessionModal");
+}
+function closeDeleteHallModal(event) {
+  if (event) event.preventDefault();
+  closeModal("deleteHallModal");
+}
+function closeDeleteMovieModal(event) {
+  if (event) event.preventDefault();
+  closeModal("deleteMovieModal");
+}
+function closeDeleteSessionModal(event) {
+  if (event) event.preventDefault();
+  closeModal("deleteSessionModal");
+}
+function closeAllModals(event) {
+  if (event) event.preventDefault();
+  document.querySelectorAll(".popup.active").forEach((modal) => {
+    modal.classList.remove("active");
+  });
+}
+function initSessionFormHandlers() {
+  console.log("=== INIT SESSION FORM HANDLERS ===");
+  const addSessionForm = document.getElementById("addSessionForm");
+  console.log("Form found:", !!addSessionForm);
+  if (addSessionForm) {
+    console.log("Form action attribute:", addSessionForm.getAttribute("action"));
+    console.log("Form method:", addSessionForm.getAttribute("method"));
+    addSessionForm.addEventListener("submit", async function(e) {
+      console.log("=== FORM SUBMIT INTERCEPTED ===");
+      e.preventDefault();
+      console.log("Default prevented");
+      try {
+        const formData = new FormData(this);
+        const response = await fetch("/admin/sessions", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          closeModal("addSessionModal");
+          if (window.notifications) {
+            window.notifications.show(result.message, "success");
+          }
+          this.reset();
+          document.getElementById("session_date").value = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        } else {
+          if (window.notifications) {
+            window.notifications.show(result.message, "error");
+          }
+          if (result.errors) {
+            console.error("Validation errors:", result.errors);
+          }
+        }
+      } catch (error) {
+        console.error("Error submitting session form:", error);
+        if (window.notifications) {
+          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+        }
+      }
+    });
+  }
+}
+function initTimeValidation() {
+  const timeInput = document.getElementById("session_time");
+  if (timeInput) {
+    timeInput.addEventListener("input", function(e) {
+      const value = e.target.value;
+      const timePattern = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      if (value && !timePattern.test(value)) {
+        this.style.borderColor = "red";
+      } else {
+        this.style.borderColor = "";
+      }
+    });
+  }
+}
+function toggleInactiveMovies(show) {
+  const inactiveMovies = document.querySelectorAll(".conf-step__movie-inactive");
+  inactiveMovies.forEach((movie) => {
+    movie.style.display = show ? "block" : "none";
+  });
+}
+function initMovieFilter() {
+  const filterCheckbox = document.getElementById("showInactiveMovies");
+  if (filterCheckbox) {
+    toggleInactiveMovies(filterCheckbox.checked);
+    filterCheckbox.addEventListener("change", function() {
+      toggleInactiveMovies(this.checked);
+    });
+  }
+}
+function initEventDelegation() {
+  document.addEventListener("submit", function(e) {
+    if (e.target && e.target.id === "addSessionForm") {
+      e.preventDefault();
+      handleSessionFormSubmit(e);
+    }
+  });
+}
+async function handleSessionFormSubmit(e) {
+  const form = e.target;
+  try {
+    const formData = new FormData(form);
+    console.log("Submitting session form to:", "/admin/sessions");
+    const response = await fetch("/admin/sessions", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+      }
+    });
+    console.log("Response status:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    console.log("Response result:", result);
+    if (result.success) {
+      closeModal("addSessionModal");
+      if (window.notifications) {
+        window.notifications.show(result.message, "success");
+      }
+      form.reset();
+      const dateInput = document.getElementById("session_date");
+      if (dateInput) {
+        dateInput.value = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+      }
+    } else {
+      if (window.notifications) {
+        window.notifications.show(result.message, "error");
+      }
+      if (result.errors) {
+        console.error("Validation errors:", result.errors);
+      }
+    }
+  } catch (error) {
+    console.error("Error submitting session form:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+    }
+  }
+}
+function initSessionForm() {
+  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
+  document.addEventListener("submit", function(e) {
+    if (e.target && e.target.id === "addSessionForm") {
+      console.log("\u0424\u043E\u0440\u043C\u0430 \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430!");
+      e.preventDefault();
+      e.stopPropagation();
+      handleSessionSubmit(e.target);
+      return false;
+    }
+  });
+}
+async function handleSessionSubmit(form) {
+  console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u0444\u043E\u0440\u043C\u044B...");
+  const formData = new FormData(form);
+  try {
+    console.log("\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u043D\u0430 /admin/sessions...");
+    const response = await fetch("/admin/sessions", {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      }
+    });
+    console.log("\u0421\u0442\u0430\u0442\u0443\u0441 \u043E\u0442\u0432\u0435\u0442\u0430:", response.status);
+    console.log("URL \u043E\u0442\u0432\u0435\u0442\u0430:", response.url);
+    const result = await response.json();
+    console.log("\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442:", result);
+    if (result.success) {
+      closeModal("addSessionModal");
+      if (window.notifications) {
+        window.notifications.show(result.message, "success");
+      }
+      form.reset();
+    } else {
+      if (window.notifications) {
+        window.notifications.show(result.message, "error");
+      }
+    }
+  } catch (error) {
+    console.error("\u041E\u0448\u0438\u0431\u043A\u0430:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+    }
+  }
 }
 document.addEventListener("DOMContentLoaded", function() {
   console.log("Admin panel initializing...");
   try {
     const notifications = new notifications_default();
-    const hallsManager = new halls_default();
+    const hallsManager = new halls_default(notifications);
+    window.notifications = notifications;
     initAccordeon();
     initModalHandlers();
-    initConfigurationHandlers();
+    initSessionForm();
+    initEventDelegation();
+    initSessionFormHandlers();
+    initTimeValidation();
+    initMovieFilter();
     console.log("Admin panel initialized successfully!");
   } catch (error) {
     console.error("Error during admin panel initialization:", error);
   }
-  async function updateSession(sessionId, data) {
-    try {
-      const result = await api_client_default.put(`/admin/sessions/${sessionId}`, data);
-      if (result.success) {
-        alert("\u0421\u0435\u0430\u043D\u0441 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0443\u0441\u043F\u0435\u0448\u043D\u043E!");
-        location.reload();
-      }
-    } catch (error) {
-      console.error("Error updating session:", error);
-      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430");
-    }
-  }
-  function loadHallConfiguration2(hallId) {
-    window.location.href = `/admin/halls/${hallId}/configuration`;
-  }
-  function loadPriceConfiguration2(hallId) {
-    window.location.href = `/admin/halls/${hallId}/prices`;
-  }
-  function openModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.add("active");
-    }
-  }
-  function closeModal(modalId) {
-    const modal = document.getElementById(modalId);
-    if (modal) {
-      modal.classList.remove("active");
-    }
-  }
-  function initModalHandlers() {
-    document.querySelectorAll("[data-open-modal]").forEach((button) => {
-      button.addEventListener("click", function() {
-        const modalId = this.getAttribute("data-open-modal");
-        openModal(modalId);
-      });
-    });
-    document.querySelectorAll("[data-close-modal]").forEach((button) => {
-      button.addEventListener("click", function() {
-        const modalId = this.getAttribute("data-close-modal");
-        closeModal(modalId);
-      });
-    });
-    document.querySelectorAll(".popup").forEach((modal) => {
-      modal.addEventListener("click", function(e) {
-        if (e.target === this) {
-          this.classList.remove("active");
-        }
-      });
-    });
-    document.addEventListener("keydown", function(e) {
-      if (e.key === "Escape") {
-        document.querySelectorAll(".popup.active").forEach((modal) => {
-          modal.classList.remove("active");
-        });
-      }
-    });
-  }
-  function closeAddHallModal() {
-    closeModal("addHallModal");
-  }
-  function closeAddMovieModal() {
-    closeModal("addMovieModal");
-  }
-  function closeEditMovieModal() {
-    closeModal("editMovieModal");
-  }
-  function closeAddSessionModal() {
-    closeModal("addSessionModal");
-  }
-  function closeEditSessionModal() {
-    closeModal("editSessionModal");
-  }
-  function closeDeleteHallModal() {
-    closeModal("deleteHallModal");
-  }
-  function closeDeleteMovieModal() {
-    closeModal("deleteMovieModal");
-  }
-  function closeDeleteSessionModal() {
-    closeModal("deleteSessionModal");
-  }
-  function closeAllModals() {
-    document.querySelectorAll(".popup.active").forEach((modal) => {
-      modal.classList.remove("active");
-    });
-  }
-  window.addEventListener("error", function(e) {
-    console.error("Global error caught:", e.error);
-    console.error("Error message:", e.message);
-    console.error("Error stack:", e.error?.stack);
-    window.lastError = e.error;
-  });
-  window.addEventListener("unhandledrejection", function(e) {
-    console.error("Unhandled promise rejection:", e.reason);
-    window.lastError = e.reason;
-  });
-  const originalFetch = window.fetch;
-  window.fetch = function(...args) {
-    console.log("Fetch called:", args[0], args[1]);
-    return originalFetch.apply(this, args).then((response) => {
-      console.log("Fetch response:", response.status, response.url);
-      return response;
-    }).catch((error) => {
-      console.error("Fetch error:", error);
-      throw error;
-    });
-  };
-  initModalHandlers();
   window.closeAddHallModal = closeAddHallModal;
   window.closeAddMovieModal = closeAddMovieModal;
   window.closeEditMovieModal = closeEditMovieModal;
@@ -505,4 +1013,6 @@ document.addEventListener("DOMContentLoaded", function() {
   window.closeModal = closeModal;
   window.resetSessions = resetSessions;
   window.openEditMovieModal = openEditMovieModal;
+  window.toggleInactiveMovies = toggleInactiveMovies;
+  window.handleSessionFormSubmit = handleSessionFormSubmit;
 });

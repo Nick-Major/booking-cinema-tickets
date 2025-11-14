@@ -4,7 +4,7 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Редактирование фильма
-          <a class="popup__dismiss" href="#" onclick="closeEditMovieModal()">
+          <a class="popup__dismiss" href="#" onclick="closeEditMovieModal(event)">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
@@ -52,7 +52,7 @@
               Сохранить
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeEditMovieModal()">
+                    onclick="closeEditMovieModal(event)">
               Отменить
             </button>
           </div>

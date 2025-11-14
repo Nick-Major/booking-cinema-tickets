@@ -55,7 +55,7 @@
     </div>
     
     <fieldset class="conf-step__buttons text-center">
-        <button class="conf-step__button conf-step__button-regular" onclick="resetHallLayout({{ $hall->id }})">Отмена</button>
+        <button class="conf-step__button conf-step__button-regular" onclick="openResetHallConfigurationModal({{ $hall->id }}, '{{ $hall->hall_name }}')">Сбросить схему</button>
         <button class="conf-step__button conf-step__button-accent" onclick="saveHallConfiguration({{ $hall->id }})">Сохранить</button>
     </fieldset>
 </div>

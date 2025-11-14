@@ -50,60 +50,51 @@ class MovieSessionController extends Controller
 
     public function store(Request $request)
     {
-        \Log::info('Store method called with data:', $request->all());
-
+        \Log::info('🎯 === SESSION STORE METHOD CALLED ===');
+        \Log::info('📦 Request data:', $request->all());
+        
         try {
+            // ИСПРАВЛЕННАЯ ВАЛИДАЦИЯ
             $validated = $request->validate([
                 'movie_id' => 'required|exists:movies,id',
                 'cinema_hall_id' => 'required|exists:cinema_halls,id',
-                'session_start' => 'required|date',
+                'session_date' => 'required|date',
+                'session_time' => 'required|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/', // ИСПРАВЛЕНО!
             ]);
 
-            $movie = Movie::findOrFail($validated['movie_id']);
-            $sessionStart = Carbon::parse($validated['session_start']);
+            \Log::info('✅ Validation passed:', $validated);
 
-            $timeValidation = $this->validateSessionTime($sessionStart, $movie->movie_duration);
-            
-            if (!$timeValidation['is_valid']) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Ошибка валидации времени',
-                    'errors' => $timeValidation['errors']
-                ], 422);
-            }
+            // ПРОСТОЕ СОЗДАНИЕ СЕАНСА
+            $sessionStart = \Carbon\Carbon::createFromFormat(
+                'Y-m-d H:i', 
+                $validated['session_date'] . ' ' . $validated['session_time']
+            );
 
-            // Проверка конфликтов времени
-            $tempSession = new MovieSession($validated);
-            $tempSession->session_end = $timeValidation['session_end'];
-            
-            if ($tempSession->hasTimeConflict()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'В выбранном зале в это время уже есть сеанс'
-                ], 422);
-            }
+            \Log::info('📅 Session start parsed:', ['start' => $sessionStart]);
 
-            $validated['session_end'] = $timeValidation['session_end'];
-            $session = MovieSession::create($validated);
+            $session = \App\Models\MovieSession::create([
+                'movie_id' => $validated['movie_id'],
+                'cinema_hall_id' => $validated['cinema_hall_id'],
+                'session_start' => $sessionStart,
+                'session_end' => $sessionStart->copy()->addHours(3), // фиксированное время
+                'is_actual' => true
+            ]);
+
+            \Log::info('🎉 Session created successfully:', ['id' => $session->id]);
 
             return response()->json([
                 'success' => true,
-                'message' => 'Сеанс успешно создан',
+                'message' => 'Сеанс успешно создан!',
                 'session' => $session
             ]);
 
-        } catch (\Illuminate\Validation\ValidationException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ошибка валидации',
-                'errors' => $e->errors()
-            ], 422);
-
         } catch (\Exception $e) {
-            \Log::error('Error creating session: ' . $e->getMessage());
+            \Log::error('💥 CRITICAL ERROR: ' . $e->getMessage());
+            \Log::error('📝 Stack trace: ' . $e->getTraceAsString());
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка сервера при создании сеанса: ' . $e->getMessage()
+                'message' => 'Критическая ошибка: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -196,58 +187,6 @@ class MovieSessionController extends Controller
             ], 500);
         }
     }
-
-    // public function edit(MovieSession $movieSession)
-    // {
-    //     try {
-    //         \Log::info('Edit method called with session ID: ' . $movieSession->id);
-
-    //         // Явно загружаем отношения
-    //         $movieSession->load(['movie', 'cinemaHall']);
-
-    //         if (!$movieSession->movie || !$movieSession->cinemaHall) {
-    //             \Log::error('Missing relations for session', [
-    //                 'session_id' => $movieSession->id,
-    //                 'movie' => $movieSession->movie ? 'exists' : 'missing',
-    //                 'cinema_hall' => $movieSession->cinemaHall ? 'exists' : 'missing'
-    //             ]);
-                
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Данные сеанса неполные'
-    //             ], 404);
-    //         }
-
-    //         return response()->json([
-    //             'id' => $movieSession->id,
-    //             'movie_id' => $movieSession->movie_id,
-    //             'cinema_hall_id' => $movieSession->cinema_hall_id,
-    //             'session_start' => $movieSession->session_start->format('Y-m-d\TH:i'),
-    //             'session_end' => $movieSession->session_end ? $movieSession->session_end->format('Y-m-d H:i:s') : null,
-    //             'is_actual' => $movieSession->is_actual,
-    //             'movie' => [
-    //                 'id' => $movieSession->movie->id,
-    //                 'title' => $movieSession->movie->title,
-    //                 'movie_duration' => $movieSession->movie->movie_duration,
-    //             ],
-    //             'cinema_hall' => [
-    //                 'id' => $movieSession->cinemaHall->id,
-    //                 'hall_name' => $movieSession->cinemaHall->hall_name,
-    //             ]
-    //         ]);
-
-    //     } catch (\Exception $e) {
-    //         \Log::error('Error in session edit method: ' . $e->getMessage(), [
-    //             'session_id' => $movieSession->id ?? 'unknown',
-    //             'trace' => $e->getTraceAsString()
-    //         ]);
-
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Ошибка при загрузке данных сеанса: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
 
     public function edit(MovieSession $movieSession)
     {

@@ -4,7 +4,7 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Редактирование сеанса
-          <a class="popup__dismiss" href="#" onclick="closeModal('editSessionModal')">
+          <a class="popup__dismiss" href="#" onclick="closeEditSessionModal(event)">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
@@ -49,7 +49,7 @@
               Сохранить
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeModal('editSessionModal')">
+                    onclick="closeEditSessionModal(event)">
               Отменить
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 

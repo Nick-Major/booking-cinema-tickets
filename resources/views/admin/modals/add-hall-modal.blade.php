@@ -4,7 +4,7 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Добавление зала
-          <a class="popup__dismiss" href="#" onclick="closeAddHallModal()">
+          <a class="popup__dismiss" href="#" onclick="closeAddHallModal(event)">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
@@ -23,7 +23,7 @@
                 Добавить зал
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeAddHallModal()">
+                    onclick="closeAddHallModal(event)">
               Отменить
             </button>
           </div>

@@ -129,9 +129,19 @@
           </button>
         </p>
         
+        <div class="conf-step__filter">
+          <label class="conf-step__label">
+            <input type="checkbox" id="showInactiveMovies" checked onchange="toggleInactiveMovies(this.checked)">
+            Показывать неактивные фильмы
+          </label>
+        </div>
+        
         <div class="conf-step__movies" id="moviesList">
           @forelse($movies as $movie)
-              <div class="conf-step__movie" data-movie-id="{{ $movie->id }}" data-movie-duration="{{ $movie->movie_duration }}" style="position: relative;">
+              <div class="conf-step__movie @if(!$movie->is_active) conf-step__movie-inactive @endif" 
+                  data-movie-id="{{ $movie->id }}" 
+                  data-movie-duration="{{ $movie->movie_duration }}" 
+                  style="position: relative;">
                   @if($movie->movie_poster)
                       <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
                           src="{{ asset('storage/' . $movie->movie_poster) }}">
@@ -141,6 +151,11 @@
                   @endif
                   <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
                   <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
+
+                  <!-- ИНДИКАТОР АКТИВНОСТИ -->
+                  @if(!$movie->is_active)
+                    <div class="conf-step__movie-status">Неактивен</div>
+                  @endif
 
                   <!-- Кнопки управления фильмом -->
                   <div class="conf-step__movie-controls">
@@ -209,6 +224,8 @@
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
   @include('admin.modals.edit-session-modal')
+  @include('admin.modals.reset-hall-configuration-modal')
+  @include('admin.modals.edit-movie-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">
@@ -217,6 +234,44 @@
   </form>
 
   <script type="module" src="{{ asset('js/views/admin/dashboard.bundle.js') }}"></script>
+
+  <!-- ВРЕМЕННЫЙ ТЕСТ ДЛЯ ДИАГНОСТИКИ -->
+  <script>
+  function testSessionCreation() {
+      console.log('=== ТЕСТ НАЧАТ ===');
+      
+      const formData = new FormData();
+      formData.append('movie_id', '1');
+      formData.append('cinema_hall_id', '1');
+      formData.append('session_date', '2025-11-15');
+      formData.append('session_time', '14:30');
+      formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
+      
+      fetch('/admin/sessions', {
+          method: 'POST',
+          body: formData,
+          headers: {
+              'X-Requested-With': 'XMLHttpRequest',
+              'Accept': 'application/json'
+          }
+      })
+      .then(response => {
+          console.log('Статус ответа:', response.status);
+          console.log('URL запроса:', response.url);
+          return response.json();
+      })
+      .then(data => {
+          console.log('Данные ответа:', data);
+      })
+      .catch(error => {
+          console.error('Ошибка:', error);
+      });
+  }
+  </script>
+
+  <button onclick="testSessionCreation()" style="position: fixed; top: 10px; right: 10px; z-index: 9999; background: red; color: white; padding: 10px;">
+      ТЕСТ: Создать сеанс
+  </button>
 </body>
 </html>
 @endsection
