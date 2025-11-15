@@ -804,53 +804,6 @@ function closeAllModals(event) {
     modal.classList.remove("active");
   });
 }
-function initSessionFormHandlers() {
-  console.log("=== INIT SESSION FORM HANDLERS ===");
-  const addSessionForm = document.getElementById("addSessionForm");
-  console.log("Form found:", !!addSessionForm);
-  if (addSessionForm) {
-    console.log("Form action attribute:", addSessionForm.getAttribute("action"));
-    console.log("Form method:", addSessionForm.getAttribute("method"));
-    addSessionForm.addEventListener("submit", async function(e) {
-      console.log("=== FORM SUBMIT INTERCEPTED ===");
-      e.preventDefault();
-      console.log("Default prevented");
-      try {
-        const formData = new FormData(this);
-        const response = await fetch("/admin/sessions", {
-          method: "POST",
-          body: formData,
-          headers: {
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
-          }
-        });
-        const result = await response.json();
-        if (result.success) {
-          closeModal("addSessionModal");
-          if (window.notifications) {
-            window.notifications.show(result.message, "success");
-          }
-          this.reset();
-          document.getElementById("session_date").value = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-        } else {
-          if (window.notifications) {
-            window.notifications.show(result.message, "error");
-          }
-          if (result.errors) {
-            console.error("Validation errors:", result.errors);
-          }
-        }
-      } catch (error) {
-        console.error("Error submitting session form:", error);
-        if (window.notifications) {
-          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
-        }
-      }
-    });
-  }
-}
 function initTimeValidation() {
   const timeInput = document.getElementById("session_time");
   if (timeInput) {
@@ -861,6 +814,63 @@ function initTimeValidation() {
         this.style.borderColor = "red";
       } else {
         this.style.borderColor = "";
+      }
+    });
+  }
+}
+function initSessionFormHandlers() {
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
+  document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach((button) => {
+    button.addEventListener("click", function(e) {
+      console.log('\u{1F3AF} \u041A\u043D\u043E\u043F\u043A\u0430 "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0435\u0430\u043D\u0441" \u043D\u0430\u0436\u0430\u0442\u0430');
+      openModal("addSessionModal");
+    });
+  });
+  const addSessionForm = document.getElementById("addSessionForm");
+  if (addSessionForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 addSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    addSessionForm.addEventListener("submit", async function(e) {
+      console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430");
+      e.preventDefault();
+      const formData = new FormData(this);
+      const movieId = document.getElementById("movie_id").value;
+      const hallId = document.getElementById("cinema_hall_id").value;
+      if (!movieId || !hallId) {
+        console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430: \u043D\u0435 \u0432\u0441\u0435 \u043F\u043E\u043B\u044F \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u044B");
+        if (window.notifications) {
+          window.notifications.show("\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u0437\u0430\u043F\u043E\u043B\u043D\u0438\u0442\u0435 \u0432\u0441\u0435 \u043F\u043E\u043B\u044F", "error");
+        }
+        return;
+      }
+      try {
+        const response = await fetch("/admin/sessions", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json"
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log("\u2705 \u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
+          closeModal("addSessionModal");
+          if (window.notifications) {
+            window.notifications.show(result.message, "success");
+          }
+          this.reset();
+          document.getElementById("session_date").value = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
+        } else {
+          console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", result.message);
+          if (window.notifications) {
+            window.notifications.show(result.message, "error");
+          }
+        }
+      } catch (error) {
+        console.error("\u{1F4A5} \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
+        if (window.notifications) {
+          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+        }
       }
     });
   }
@@ -880,106 +890,6 @@ function initMovieFilter() {
     });
   }
 }
-function initEventDelegation() {
-  document.addEventListener("submit", function(e) {
-    if (e.target && e.target.id === "addSessionForm") {
-      e.preventDefault();
-      handleSessionFormSubmit(e);
-    }
-  });
-}
-async function handleSessionFormSubmit(e) {
-  const form = e.target;
-  try {
-    const formData = new FormData(form);
-    console.log("Submitting session form to:", "/admin/sessions");
-    const response = await fetch("/admin/sessions", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "Accept": "application/json",
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
-      }
-    });
-    console.log("Response status:", response.status);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const result = await response.json();
-    console.log("Response result:", result);
-    if (result.success) {
-      closeModal("addSessionModal");
-      if (window.notifications) {
-        window.notifications.show(result.message, "success");
-      }
-      form.reset();
-      const dateInput = document.getElementById("session_date");
-      if (dateInput) {
-        dateInput.value = (/* @__PURE__ */ new Date()).toISOString().split("T")[0];
-      }
-    } else {
-      if (window.notifications) {
-        window.notifications.show(result.message, "error");
-      }
-      if (result.errors) {
-        console.error("Validation errors:", result.errors);
-      }
-    }
-  } catch (error) {
-    console.error("Error submitting session form:", error);
-    if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
-    }
-  }
-}
-function initSessionForm() {
-  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
-  document.addEventListener("submit", function(e) {
-    if (e.target && e.target.id === "addSessionForm") {
-      console.log("\u0424\u043E\u0440\u043C\u0430 \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430!");
-      e.preventDefault();
-      e.stopPropagation();
-      handleSessionSubmit(e.target);
-      return false;
-    }
-  });
-}
-async function handleSessionSubmit(form) {
-  console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u043A\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u0438 \u0444\u043E\u0440\u043C\u044B...");
-  const formData = new FormData(form);
-  try {
-    console.log("\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u043D\u0430 /admin/sessions...");
-    const response = await fetch("/admin/sessions", {
-      method: "POST",
-      body: formData,
-      headers: {
-        "X-Requested-With": "XMLHttpRequest",
-        "Accept": "application/json"
-      }
-    });
-    console.log("\u0421\u0442\u0430\u0442\u0443\u0441 \u043E\u0442\u0432\u0435\u0442\u0430:", response.status);
-    console.log("URL \u043E\u0442\u0432\u0435\u0442\u0430:", response.url);
-    const result = await response.json();
-    console.log("\u0420\u0435\u0437\u0443\u043B\u044C\u0442\u0430\u0442:", result);
-    if (result.success) {
-      closeModal("addSessionModal");
-      if (window.notifications) {
-        window.notifications.show(result.message, "success");
-      }
-      form.reset();
-    } else {
-      if (window.notifications) {
-        window.notifications.show(result.message, "error");
-      }
-    }
-  } catch (error) {
-    console.error("\u041E\u0448\u0438\u0431\u043A\u0430:", error);
-    if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
-    }
-  }
-}
 document.addEventListener("DOMContentLoaded", function() {
   console.log("Admin panel initializing...");
   try {
@@ -988,8 +898,6 @@ document.addEventListener("DOMContentLoaded", function() {
     window.notifications = notifications;
     initAccordeon();
     initModalHandlers();
-    initSessionForm();
-    initEventDelegation();
     initSessionFormHandlers();
     initTimeValidation();
     initMovieFilter();
@@ -1014,5 +922,4 @@ document.addEventListener("DOMContentLoaded", function() {
   window.resetSessions = resetSessions;
   window.openEditMovieModal = openEditMovieModal;
   window.toggleInactiveMovies = toggleInactiveMovies;
-  window.handleSessionFormSubmit = handleSessionFormSubmit;
 });

@@ -45,34 +45,26 @@ async function openEditMovieModal(movieId) {
     try {
         console.log('Opening edit movie modal for:', movieId);
         
-        // Загружаем данные фильма через AJAX
         const response = await fetch(`/admin/movies/${movieId}/edit`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
         
         const html = await response.text();
-        
-        // Создаем временный контейнер для извлечения модального окна
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = html;
         
-        // Находим модальное окно в загруженном HTML
         const modalContent = tempDiv.querySelector('.popup');
         if (!modalContent) {
             throw new Error('Модальное окно не найдено в ответе');
         }
         
-        // Удаляем существующее модальное окно (если есть)
         const existingModal = document.getElementById('editMovieModal');
         if (existingModal) {
             existingModal.remove();
         }
         
-        // Добавляем новое модальное окно в DOM
         document.body.appendChild(modalContent);
-        
-        // Открываем модальное окно
         openModal('editMovieModal');
         
     } catch (error) {
@@ -179,7 +171,7 @@ function initModalHandlers() {
     });
 }
 
-// Функции закрытия модальных окон - ДОБАВЛЯЕМ event.preventDefault()
+// Функции закрытия модальных окон
 function closeAddHallModal(event) { 
     if (event) event.preventDefault();
     closeModal('addHallModal'); 
@@ -228,66 +220,8 @@ function closeAllModals(event) {
 }
 
 // ============================================================================
-// ОБРАБОТЧИКИ ФОРМ СЕАНСОВ
+// ВАЛИДАЦИЯ ВРЕМЕНИ
 // ============================================================================
-function initSessionFormHandlers() {
-    // Обработчик формы добавления сеанса
-    console.log('=== INIT SESSION FORM HANDLERS ===');
-
-    const addSessionForm = document.getElementById('addSessionForm');
-    console.log('Form found:', !!addSessionForm);
-    
-    if (addSessionForm) {
-        console.log('Form action attribute:', addSessionForm.getAttribute('action'));
-        console.log('Form method:', addSessionForm.getAttribute('method'));
-
-        addSessionForm.addEventListener('submit', async function(e) {
-            console.log('=== FORM SUBMIT INTERCEPTED ===');
-            e.preventDefault();
-            console.log('Default prevented');
-            
-            try {
-                const formData = new FormData(this);
-                
-                const response = await fetch("/admin/sessions", {
-                    method: 'POST',
-                    body: formData,
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                    }
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    closeModal('addSessionModal');
-                    if (window.notifications) {
-                        window.notifications.show(result.message, 'success');
-                    }
-                    // Очищаем форму
-                    this.reset();
-                    document.getElementById('session_date').value = new Date().toISOString().split('T')[0];
-                } else {
-                    if (window.notifications) {
-                        window.notifications.show(result.message, 'error');
-                    }
-                    if (result.errors) {
-                        console.error('Validation errors:', result.errors);
-                    }
-                }
-            } catch (error) {
-                console.error('Error submitting session form:', error);
-                if (window.notifications) {
-                    window.notifications.show('Ошибка при создании сеанса', 'error');
-                }
-            }
-        });
-    }
-}
-
-// Валидация времени в реальном времени
 function initTimeValidation() {
     const timeInput = document.getElementById('session_time');
     if (timeInput) {
@@ -299,6 +233,79 @@ function initTimeValidation() {
                 this.style.borderColor = 'red';
             } else {
                 this.style.borderColor = '';
+            }
+        });
+    }
+}
+
+// ============================================================================
+// ОБРАБОТЧИКИ ФОРМ СЕАНСОВ
+// ============================================================================
+function initSessionFormHandlers() {
+    console.log('🎯 Инициализация обработчиков формы сеанса...');
+
+    // Обработчик открытия модального окна
+    document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            console.log('🎯 Кнопка "Добавить сеанс" нажата');
+            openModal('addSessionModal');
+        });
+    });
+
+    // Обработчик для формы
+    const addSessionForm = document.getElementById('addSessionForm');
+    if (addSessionForm) {
+        console.log('✅ Форма addSessionForm найдена');
+        
+        addSessionForm.addEventListener('submit', async function(e) {
+            console.log('🎯 Отправка формы перехвачена');
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            
+            // Проверяем обязательные поля
+            const movieId = document.getElementById('movie_id').value;
+            const hallId = document.getElementById('cinema_hall_id').value;
+            
+            if (!movieId || !hallId) {
+                console.log('❌ Ошибка: не все поля заполнены');
+                if (window.notifications) {
+                    window.notifications.show('Пожалуйста, заполните все поля', 'error');
+                }
+                return;
+            }
+            
+            try {
+                const response = await fetch("/admin/sessions", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+                
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('✅ Сеанс успешно создан');
+                    closeModal('addSessionModal');
+                    if (window.notifications) {
+                        window.notifications.show(result.message, 'success');
+                    }
+                    this.reset();
+                    document.getElementById('session_date').value = new Date().toISOString().split('T')[0];
+                } else {
+                    console.log('❌ Ошибка при создании сеанса:', result.message);
+                    if (window.notifications) {
+                        window.notifications.show(result.message, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('💥 Ошибка сети:', error);
+                if (window.notifications) {
+                    window.notifications.show('Ошибка сети при создании сеанса', 'error');
+                }
             }
         });
     }
@@ -317,7 +324,6 @@ function toggleInactiveMovies(show) {
 function initMovieFilter() {
     const filterCheckbox = document.getElementById('showInactiveMovies');
     if (filterCheckbox) {
-        // Инициализируем состояние при загрузке
         toggleInactiveMovies(filterCheckbox.checked);
         
         filterCheckbox.addEventListener('change', function() {
@@ -325,136 +331,6 @@ function initMovieFilter() {
         });
     }
 }
-
-// ============================================================================
-// ДЕЛЕГИРОВАНИЕ СОБЫТИЙ ДЛЯ ФОРМ
-// ============================================================================
-function initEventDelegation() {
-    // Обработчик для ВСЕХ форм с id="addSessionForm" (даже динамически добавленных)
-    document.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'addSessionForm') {
-            e.preventDefault();
-            handleSessionFormSubmit(e);
-        }
-    });
-}
-
-// Обработчик отправки формы сеанса
-async function handleSessionFormSubmit(e) {
-    const form = e.target;
-    
-    try {
-        const formData = new FormData(form);
-        
-        console.log('Submitting session form to:', '/admin/sessions');
-        
-        const response = await fetch('/admin/sessions', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-            }
-        });
-
-        console.log('Response status:', response.status);
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const result = await response.json();
-        console.log('Response result:', result);
-
-        if (result.success) {
-            closeModal('addSessionModal');
-            if (window.notifications) {
-                window.notifications.show(result.message, 'success');
-            }
-            // Очищаем форму
-            form.reset();
-            // Устанавливаем текущую дату по умолчанию
-            const dateInput = document.getElementById('session_date');
-            if (dateInput) {
-                dateInput.value = new Date().toISOString().split('T')[0];
-            }
-        } else {
-            if (window.notifications) {
-                window.notifications.show(result.message, 'error');
-            }
-            if (result.errors) {
-                console.error('Validation errors:', result.errors);
-            }
-        }
-    } catch (error) {
-        console.error('Error submitting session form:', error);
-        if (window.notifications) {
-            window.notifications.show('Ошибка при создании сеанса', 'error');
-        }
-    }
-}
-
-// Надежный обработчик формы
-function initSessionForm() {
-    console.log('Инициализация обработчика формы сеанса...');
-    
-    document.addEventListener('submit', function(e) {
-        if (e.target && e.target.id === 'addSessionForm') {
-            console.log('Форма перехвачена!');
-            e.preventDefault();
-            e.stopPropagation();
-            
-            handleSessionSubmit(e.target);
-            return false;
-        }
-    });
-}
-
-async function handleSessionSubmit(form) {
-    console.log('Обработка отправки формы...');
-    
-    const formData = new FormData(form);
-    
-    try {
-        console.log('Отправка на /admin/sessions...');
-        
-        const response = await fetch('/admin/sessions', {
-            method: 'POST',
-            body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest',
-                'Accept': 'application/json'
-            }
-        });
-        
-        console.log('Статус ответа:', response.status);
-        console.log('URL ответа:', response.url);
-        
-        const result = await response.json();
-        console.log('Результат:', result);
-        
-        if (result.success) {
-            closeModal('addSessionModal');
-            if (window.notifications) {
-                window.notifications.show(result.message, 'success');
-            }
-            form.reset();
-        } else {
-            if (window.notifications) {
-                window.notifications.show(result.message, 'error');
-            }
-        }
-    } catch (error) {
-        console.error('Ошибка:', error);
-        if (window.notifications) {
-            window.notifications.show('Ошибка при создании сеанса', 'error');
-        }
-    }
-}
-
-// В DOMContentLoaded добавьте:
-// initSessionForm();
 
 // ============================================================================
 // ОСНОВНОЙ КОД
@@ -470,8 +346,6 @@ document.addEventListener('DOMContentLoaded', function() {
         
         initAccordeon();
         initModalHandlers();
-        initSessionForm();
-        initEventDelegation();
         initSessionFormHandlers();
         initTimeValidation();
         initMovieFilter();
@@ -500,5 +374,4 @@ document.addEventListener('DOMContentLoaded', function() {
     window.resetSessions = resetSessions;
     window.openEditMovieModal = openEditMovieModal;
     window.toggleInactiveMovies = toggleInactiveMovies;
-    window.handleSessionFormSubmit = handleSessionFormSubmit;
 });
