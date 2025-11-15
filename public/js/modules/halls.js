@@ -263,5 +263,85 @@ class HallsManager {
     }
 }
 
-// Экспорт модуля
+// ============================================================================
+// НОВЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ С API И КОНФИГУРАЦИЯМИ
+// ============================================================================
+
+export async function loadHallConfiguration(hallId) {
+    try {
+        const response = await fetch(`/admin/halls/${hallId}/configuration`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const html = await response.text();
+        const container = document.getElementById('hallConfiguration');
+        
+        if (container) {
+            container.innerHTML = html;
+            if (window.notifications) {
+                window.notifications.show('Конфигурация зала загружена', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading hall configuration:', error);
+        if (window.notifications) {
+            window.notifications.show('Ошибка при загрузке конфигурации зала', 'error');
+        }
+    }
+}
+
+export async function loadPriceConfiguration(hallId) {
+    try {
+        const response = await fetch(`/admin/halls/${hallId}/prices`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const html = await response.text();
+        const container = document.getElementById('priceConfiguration');
+        
+        if (container) {
+            container.innerHTML = html;
+            if (window.notifications) {
+                window.notifications.show('Конфигурация цен загружена', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading price configuration:', error);
+        if (window.notifications) {
+            window.notifications.show('Ошибка при загрузке конфигурации цен', 'error');
+        }
+    }
+}
+
+// Функции для работы с API залов
+export async function toggleHallSales(hallId) {
+    try {
+        const response = await fetch('/admin/toggle-sales', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({ hall_id: hallId })
+        });
+        
+        const result = await response.json();
+        return result;
+    } catch (error) {
+        console.error('Error toggling hall sales:', error);
+        throw error;
+    }
+}
+
+export async function fetchHalls() {
+    try {
+        const response = await fetch('/admin/halls');
+        if (!response.ok) throw new Error('Ошибка загрузки залов');
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Error fetching halls:', error);
+        throw error;
+    }
+}
+
+// Экспорт класса HallsManager по умолчанию
 export default HallsManager;

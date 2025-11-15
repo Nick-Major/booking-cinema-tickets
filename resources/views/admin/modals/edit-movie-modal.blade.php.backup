@@ -1,4 +1,4 @@
-<div class="popup" id="editMovieModal">
+<!-- <div class="popup" id="editMovieModal">
   <div class="popup__container">
     <div class="popup__content">
       <div class="popup__header">
@@ -60,4 +60,4 @@
       </div>
     </div>
   </div>
-</div>
+</div> -->

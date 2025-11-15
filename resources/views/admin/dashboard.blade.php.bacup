@@ -1,3 +1,8 @@
+<@extends('layouts.base')
+
+@section('title', 'ИдёмВКино - Админка')
+
+@section('content')
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,9 +11,6 @@
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>ИдёмВКино</title>
-  <link rel="stylesheet" href="{{ asset('css/common/normalize.css') }}">
-  <link rel="stylesheet" href="{{ asset('css/admin/styles.css') }}">
-  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900&amp;subset=cyrillic,cyrillic-ext,latin-ext" rel="stylesheet">
 </head>
 
 <body>
@@ -31,7 +33,7 @@
         </div>
     @endif
     
-    <!-- Управление залами - обновленная секция -->
+    <!-- Управление залами -->
     <section class="conf-step">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Управление залами</h2>
@@ -59,7 +61,7 @@
     
     <!-- Конфигурация залов -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="hallConfigurationSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация залов</h2>
       </header>
@@ -85,7 +87,7 @@
     
     <!-- Конфигурация цен -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="priceConfigurationSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Конфигурация цен</h2>
       </header>
@@ -111,7 +113,7 @@
     
     <!-- Сетка сеансов -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="sessionsSection">
       <header class="conf-step__header conf-step__header_opened">
         <h2 class="conf-step__title">Сетка сеансов</h2>
       </header>
@@ -127,9 +129,20 @@
           </button>
         </p>
         
+        <div class="conf-step__filter">
+          <label class="conf-step__label">
+            <input type="checkbox" id="showInactiveMovies" checked onchange="toggleInactiveMovies(this.checked)">
+            Показывать неактивные фильмы
+          </label>
+        </div>
+        
         <div class="conf-step__movies" id="moviesList">
           @forelse($movies as $movie)
-              <div class="conf-step__movie" data-movie-id="{{ $movie->id }}" data-movie-duration="{{ $movie->movie_duration }}" style="position: relative;">
+              @if($movie)
+              <div class="conf-step__movie @if(!$movie->is_active) conf-step__movie-inactive @endif" 
+                  data-movie-id="{{ $movie->id }}" 
+                  data-movie-duration="{{ $movie->movie_duration }}" 
+                  style="position: relative;">
                   @if($movie->movie_poster)
                       <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
                           src="{{ asset('storage/' . $movie->movie_poster) }}">
@@ -139,6 +152,11 @@
                   @endif
                   <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
                   <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
+
+                  <!-- ИНДИКАТОР АКТИВНОСТИ -->
+                  @if(!$movie->is_active)
+                    <div class="conf-step__movie-status">Неактивен</div>
+                  @endif
 
                   <!-- Кнопки управления фильмом -->
                   <div class="conf-step__movie-controls">
@@ -152,13 +170,99 @@
                               title="Удалить фильм"></button>
                   </div>
               </div>
+              @endif
           @empty
               <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
           @endforelse
         </div>
         
-        <div class="conf-step__seances" id="sessionsTimeline">
-          @include('admin.components.sessions-timeline', ['sessions' => $sessions])
+        <!-- ОБНОВЛЕННАЯ СЕКЦИЯ ТАЙМЛАЙНА С РАСПИСАНИЕМ -->
+        <div class="conf-step__seances-timeline-wrapper">
+            <!-- Навигация по датам -->
+            <div class="conf-step__timeline-nav">
+                <button class="conf-step__button conf-step__button-regular" 
+                        onclick="changeTimelineDate('{{ $prevDate }}')"
+                        style="width: 100px;">
+                    ← Назад
+                </button>
+                
+                <input type="date" 
+                      value="{{ $currentDate }}" 
+                      onchange="changeTimelineDate(this.value)"
+                      class="conf-step__input"
+                      style="width: 150px;">
+                
+                <button class="conf-step__button conf-step__button-regular"
+                        onclick="changeTimelineDate('{{ $nextDate }}')"
+                        style="width: 100px;">
+                    Вперед →
+                </button>
+            </div>
+
+            <!-- Вертикальный таймлайн с залами -->
+            <div class="conf-step__timeline-vertical">
+                @forelse($halls as $hall)
+                    @php
+                        $hallSessions = $sessions->where('cinema_hall_id', $hall->id)
+                            ->sortBy('session_start');
+                        $schedule = null;
+                    @endphp
+                    
+                    <div class="conf-step__timeline-hall" data-hall-id="{{ $hall->id }}">
+                        <!-- Заголовок зала с расписанием -->
+                        <div class="conf-step__hall-header">
+                            <div class="conf-step__hall-title-section">
+                                <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+                                @if($schedule)
+                                    <span class="conf-step__hall-schedule">
+                                        {{ $schedule->start_time }} - {{ $schedule->end_time }}
+                                    </span>
+                                @endif
+                            </div>
+                            
+                            @if(!$schedule)
+                                <button class="conf-step__button conf-step__button-schedule" 
+                                        onclick="openCreateScheduleModal({{ $hall->id }}, '{{ $selectedDate->format('Y-m-d') }}')">
+                                    Создать расписание
+                                </button>
+                            @else
+                                <button class="conf-step__button conf-step__button-regular" 
+                                        onclick="openEditScheduleModal({{ $schedule->id }})">
+                                    Изменить расписание
+                                </button>
+                            @endif
+                        </div>
+                        
+                        @if($schedule)
+                            <!-- Контейнер с горизонтальной прокруткой -->
+                            <div class="conf-step__timeline-scroll-container">
+                                <div class="conf-step__timeline-content">
+                                    @include('admin.components.dynamic-timeline', [
+                                        'hallSessions' => $hallSessions,
+                                        'selectedDate' => $selectedDate,
+                                        'currentDate' => $currentDate,
+                                        'hall' => $hall,
+                                        'schedule' => $schedule
+                                    ])
+                                </div>
+                            </div>
+                        @else
+                            <!-- Сообщение о необходимости расписания -->
+                            <div class="conf-step__no-schedule">
+                                <p>Для отображения сеансов необходимо создать расписание работы зала</p>
+                            </div>
+                        @endif
+                    </div>
+                @empty
+                    <div class="conf-step__empty-halls">
+                        <p>Нет доступных залов</p>
+                        <button class="conf-step__button conf-step__button-accent"
+                                onclick="openModal('addHallModal')">
+                            Создать первый зал
+                        </button>
+                    </div>
+                @endforelse
+            </div>
         </div>
         
         <fieldset class="conf-step__buttons text-center">
@@ -171,7 +275,7 @@
     
     <!-- Управление продажами по залам -->
     @if($halls->count() > 0)
-    <section class="conf-step">
+    <section class="conf-step" id="salesManagementSection">
         <header class="conf-step__header conf-step__header_opened">
             <h2 class="conf-step__title">Управление продажами</h2>
         </header>
@@ -207,6 +311,8 @@
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
   @include('admin.modals.edit-session-modal')
+  @include('admin.modals.reset-hall-configuration-modal')
+  @include('admin.modals.hall-schedule-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">
@@ -214,6 +320,7 @@
     <button type="submit" class="conf-step__button conf-step__button-regular">Выйти</button>
   </form>
 
-  <script src="{{ asset('js/admin/app.js') }}"></script>
+  <script type="module" src="{{ asset('js/views/admin/dashboard.bundle.js') }}"></script>
 </body>
 </html>
+@endsection

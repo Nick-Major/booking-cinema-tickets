@@ -54,7 +54,6 @@
                 <!-- Контейнер с горизонтальной прокруткой -->
                 <div class="conf-step__timeline-scroll-container">
                     <div class="conf-step__timeline-content">
-                        <!-- Динамическая шкала времени -->
                         @include('admin.components.dynamic-timeline', [
                             'hallSessions' => $hallSessions,
                             'selectedDate' => $selectedDate,

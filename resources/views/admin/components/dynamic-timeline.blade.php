@@ -30,6 +30,7 @@
     <!-- Область сеансов -->
     <div class="conf-step__sessions-area">
         @forelse($hallSessions as $session)
+            @if($session->movie)
             @php
                 try {
                     $position = $session->getTimelinePosition($dayStart, $pixelsPerMinute);
@@ -79,6 +80,7 @@
                     Добавить сеанс
                 </button>
             </div>
+            @endif
         @endforelse
     </div>
 </div>

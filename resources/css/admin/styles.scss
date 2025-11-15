@@ -1375,7 +1375,7 @@ select {
 
 .conf-step__movie-status {
   position: absolute;
-  top: 5px;
+  top: 45px;
   right: 5px;
   background: #ff4444;
   color: white;
@@ -1384,4 +1384,43 @@ select {
   font-size: 11px;
   font-weight: bold;
   z-index: 2;
+}
+
+/* Стили для расписания залов */
+.conf-step__hall-title-section {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.conf-step__hall-schedule {
+    background: #e3f2fd;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #1976d2;
+    border: 1px solid #bbdefb;
+}
+
+.conf-step__button-schedule {
+    background-color: #4caf50;
+    color: white;
+}
+
+.conf-step__button-schedule:hover {
+    background-color: #45a049;
+}
+
+.conf-step__no-schedule {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9f9f9;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.conf-step__no-schedule p {
+    color: #666;
+    font-size: 16px;
+    margin-bottom: 15px;
 }

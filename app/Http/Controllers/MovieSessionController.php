@@ -51,32 +51,63 @@ class MovieSessionController extends Controller
     public function store(Request $request)
     {
         \Log::info('🎯 === SESSION STORE METHOD CALLED ===');
-        \Log::info('📦 Request data:', $request->all());
+        \Log::info('📦 All request data:', $request->all());
+        \Log::info('📦 Headers:', $request->headers->all());
         
         try {
-            // ИСПРАВЛЕННАЯ ВАЛИДАЦИЯ
+            // ВРЕМЕННО: логируем все залы и фильмы для проверки
+            $allHalls = CinemaHall::pluck('id', 'hall_name')->toArray();
+            $allMovies = Movie::pluck('id', 'title')->toArray();
+            
+            \Log::info('🏛️ Available halls:', $allHalls);
+            \Log::info('🎬 Available movies:', $allMovies);
+
+            // ВАЛИДАЦИЯ
             $validated = $request->validate([
                 'movie_id' => 'required|exists:movies,id',
                 'cinema_hall_id' => 'required|exists:cinema_halls,id',
                 'session_date' => 'required|date',
-                'session_time' => 'required|regex:/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/', // ИСПРАВЛЕНО!
+                'session_time' => 'required|date_format:H:i',
             ]);
 
             \Log::info('✅ Validation passed:', $validated);
 
-            // ПРОСТОЕ СОЗДАНИЕ СЕАНСА
+            // Проверим существование зала и фильма вручную
+            $hall = CinemaHall::find($validated['cinema_hall_id']);
+            $movie = Movie::find($validated['movie_id']);
+            
+            if (!$hall) {
+                \Log::error('❌ Hall not found with ID: ' . $validated['cinema_hall_id']);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Зал не найден'
+                ], 422);
+            }
+            
+            if (!$movie) {
+                \Log::error('❌ Movie not found with ID: ' . $validated['movie_id']);
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Фильм не найден'
+                ], 422);
+            }
+
+            \Log::info('✅ Hall and movie confirmed:', [
+                'hall' => $hall->hall_name,
+                'movie' => $movie->title
+            ]);
+
+            // СОЗДАНИЕ СЕАНСА
             $sessionStart = \Carbon\Carbon::createFromFormat(
                 'Y-m-d H:i', 
                 $validated['session_date'] . ' ' . $validated['session_time']
             );
 
-            \Log::info('📅 Session start parsed:', ['start' => $sessionStart]);
-
             $session = \App\Models\MovieSession::create([
                 'movie_id' => $validated['movie_id'],
                 'cinema_hall_id' => $validated['cinema_hall_id'],
                 'session_start' => $sessionStart,
-                'session_end' => $sessionStart->copy()->addHours(3), // фиксированное время
+                'session_end' => $sessionStart->copy()->addHours(3),
                 'is_actual' => true
             ]);
 
@@ -88,6 +119,12 @@ class MovieSessionController extends Controller
                 'session' => $session
             ]);
 
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('🚨 VALIDATION ERROR:', $e->errors());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка валидации: ' . implode(', ', array_merge(...array_values($e->errors())))
+            ], 422);
         } catch (\Exception $e) {
             \Log::error('💥 CRITICAL ERROR: ' . $e->getMessage());
             \Log::error('📝 Stack trace: ' . $e->getTraceAsString());

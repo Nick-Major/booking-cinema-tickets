@@ -1,0 +1,150 @@
+// @ts-nocheck
+
+import HallsManager from '../../modules/halls.js';
+import NotificationSystem from '../../core/notifications.js';
+import { initAccordeon } from '../../modules/accordeon.js';
+import { 
+    initModalHandlers, 
+    closeAddHallModal, 
+    closeAddMovieModal, 
+    closeEditMovieModal, 
+    closeAddSessionModal, 
+    closeEditSessionModal, 
+    closeDeleteHallModal, 
+    closeDeleteMovieModal, 
+    closeDeleteSessionModal, 
+    closeAllModals, 
+    openModal, 
+    closeModal 
+} from '../../core/modals.js';
+import { 
+    initSessionFormHandlers, 
+    initTimeValidation,
+    openAddSessionModal,
+    changeTimelineDate
+} from '../../modules/sessions.js';
+import { 
+    // openEditMovieModal, 
+    toggleInactiveMovies, 
+    initMovieFilter 
+} from '../../modules/movies.js';
+import { 
+    loadHallConfiguration, 
+    loadPriceConfiguration 
+} from '../../modules/halls.js';
+import './hall-configuration.js';
+import '../../modules/pricing.js';
+import './modals/add-movie-modal.js';
+
+// ============================================================================
+// VIEW-SPECIFIC ФУНКЦИИ
+// ============================================================================
+function resetSessions() {
+    if (window.notifications) {
+        window.notifications.show('Функция resetSessions вызвана', 'info');
+    }
+}
+
+function updateSession() {
+    if (window.notifications) {
+        window.notifications.show('Функция updateSession вызвана', 'info');
+    }
+}
+
+// Временная заглушка для openEditMovieModal
+function openEditMovieModal(movieId) {
+    console.log('Edit movie modal temporarily disabled. Movie ID:', movieId);
+    if (window.notifications) {
+        window.notifications.show('Редактирование фильма временно отключено', 'info');
+    }
+}
+
+// Функция для открытия модального окна расписания
+function openCreateScheduleModal(hallId, date) {
+    console.log('🎯 Открытие модального окна создания расписания:', { hallId, date });
+    
+    // Заполняем форму данными
+    document.getElementById('hall_schedule_id').value = '';
+    document.getElementById('hall_id').value = hallId;
+    document.getElementById('schedule_date').value = date;
+    document.getElementById('start_time').value = '09:00';
+    document.getElementById('end_time').value = '23:00';
+    
+    // Заполняем информацию
+    document.getElementById('modal_hall_name').textContent = 'Зал ' + hallId;
+    document.getElementById('modal_schedule_date').textContent = new Date(date).toLocaleDateString();
+    document.getElementById('hallScheduleModalTitle').textContent = 'Создание расписания';
+    document.getElementById('hallScheduleSubmitBtn').textContent = 'Создать расписание';
+    
+    openModal('hallScheduleModal');
+}
+
+function openEditScheduleModal(scheduleId) {
+    console.log('🎯 Открытие модального окна редактирования расписания:', scheduleId);
+    alert('Редактирование расписания будет реализовано в следующем шаге');
+}
+
+// ============================================================================
+// ОСНОВНОЙ КОД
+// ============================================================================
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Admin panel initializing...');
+    
+    try {
+        console.log('✅ Loading NotificationSystem...');
+        const notifications = new NotificationSystem();
+        
+        console.log('✅ Loading HallsManager...');
+        const hallsManager = new HallsManager(notifications);
+        
+        window.notifications = notifications;
+        
+        console.log('✅ Initializing accordeon...');
+        initAccordeon();
+        
+        console.log('✅ Initializing modal handlers...');
+        initModalHandlers(); // КРИТИЧЕСКИ ВАЖНО!
+        
+        console.log('✅ Initializing session form handlers...');
+        initSessionFormHandlers();
+        
+        console.log('✅ Initializing time validation...');
+        initTimeValidation();
+        
+        console.log('✅ Initializing movie filter...');
+        initMovieFilter();
+        
+        console.log('🎉 Admin panel initialized successfully!');
+    } catch (error) {
+        console.error('💥 Error during admin panel initialization:', error);
+    }
+
+    // ЭКСПОРТИРУЕМ ВСЕ НЕОБХОДИМЫЕ ФУНКЦИИ ДЛЯ РАБОТЫ
+    window.resetSessions = resetSessions;
+    window.updateSession = updateSession;
+    
+    // Функции для модальных окон
+    window.openEditMovieModal = openEditMovieModal;
+    window.loadHallConfiguration = loadHallConfiguration;
+    window.loadPriceConfiguration = loadPriceConfiguration;
+    window.toggleInactiveMovies = toggleInactiveMovies;
+    window.openAddSessionModal = openAddSessionModal;
+    window.changeTimelineDate = changeTimelineDate;
+    window.openModal = openModal;
+    window.closeModal = closeModal;
+    window.closeAllModals = closeAllModals;
+
+    // Функции для расписания
+    window.openCreateScheduleModal = openCreateScheduleModal;
+    window.openEditScheduleModal = openEditScheduleModal;
+
+    // Функции закрытия модальных окон
+    window.closeAddHallModal = closeAddHallModal;
+    window.closeAddMovieModal = closeAddMovieModal;
+    window.closeEditMovieModal = closeEditMovieModal;
+    window.closeAddSessionModal = closeAddSessionModal;
+    window.closeEditSessionModal = closeEditSessionModal;
+    window.closeDeleteHallModal = closeDeleteHallModal;
+    window.closeDeleteMovieModal = closeDeleteMovieModal;
+    window.closeDeleteSessionModal = closeDeleteSessionModal;
+});

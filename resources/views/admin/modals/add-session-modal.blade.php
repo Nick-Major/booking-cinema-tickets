@@ -10,14 +10,25 @@
         </h2>
       </div>
       <div class="popup__wrapper">
-        <form id="addSessionForm" method="POST">
+        <form id="addSessionForm" method="POST" action="{{ route('sessions.store') }}">
           @csrf
+          <input type="hidden" name="_token" value="{{ csrf_token() }}">
+    
+          <!-- Временно добавим вывод для отладки -->
+          <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+              <strong>Debug Info:</strong><br>
+              Halls count: {{ $halls->count() }}<br>
+              Movies count: {{ $movies->count() }}
+          </div>
+
           <label class="conf-step__label conf-step__label-fullsize" for="movie_id">
             Фильм
             <select class="conf-step__input" name="movie_id" id="movie_id" required>
               <option value="">Выберите фильм</option>
               @foreach($movies as $movie)
+                @if($movie)
                 <option value="{{ $movie->id }}">{{ $movie->title }}</option>
+                @endif
               @endforeach
             </select>
           </label>

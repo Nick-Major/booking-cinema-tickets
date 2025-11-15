@@ -185,6 +185,14 @@ class TicketController extends Controller
         $movieSession = MovieSession::findOrFail($movieSessionId);
         $seat = Seat::findOrFail($seatId);
 
+        // Проверяем доступность зала
+        if (!$movieSession->cinemaHall->is_active) {
+            return [
+                'available' => false,
+                'message' => 'Продажа билетов в этом зале приостановлена'
+            ];
+        }
+
         // Проверяем доступность сеанса
         if (!$movieSession->isAvailable()) {
             return [

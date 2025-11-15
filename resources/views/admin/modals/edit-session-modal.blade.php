@@ -29,7 +29,9 @@
             <select class="conf-step__input" name="cinema_hall_id" id="edit_cinema_hall_id" required>
               <option value="">Выберите зал</option>
               @foreach($halls as $hall)
+                @if($movie)
                 <option value="{{ $hall->id }}">{{ $hall->hall_name }}</option>
+                @endif
               @endforeach
             </select>
           </label>
