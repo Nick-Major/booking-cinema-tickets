@@ -1,6 +1,55 @@
 // @ts-nocheck
 
-import { initModalHandlers, openModal, closeModal } from '../../core/modals.js';
+import { 
+    initModalHandlers, 
+    openModal, 
+    closeModal,
+    closeAddHallModal,
+    closeAddMovieModal,
+    closeAddSessionModal,
+    closeEditSessionModal,
+    closeEditMovieModal,
+    closeDeleteHallModal,
+    closeDeleteMovieModal,
+    closeDeleteSessionModal,
+    closeAllModals
+} from '../../core/modals.js';
+
+import HallsManager from '../../modules/halls.js';
+import NotificationSystem from '../../core/notifications.js';
+
+// Импортируем функции конфигурации залов
+import {
+    generateHallLayout,
+    changeSeatType,
+    openResetHallConfigurationModal,
+    closeResetHallConfigurationModal,
+    resetHallConfiguration,
+    saveHallConfiguration
+} from './hall-configuration.js';
+
+// Реальная функция загрузки конфигурации зала
+async function loadHallConfiguration(hallId) {
+    try {
+        console.log('Loading hall configuration for:', hallId);
+        
+        const response = await fetch(`/admin/halls/${hallId}/configuration`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const html = await response.text();
+        const container = document.getElementById('hallConfiguration');
+        
+        if (container) {
+            container.innerHTML = html;
+            console.log('Hall configuration loaded successfully');
+        }
+    } catch (error) {
+        console.error('Error loading hall configuration:', error);
+        if (window.notifications) {
+            window.notifications.show('Ошибка при загрузке конфигурации зала', 'error');
+        }
+    }
+}
 
 // Минимальный набор функций для тестирования
 function openCreateScheduleModal(hallId, date) {
@@ -10,13 +59,7 @@ function openCreateScheduleModal(hallId, date) {
 
 function openEditMovieModal(movieId) {
     console.log('Edit movie modal called for:', movieId);
-    // Временная заглушка
-    alert('Редактирование фильма временно отключено');
-}
-
-function loadHallConfiguration(hallId) {
-    console.log('Load hall config:', hallId);
-    // Временная заглушка
+    window.notifications.show('Редактирование фильма временно отключено', 'info');
 }
 
 function loadPriceConfiguration(hallId) {
@@ -56,6 +99,15 @@ document.addEventListener('DOMContentLoaded', function() {
     try {
         initModalHandlers();
         console.log('✅ Modal handlers initialized');
+        
+        // Инициализируем систему уведомлений
+        window.notifications = new NotificationSystem();
+        console.log('✅ NotificationSystem initialized');
+        
+        // Инициализируем менеджер залов с настоящей системой уведомлений
+        window.hallsManager = new HallsManager(window.notifications);
+        console.log('✅ HallsManager initialized');
+        
     } catch (error) {
         console.error('💥 Error:', error);
     }
@@ -63,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Экспортируем функции
     window.openCreateScheduleModal = openCreateScheduleModal;
     window.openEditMovieModal = openEditMovieModal;
-    window.loadHallConfiguration = loadHallConfiguration;
+    window.loadHallConfiguration = loadHallConfiguration; // ← ЭКСПОРТИРУЕМ
     window.loadPriceConfiguration = loadPriceConfiguration;
     window.toggleInactiveMovies = toggleInactiveMovies;
     window.openAddSessionModal = openAddSessionModal;
@@ -72,4 +124,23 @@ document.addEventListener('DOMContentLoaded', function() {
     window.updateSession = updateSession;
     window.openModal = openModal;
     window.closeModal = closeModal;
+    
+    // Экспортируем функции закрытия модалок из modals.js
+    window.closeAddHallModal = closeAddHallModal;
+    window.closeAddMovieModal = closeAddMovieModal;
+    window.closeAddSessionModal = closeAddSessionModal;
+    window.closeEditSessionModal = closeEditSessionModal;
+    window.closeEditMovieModal = closeEditMovieModal;
+    window.closeDeleteHallModal = closeDeleteHallModal;
+    window.closeDeleteMovieModal = closeDeleteMovieModal;
+    window.closeDeleteSessionModal = closeDeleteSessionModal;
+    window.closeAllModals = closeAllModals;
+    
+    // Экспортируем функции конфигурации залов
+    window.generateHallLayout = generateHallLayout;
+    window.changeSeatType = changeSeatType;
+    window.openResetHallConfigurationModal = openResetHallConfigurationModal;
+    window.closeResetHallConfigurationModal = closeResetHallConfigurationModal;
+    window.resetHallConfiguration = resetHallConfiguration;
+    window.saveHallConfiguration = saveHallConfiguration;
 });

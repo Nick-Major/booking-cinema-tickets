@@ -1,7 +1,6 @@
 // Вспомогательные функции
 export function showNotification(message, type = "info") {
     console.log(`[${type}] ${message}`);
-    // Можно добавить toast уведомления
 }
 
 export function formatPrice(price) {

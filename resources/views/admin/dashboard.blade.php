@@ -70,17 +70,17 @@
         <ul class="conf-step__selectors-box" id="hallSelector">
           @foreach($halls as $hall)
             <li>
-              <input type="radio" class="conf-step__radio" name="chairs-hall" 
-                     value="{{ $hall->id }}" {{ $loop->first ? 'checked' : '' }}
-                     onchange="loadHallConfiguration({{ $hall->id }})">
+              <input type="radio" class="conf-step__radio" name="chairs-hall"
+                    value="{{ $hall->id }}" {{ $loop->first ? 'checked' : '' }}
+                    onchange="loadHallConfiguration({{ $hall->id }})">
               <span class="conf-step__selector">{{ $hall->hall_name }}</span>
             </li>
           @endforeach
         </ul>
-        
+
         <div id="hallConfiguration">
           @include('admin.components.hall-configuration', ['hall' => $halls->first()])
-        </div>                 
+        </div>
       </div>
     </section>
     @endif
@@ -268,7 +268,8 @@
   @include('admin.modals.delete-hall-modal')
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
-  @include('admin.modals.edit-session-modal')
+  @include('admin.modals.edit-movie-modal')
+  <!-- @include('admin.modals.edit-session-modal') -->
   @include('admin.modals.reset-hall-configuration-modal')
   @include('admin.modals.hall-schedule-modal')
   
