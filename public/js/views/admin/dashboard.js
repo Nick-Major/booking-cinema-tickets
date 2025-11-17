@@ -28,6 +28,12 @@ import {
     saveHallConfiguration
 } from './hall-configuration.js';
 
+// Импортируем функции управления ценами
+import {
+    savePrices,
+    resetPrices
+} from '../../modules/pricing.js';
+
 // Реальная функция загрузки конфигурации зала
 async function loadHallConfiguration(hallId) {
     try {
@@ -51,6 +57,29 @@ async function loadHallConfiguration(hallId) {
     }
 }
 
+// Реальная функция загрузки конфигурации цен
+async function loadPriceConfiguration(hallId) {
+    try {
+        console.log('Loading price configuration for:', hallId);
+        
+        const response = await fetch(`/admin/halls/${hallId}/prices`);
+        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        
+        const html = await response.text();
+        const container = document.getElementById('priceConfiguration');
+        
+        if (container) {
+            container.innerHTML = html;
+            console.log('Price configuration loaded successfully');
+        }
+    } catch (error) {
+        console.error('Error loading price configuration:', error);
+        if (window.notifications) {
+            window.notifications.show('Ошибка при загрузке конфигурации цен', 'error');
+        }
+    }
+}
+
 // Минимальный набор функций для тестирования
 function openCreateScheduleModal(hallId, date) {
     console.log('Opening schedule modal for hall:', hallId, 'date:', date);
@@ -60,11 +89,6 @@ function openCreateScheduleModal(hallId, date) {
 function openEditMovieModal(movieId) {
     console.log('Edit movie modal called for:', movieId);
     window.notifications.show('Редактирование фильма временно отключено', 'info');
-}
-
-function loadPriceConfiguration(hallId) {
-    console.log('Load price config:', hallId);
-    // Временная заглушка
 }
 
 function toggleInactiveMovies(show) {
@@ -115,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Экспортируем функции
     window.openCreateScheduleModal = openCreateScheduleModal;
     window.openEditMovieModal = openEditMovieModal;
-    window.loadHallConfiguration = loadHallConfiguration; // ← ЭКСПОРТИРУЕМ
+    window.loadHallConfiguration = loadHallConfiguration;
     window.loadPriceConfiguration = loadPriceConfiguration;
     window.toggleInactiveMovies = toggleInactiveMovies;
     window.openAddSessionModal = openAddSessionModal;
@@ -143,4 +167,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.closeResetHallConfigurationModal = closeResetHallConfigurationModal;
     window.resetHallConfiguration = resetHallConfiguration;
     window.saveHallConfiguration = saveHallConfiguration;
+
+    // Экспортируем функции управления ценами ← ДОБАВИЛИ ЭКСПОРТ
+    window.savePrices = savePrices;
+    window.resetPrices = resetPrices;
 });

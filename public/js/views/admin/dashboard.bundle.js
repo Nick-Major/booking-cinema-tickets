@@ -642,6 +642,98 @@ document.addEventListener("DOMContentLoaded", function() {
   }
 });
 
+// public/js/modules/pricing.js
+async function savePrices(hallId) {
+  try {
+    console.log("Saving prices for hall:", hallId);
+    const regularPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .regular-price-input`);
+    const vipPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .vip-price-input`);
+    if (!regularPriceInput || !vipPriceInput) {
+      throw new Error("\u041F\u043E\u043B\u044F \u0432\u0432\u043E\u0434\u0430 \u0446\u0435\u043D \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+    }
+    const regularPrice = parseFloat(regularPriceInput.value);
+    const vipPrice = parseFloat(vipPriceInput.value);
+    if (isNaN(regularPrice) || isNaN(vipPrice) || regularPrice < 0 || vipPrice < 0) {
+      throw new Error("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u043A\u043E\u0440\u0440\u0435\u043A\u0442\u043D\u044B\u0435 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u044F \u0446\u0435\u043D");
+    }
+    const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        regular_price: regularPrice,
+        vip_price: vipPrice
+      })
+    });
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications && typeof window.notifications.show === "function") {
+        window.notifications.show("\u0426\u0435\u043D\u044B \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B \u0443\u0441\u043F\u0435\u0448\u043D\u043E!", "success");
+      } else {
+        console.log("\u0426\u0435\u043D\u044B \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B \u0443\u0441\u043F\u0435\u0448\u043D\u043E!");
+        alert("\u0426\u0435\u043D\u044B \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B \u0443\u0441\u043F\u0435\u0448\u043D\u043E!");
+      }
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D");
+    }
+  } catch (error) {
+    console.error("Error updating prices:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D: " + error.message, "error");
+    } else {
+      console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D:", error.message);
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D: " + error.message);
+    }
+  }
+}
+async function resetPrices(hallId) {
+  try {
+    const regularPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .regular-price-input`);
+    const vipPriceInput = document.querySelector(`.price-configuration[data-hall-id="${hallId}"] .vip-price-input`);
+    if (!regularPriceInput || !vipPriceInput) {
+      throw new Error("\u041F\u043E\u043B\u044F \u0432\u0432\u043E\u0434\u0430 \u0446\u0435\u043D \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+    }
+    const baseRegularPrice = 350;
+    const baseVipPrice = 500;
+    regularPriceInput.value = baseRegularPrice.toFixed(2);
+    vipPriceInput.value = baseVipPrice.toFixed(2);
+    const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        regular_price: baseRegularPrice,
+        vip_price: baseVipPrice
+      })
+    });
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications && typeof window.notifications.show === "function") {
+        window.notifications.show("\u0426\u0435\u043D\u044B \u0441\u0431\u0440\u043E\u0448\u0435\u043D\u044B \u0434\u043E \u0431\u0430\u0437\u043E\u0432\u044B\u0445 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B", "success");
+      } else {
+        console.log("\u0426\u0435\u043D\u044B \u0441\u0431\u0440\u043E\u0448\u0435\u043D\u044B \u0434\u043E \u0431\u0430\u0437\u043E\u0432\u044B\u0445 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B");
+        alert("\u0426\u0435\u043D\u044B \u0441\u0431\u0440\u043E\u0448\u0435\u043D\u044B \u0434\u043E \u0431\u0430\u0437\u043E\u0432\u044B\u0445 \u0437\u043D\u0430\u0447\u0435\u043D\u0438\u0439 \u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u044B");
+      }
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D");
+    }
+  } catch (error) {
+    console.error("Error resetting prices:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D: " + error.message, "error");
+    } else {
+      console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D:", error.message);
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u0431\u0440\u043E\u0441\u0435 \u0446\u0435\u043D: " + error.message);
+    }
+  }
+}
+
 // public/js/views/admin/dashboard.js
 async function loadHallConfiguration2(hallId) {
   try {
@@ -661,6 +753,24 @@ async function loadHallConfiguration2(hallId) {
     }
   }
 }
+async function loadPriceConfiguration2(hallId) {
+  try {
+    console.log("Loading price configuration for:", hallId);
+    const response = await fetch(`/admin/halls/${hallId}/prices`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const html = await response.text();
+    const container = document.getElementById("priceConfiguration");
+    if (container) {
+      container.innerHTML = html;
+      console.log("Price configuration loaded successfully");
+    }
+  } catch (error) {
+    console.error("Error loading price configuration:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D", "error");
+    }
+  }
+}
 function openCreateScheduleModal(hallId, date) {
   console.log("Opening schedule modal for hall:", hallId, "date:", date);
   openModal("hallScheduleModal");
@@ -668,9 +778,6 @@ function openCreateScheduleModal(hallId, date) {
 function openEditMovieModal(movieId) {
   console.log("Edit movie modal called for:", movieId);
   window.notifications.show("\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0444\u0438\u043B\u044C\u043C\u0430 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E", "info");
-}
-function loadPriceConfiguration2(hallId) {
-  console.log("Load price config:", hallId);
 }
 function toggleInactiveMovies(show) {
   console.log("Toggle inactive movies:", show);
@@ -727,4 +834,6 @@ document.addEventListener("DOMContentLoaded", function() {
   window.closeResetHallConfigurationModal = closeResetHallConfigurationModal;
   window.resetHallConfiguration = resetHallConfiguration;
   window.saveHallConfiguration = saveHallConfiguration;
+  window.savePrices = savePrices;
+  window.resetPrices = resetPrices;
 });
