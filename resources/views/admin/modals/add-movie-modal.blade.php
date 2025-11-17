@@ -4,13 +4,13 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Добавление фильма
-          <a class="popup__dismiss" href="#" onclick="closeAddMovieModal(event)">
+          <a class="popup__dismiss" href="#" data-close-modal="addMovieModal">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
       </div>
       <div class="popup__wrapper">
-        <form action="{{ route('movies.store') }}" method="POST" enctype="multipart/form-data">
+        <form id="addMovieForm" action="{{ route('movies.store') }}" method="POST" enctype="multipart/form-data">
           @csrf
           <div class="popup__form-layout">
             <div class="popup__poster" style="flex: 0 0 200px;">
@@ -20,8 +20,7 @@
               </div>
               <!-- Поле загрузки постера -->
               <label class="conf-step__label conf-step__label-fullsize" for="movie_poster">
-                <input class="conf-step__input" type="file" name="movie_poster" accept="image/*" 
-                       onchange="previewMoviePoster(this)" style="width: 100%;">
+                <input class="conf-step__input" type="file" name="movie_poster" accept="image/*" style="width: 100%;">
               </label>
             </div>
             
@@ -59,8 +58,7 @@
             <button type="submit" class="conf-step__button conf-step__button-accent">
               Добавить фильм
             </button>
-            <button type="button" class="conf-step__button conf-step__button-regular"
-                    onclick="closeAddMovieModal(event)">
+            <button type="button" class="conf-step__button conf-step__button-regular" data-close-modal="addMovieModal">
               Отменить
             </button>
           </div>

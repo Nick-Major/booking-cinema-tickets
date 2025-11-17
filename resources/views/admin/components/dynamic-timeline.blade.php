@@ -31,47 +31,48 @@
     <div class="conf-step__sessions-area">
         @forelse($hallSessions as $session)
             @if($session->movie)
-            @php
-                try {
-                    $position = $session->getTimelinePosition($dayStart, $pixelsPerMinute);
-                    
-                    // Пропускаем сеансы за пределами видимой области
-                    if ($position['left'] > $timelineWidth) {
+                @php
+                    try {
+                        $position = $session->getTimelinePosition($dayStart, $pixelsPerMinute);
+                        
+                        // Пропускаем сеансы за пределами видимой области
+                        if ($position['left'] > $timelineWidth) {
+                            continue;
+                        }
+                        
+                        $isLong = $session->getDisplayDuration() > 180;
+                        $isVeryLong = $session->getDisplayDuration() > 240;
+                        $isOvernight = $position['is_overnight'];
+                    } catch (Exception $e) {
                         continue;
                     }
-                    
-                    $isLong = $session->getDisplayDuration() > 180;
-                    $isVeryLong = $session->getDisplayDuration() > 240;
-                    $isOvernight = $position['is_overnight'];
-                } catch (Exception $e) {
-                    continue;
-                }
-            @endphp
+                @endphp
 
-            <!-- Сеанс -->
-            <div class="conf-step__seances-movie
-                        @if($isLong) conf-step__seances-movie--long @endif
-                        @if($isVeryLong) conf-step__seances-movie--very-long @endif
-                        @if($isOvernight) conf-step__seances-movie--overnight @endif"
-                 style="left: {{ $position['left'] }}px; width: {{ $position['width'] }}px;"
-                 data-session-id="{{ $session->id }}"
-                 ondblclick="openEditSessionModal({{ $session->id }})"
-                 title="{{ $session->movie->title }} ({{ $position['start_time'] }} - {{ $position['end_time'] }})">
+                <!-- Сеанс -->
+                <div class="conf-step__seances-movie
+                            @if($isLong) conf-step__seances-movie--long @endif
+                            @if($isVeryLong) conf-step__seances-movie--very-long @endif
+                            @if($isOvernight) conf-step__seances-movie--overnight @endif"
+                     style="left: {{ $position['left'] }}px; width: {{ $position['width'] }}px;"
+                     data-session-id="{{ $session->id }}"
+                     ondblclick="openEditSessionModal({{ $session->id }})"
+                     title="{{ $session->movie->title }} ({{ $position['start_time'] }} - {{ $position['end_time'] }})">
 
-                <div class="conf-step__seances-movie-content">
-                    <h4 class="conf-step__seances-movie-title">{{ $session->movie->title }}</h4>
-                    <div class="conf-step__seances-movie-time">
-                        <span>{{ $position['start_time'] }}</span>
-                        @if($isOvernight)
-                            <span class="conf-step__overnight-indicator">🌙</span>
-                        @endif
+                    <div class="conf-step__seances-movie-content">
+                        <h4 class="conf-step__seances-movie-title">{{ $session->movie->title }}</h4>
+                        <div class="conf-step__seances-movie-time">
+                            <span>{{ $position['start_time'] }}</span>
+                            @if($isOvernight)
+                                <span class="conf-step__overnight-indicator">🌙</span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="conf-step__duration-indicator">
+                        {{ floor($session->movie->movie_duration / 60) }}ч {{ $session->movie->movie_duration % 60 }}м
                     </div>
                 </div>
-
-                <div class="conf-step__duration-indicator">
-                    {{ floor($session->movie->movie_duration / 60) }}ч {{ $session->movie->movie_duration % 60 }}м
-                </div>
-            </div>
+            @endif
         @empty
             <div class="conf-step__empty-track">
                 <p class="no-seances">Нет сеансов на выбранную дату</p>
@@ -80,7 +81,6 @@
                     Добавить сеанс
                 </button>
             </div>
-            @endif
         @endforelse
     </div>
 </div>

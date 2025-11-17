@@ -145,7 +145,7 @@
                   style="position: relative;">
                   @if($movie->movie_poster)
                       <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
-                          src="{{ asset('storage/' . $movie->movie_poster) }}">
+                          src="{{ Storage::url($movie->movie_poster) }}">
                   @else
                       <img class="conf-step__movie-poster" alt="Постер отсутствует"
                           src="{{ asset('images/admin/poster-placeholder.png') }}">
@@ -202,22 +202,68 @@
             <!-- Простой список залов с кнопками расписания -->
             <div class="conf-step__timeline-vertical">
                 @foreach($halls as $hall)
+                    @php
+                        $schedule = $hallSchedules[$hall->id] ?? null;
+                        $hallSessions = $sessions[$hall->id] ?? collect();
+                    @endphp
+
                     <div class="conf-step__timeline-hall" data-hall-id="{{ $hall->id }}">
                         <div class="conf-step__hall-header">
                             <div class="conf-step__hall-title-section">
                                 <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+                                @if($schedule)
+                                    <!-- Кнопки управления расписанием ПЕРЕНЕСЕМ СЮДА -->
+                                    <div class="conf-step__schedule-controls">
+                                        <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                                                onclick="openEditScheduleModal({{ $schedule->id }})"
+                                                title="Редактировать расписание">
+                                            ✏️
+                                        </button>
+                                        <button class="conf-step__button conf-step__button-small conf-step__button-warning"
+                                                onclick="deleteSchedule({{ $schedule->id }}, {{ $hall->id }})"
+                                                title="Удалить расписание">
+                                            🗑️
+                                        </button>
+                                    </div>
+                                @endif
                             </div>
-                            
-                            <button class="conf-step__button conf-step__button-schedule" 
-                                    onclick="openCreateScheduleModal({{ $hall->id }}, '{{ $selectedDate->format('Y-m-d') }}')">
-                                Создать расписание
-                            </button>
+
+                            @if(!$schedule)
+                                <button class="conf-step__button conf-step__button-schedule"
+                                        onclick="openCreateScheduleModal({{ $hall->id }}, '{{ $selectedDate->format('Y-m-d') }}', '{{ $hall->hall_name }}')">
+                                    Создать расписание
+                                </button>
+                            @endif
                         </div>
-                        
-                        <!-- Простое сообщение -->
-                        <div class="conf-step__no-schedule">
-                            <p>Расписание еще не создано</p>
-                        </div>
+
+                        @if($schedule)
+                            <!-- Блок когда расписание создано -->
+                            <div class="conf-step__schedule-created">
+                                <div class="conf-step__schedule-info">
+                                    <strong>Расписание:</strong>
+                                    <span class="schedule-time">{{ $schedule->formatted_time }}</span>
+                                    @if($schedule->overnight)
+                                        <span class="schedule-overnight">🌙 (до следующего дня)</span>
+                                    @endif
+                                </div>
+
+                                <!-- Таймлайн с сеансами -->
+                                <div class="conf-step__timeline-scroll-container">
+                                    <div class="conf-step__timeline-content">
+                                        @include('admin.components.dynamic-timeline', [
+                                            'hallSessions' => $hallSessions,
+                                            'selectedDate' => $selectedDate,
+                                            'hall' => $hall
+                                        ])
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <!-- Блок когда расписание не создано -->
+                            <div class="conf-step__no-schedule">
+                                <p>Расписание еще не создано</p>
+                            </div>
+                        @endif
                     </div>
                 @endforeach
             </div>
@@ -269,7 +315,7 @@
   @include('admin.modals.delete-movie-modal')
   @include('admin.modals.delete-session-modal')
   @include('admin.modals.edit-movie-modal')
-  <!-- @include('admin.modals.edit-session-modal') -->
+  @include('admin.modals.edit-session-modal')
   @include('admin.modals.reset-hall-configuration-modal')
   @include('admin.modals.hall-schedule-modal')
   

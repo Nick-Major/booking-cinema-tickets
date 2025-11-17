@@ -38,7 +38,15 @@ class MovieController extends Controller
 
         $movie = Movie::create($validated);
 
-        // Редирект
+        // Проверяем, является ли запрос AJAX по заголовку
+        if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
+            return response()->json([
+                'success' => true,
+                'message' => 'Фильм успешно добавлен!',
+                'movie' => $movie
+            ]);
+        }
+
         return redirect()->route('admin.dashboard')
             ->with('success', 'Фильм успешно добавлен!');
     }
@@ -56,7 +64,7 @@ class MovieController extends Controller
     public function edit($id)
     {
         $movie = Movie::findOrFail($id);
-        return view('admin.modals.edit-movie-modal', compact('movie'));
+        return response()->json($movie);
     }
 
     public function update(Request $request, Movie $movie)
@@ -84,9 +92,11 @@ class MovieController extends Controller
 
         $movie->update($validated);
 
-        // Редирект
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Фильм успешно обновлен!');
+        // Возвращаем JSON ответ для AJAX запросов
+        return response()->json([
+            'success' => true, 
+            'message' => 'Фильм успешно обновлен!'
+        ]);
     }
 
     public function destroy(Movie $movie)

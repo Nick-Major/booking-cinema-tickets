@@ -458,6 +458,53 @@ style.textContent = `
 document.head.appendChild(style);
 var notifications_default = NotificationSystem;
 
+// public/js/modules/accordeon.js
+function initAccordeon() {
+  const headers = document.querySelectorAll(".conf-step__header");
+  headers.forEach((header) => {
+    if (header.hasAttribute("data-accordeon-initialized")) {
+      return;
+    }
+    header.setAttribute("data-accordeon-initialized", "true");
+    header.addEventListener("click", () => {
+      header.classList.toggle("conf-step__header_closed");
+      header.classList.toggle("conf-step__header_opened");
+    });
+  });
+}
+function toggleAccordeonSection(header) {
+  if (header) {
+    header.classList.toggle("conf-step__header_closed");
+    header.classList.toggle("conf-step__header_opened");
+  }
+}
+function openAccordeonSection(header) {
+  if (header) {
+    header.classList.remove("conf-step__header_closed");
+    header.classList.add("conf-step__header_opened");
+  }
+}
+function closeAccordeonSection(header) {
+  if (header) {
+    header.classList.add("conf-step__header_closed");
+    header.classList.remove("conf-step__header_opened");
+  }
+}
+function closeAllAccordeonSections() {
+  const headers = document.querySelectorAll(".conf-step__header");
+  headers.forEach((header) => {
+    header.classList.add("conf-step__header_closed");
+    header.classList.remove("conf-step__header_opened");
+  });
+}
+function openAllAccordeonSections() {
+  const headers = document.querySelectorAll(".conf-step__header");
+  headers.forEach((header) => {
+    header.classList.remove("conf-step__header_closed");
+    header.classList.add("conf-step__header_opened");
+  });
+}
+
 // public/js/views/admin/hall-configuration.js
 function showSafeNotification(message, type = "info") {
   if (window.notifications && typeof window.notifications.show === "function") {
@@ -734,6 +781,415 @@ async function resetPrices(hallId) {
   }
 }
 
+// public/js/modules/movies.js
+function openDeleteMovieModal(movieId, movieName) {
+  document.getElementById("movieIdToDelete").value = movieId;
+  document.getElementById("movieNameToDelete").textContent = `"${movieName}"`;
+  openModal("deleteMovieModal");
+}
+async function addMovie(form) {
+  try {
+    const formData = new FormData(form);
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications) {
+        window.notifications.show("\u0424\u0438\u043B\u044C\u043C \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D!", "success");
+      }
+      closeModal("addMovieModal");
+      form.reset();
+      const posterPreview = document.getElementById("posterPreview");
+      if (posterPreview) {
+        posterPreview.innerHTML = '<span style="color: #63536C;">\u041F\u043E\u0441\u0442\u0435\u0440</span>';
+      }
+      setTimeout(() => {
+        location.reload();
+      }, 1e3);
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430");
+    }
+  } catch (error) {
+    console.error("Error adding movie:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message, "error");
+    } else {
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message);
+    }
+  }
+}
+async function confirmMovieDeletion(event) {
+  if (event) event.preventDefault();
+  const movieId = document.getElementById("movieIdToDelete").value;
+  try {
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const response = await fetch(`/admin/movies/${movieId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-TOKEN": csrfToken,
+        "X-Requested-With": "XMLHttpRequest",
+        "Accept": "application/json"
+      }
+    });
+    const result = await response.json();
+    if (result.success) {
+      closeModal("deleteMovieModal");
+      const movieElement = document.querySelector(`[data-movie-id="${movieId}"]`);
+      if (movieElement) {
+        movieElement.remove();
+      }
+      if (window.notifications && typeof window.notifications.show === "function") {
+        window.notifications.show(result.message, "success");
+      }
+      const moviesList = document.getElementById("moviesList");
+      const remainingMovies = moviesList.querySelectorAll(".conf-step__movie");
+      if (remainingMovies.length === 0) {
+        moviesList.innerHTML = '<div class="conf-step__empty-movies">\u041D\u0435\u0442 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u043D\u044B\u0445 \u0444\u0438\u043B\u044C\u043C\u043E\u0432</div>';
+      }
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430");
+    }
+  } catch (error) {
+    console.error("Error deleting movie:", error);
+    closeModal("deleteMovieModal");
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message, "error");
+    } else {
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message);
+    }
+  }
+}
+function previewMoviePoster(input) {
+  let previewId = "posterPreview";
+  if (input.closest("#editMovieModal")) {
+    previewId = "edit_poster_preview";
+  }
+  const preview = document.getElementById(previewId);
+  if (!preview) {
+    console.error("Preview container not found:", previewId);
+    return;
+  }
+  if (input.files && input.files[0]) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      preview.innerHTML = `<img src="${e.target.result}" style="max-width:200px; max-height:300px; object-fit:cover; border-radius:5px;">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+  } else {
+    preview.innerHTML = "";
+  }
+}
+function initMovies() {
+  const addMovieForm = document.getElementById("addMovieForm");
+  if (addMovieForm) {
+    addMovieForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      await addMovie(this);
+    });
+  }
+  const posterInput = document.querySelector('#addMovieModal input[name="movie_poster"]');
+  if (posterInput) {
+    posterInput.addEventListener("change", function(e) {
+      previewMoviePoster(this);
+    });
+  }
+  const editPosterInput = document.querySelector('#editMovieModal input[name="movie_poster"]');
+  if (editPosterInput) {
+    editPosterInput.addEventListener("change", function(e) {
+      previewMoviePoster(this);
+    });
+  }
+  const editMovieForm = document.getElementById("editMovieForm");
+  if (editMovieForm) {
+    editMovieForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      await updateMovie(this);
+    });
+  }
+  document.addEventListener("click", function(e) {
+    if (e.target.hasAttribute("data-delete-movie")) {
+      e.preventDefault();
+      const movieId = e.target.getAttribute("data-delete-movie");
+      const movieName = e.target.getAttribute("data-movie-name");
+      openDeleteMovieModal(movieId, movieName);
+    }
+  });
+  const deleteMovieForm = document.getElementById("deleteMovieForm");
+  if (deleteMovieForm) {
+    deleteMovieForm.addEventListener("submit", function(e) {
+      confirmMovieDeletion(e);
+    });
+  }
+}
+async function updateMovie(form) {
+  try {
+    const formData = new FormData(form);
+    const movieId = formData.get("movie_id");
+    const response = await fetch(`/admin/movies/${movieId}`, {
+      method: "POST",
+      // Laravel требует POST для форм с _method=PUT
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications) {
+        window.notifications.show("\u0424\u0438\u043B\u044C\u043C \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D!", "success");
+      }
+      closeModal("editMovieModal");
+      setTimeout(() => location.reload(), 1e3);
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430");
+    }
+  } catch (error) {
+    console.error("Error updating movie:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message, "error");
+    } else {
+      console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430:", error.message);
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message);
+    }
+  }
+}
+function toggleInactiveMovies(show) {
+  const inactiveMovies = document.querySelectorAll(".conf-step__movie-inactive");
+  inactiveMovies.forEach((movie) => {
+    movie.style.display = show ? "block" : "none";
+  });
+}
+function initMovieFilter() {
+  const filterCheckbox = document.getElementById("showInactiveMovies");
+  if (filterCheckbox) {
+    toggleInactiveMovies(filterCheckbox.checked);
+    filterCheckbox.addEventListener("change", function() {
+      toggleInactiveMovies(this.checked);
+    });
+  }
+}
+async function toggleMovieActive(movieId) {
+  try {
+    const response = await fetch(`/admin/movies/${movieId}/toggle-active`, {
+      method: "POST",
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+      }
+    });
+    const result = await response.json();
+    return result;
+  } catch (error) {
+    console.error("Error toggling movie active:", error);
+    throw error;
+  }
+}
+async function fetchMovies() {
+  try {
+    const response = await fetch("/admin/movies");
+    if (!response.ok) throw new Error("\u041E\u0448\u0438\u0431\u043A\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0444\u0438\u043B\u044C\u043C\u043E\u0432");
+    return await response.json();
+  } catch (error) {
+    console.error("Error fetching movies:", error);
+    throw error;
+  }
+}
+
+// public/js/modules/schedules.js
+function openCreateScheduleModal(hallId, date, hallName = "") {
+  document.getElementById("hall_id").value = hallId;
+  document.getElementById("schedule_date").value = date;
+  document.getElementById("modal_hall_name").textContent = hallName || `\u0417\u0430\u043B #${hallId}`;
+  document.getElementById("modal_schedule_date").textContent = formatDateForDisplay(date);
+  openModal("hallScheduleModal");
+}
+function formatDateForDisplay(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("ru-RU", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric"
+  });
+}
+function validateTime(timeString) {
+  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+  return timeRegex.test(timeString);
+}
+function formatTime(input) {
+  let value = input.value.replace(/[^\d:]/g, "");
+  if (value.length === 2 && !value.includes(":")) {
+    value = value + ":";
+  }
+  if (value.length > 5) {
+    value = value.substring(0, 5);
+  }
+  input.value = value;
+}
+function initSchedules() {
+  setupScheduleTimeValidation();
+  document.querySelectorAll(".time-input").forEach((input) => {
+    input.addEventListener("input", function() {
+      formatTime(this);
+    });
+    input.addEventListener("blur", function() {
+      if (this.value && !validateTime(this.value)) {
+        this.setCustomValidity("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0432\u0440\u0435\u043C\u044F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 \u0427\u0427:\u041C\u041C");
+        this.reportValidity();
+      } else {
+        this.setCustomValidity("");
+      }
+    });
+  });
+  const hallScheduleForm = document.getElementById("hallScheduleForm");
+  if (hallScheduleForm) {
+    hallScheduleForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      await createSchedule(this);
+    });
+  }
+}
+async function createSchedule(form) {
+  try {
+    const formData = new FormData(form);
+    const startTime = formData.get("start_time");
+    const endTime = formData.get("end_time");
+    if (!validateTime(startTime) || !validateTime(endTime)) {
+      throw new Error("\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0444\u043E\u0440\u043C\u0430\u0442 \u0432\u0440\u0435\u043C\u0435\u043D\u0438");
+    }
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: formData
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications) {
+        window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D\u043E!", "success");
+      }
+      closeModal("hallScheduleModal");
+      form.reset();
+      setTimeout(() => {
+        location.reload();
+      }, 1e3);
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
+    }
+  } catch (error) {
+    console.error("Error creating schedule:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message, "error");
+    } else {
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message);
+    }
+  }
+}
+function setupScheduleTimeValidation() {
+  const startTimeInput = document.getElementById("start_time");
+  const endTimeInput = document.getElementById("end_time");
+  const overnightInfo = document.getElementById("overnightInfo");
+  const overnightEndDate = document.getElementById("overnight_end_date");
+  function checkOvernightMode2() {
+    const startTime = startTimeInput.value;
+    const endTime = endTimeInput.value;
+    const scheduleDate = document.getElementById("schedule_date").value;
+    if (startTime && endTime) {
+      const start = parseTime(startTime);
+      const end = parseTime(endTime);
+      if (end < start) {
+        overnightInfo.style.display = "block";
+        const nextDay = new Date(scheduleDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        overnightEndDate.textContent = nextDay.toLocaleDateString("ru-RU");
+      } else {
+        overnightInfo.style.display = "none";
+      }
+    }
+  }
+  function parseTime(timeString) {
+    const [hours, minutes] = timeString.split(":").map(Number);
+    return hours * 60 + minutes;
+  }
+  if (startTimeInput && endTimeInput) {
+    startTimeInput.addEventListener("input", checkOvernightMode2);
+    endTimeInput.addEventListener("input", checkOvernightMode2);
+  }
+}
+function openEditScheduleModal(scheduleId) {
+  fetch(`/admin/hall-schedules/${scheduleId}/edit`).then((response) => response.json()).then((schedule) => {
+    document.getElementById("hall_schedule_id").value = schedule.id;
+    document.getElementById("hall_id").value = schedule.cinema_hall_id;
+    document.getElementById("schedule_date").value = schedule.date;
+    document.getElementById("modal_hall_name").textContent = schedule.hall_name || `\u0417\u0430\u043B #${schedule.cinema_hall_id}`;
+    document.getElementById("modal_schedule_date").textContent = formatDateForDisplay(schedule.date);
+    document.getElementById("start_time").value = schedule.start_time;
+    document.getElementById("end_time").value = schedule.end_time;
+    document.getElementById("hallScheduleModalTitle").textContent = "\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u0440\u0430\u0431\u043E\u0442\u044B \u0437\u0430\u043B\u0430";
+    document.getElementById("hallScheduleForm").action = `/admin/hall-schedules/${scheduleId}`;
+    document.getElementById("hallScheduleSubmitBtn").textContent = "\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F";
+    const methodInput = document.createElement("input");
+    methodInput.type = "hidden";
+    methodInput.name = "_method";
+    methodInput.value = "PUT";
+    document.getElementById("hallScheduleForm").appendChild(methodInput);
+    openModal("hallScheduleModal");
+    checkOvernightMode();
+  }).catch((error) => {
+    console.error("Error loading schedule:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F", "error");
+    }
+  });
+}
+async function deleteSchedule(scheduleId, hallId) {
+  if (!confirm("\u0412\u044B \u0443\u0432\u0435\u0440\u0435\u043D\u044B, \u0447\u0442\u043E \u0445\u043E\u0442\u0438\u0442\u0435 \u0443\u0434\u0430\u043B\u0438\u0442\u044C \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435?")) {
+    return;
+  }
+  try {
+    const response = await fetch(`/admin/hall-schedules/${scheduleId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+        "Accept": "application/json"
+      }
+    });
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications) {
+        window.notifications.show(result.message, "success");
+      }
+      window.location.reload();
+    } else {
+      if (window.notifications) {
+        window.notifications.show(result.message, "error");
+      }
+    }
+  } catch (error) {
+    console.error("Error deleting schedule:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F", "error");
+    }
+  }
+}
+
 // public/js/views/admin/dashboard.js
 async function loadHallConfiguration2(hallId) {
   try {
@@ -771,16 +1227,38 @@ async function loadPriceConfiguration2(hallId) {
     }
   }
 }
-function openCreateScheduleModal(hallId, date) {
-  console.log("Opening schedule modal for hall:", hallId, "date:", date);
-  openModal("hallScheduleModal");
-}
-function openEditMovieModal(movieId) {
-  console.log("Edit movie modal called for:", movieId);
-  window.notifications.show("\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u0435 \u0444\u0438\u043B\u044C\u043C\u0430 \u0432\u0440\u0435\u043C\u0435\u043D\u043D\u043E \u043E\u0442\u043A\u043B\u044E\u0447\u0435\u043D\u043E", "info");
-}
-function toggleInactiveMovies(show) {
-  console.log("Toggle inactive movies:", show);
+async function openEditMovieModal(movieId) {
+  try {
+    console.log("Opening edit movie modal for:", movieId);
+    const response = await fetch(`/admin/movies/${movieId}/edit`);
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+    const movie = await response.json();
+    console.log("Loaded movie data:", movie);
+    document.getElementById("edit_movie_id").value = movie.id;
+    document.getElementById("edit_title").value = movie.title;
+    document.getElementById("edit_movie_description").value = movie.movie_description || "";
+    document.getElementById("edit_movie_duration").value = movie.movie_duration;
+    document.getElementById("edit_country").value = movie.country || "";
+    document.getElementById("edit_is_active").checked = movie.is_active;
+    const currentPosterElement = document.getElementById("edit_current_poster");
+    if (movie.movie_poster) {
+      currentPosterElement.textContent = `\u0422\u0435\u043A\u0443\u0449\u0438\u0439 \u043F\u043E\u0441\u0442\u0435\u0440: ${movie.movie_poster}`;
+      currentPosterElement.style.display = "block";
+    } else {
+      currentPosterElement.textContent = "";
+      currentPosterElement.style.display = "none";
+    }
+    document.getElementById("edit_poster_preview").innerHTML = "";
+    console.log("Opening edit movie modal...");
+    openModal("editMovieModal");
+  } catch (error) {
+    console.error("Error opening edit movie modal:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0444\u0438\u043B\u044C\u043C\u0430", "error");
+    } else {
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message);
+    }
+  }
 }
 function openAddSessionModal() {
   console.log("Open add session modal");
@@ -805,20 +1283,31 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("\u2705 NotificationSystem initialized");
     window.hallsManager = new halls_default(window.notifications);
     console.log("\u2705 HallsManager initialized");
+    initMovies();
+    initMovieFilter();
+    console.log("\u2705 Movies module initialized");
+    initSchedules();
+    console.log("\u2705 Schedules module initialized");
+    initAccordeon();
+    console.log("\u2705 Accordeon initialized");
   } catch (error) {
     console.error("\u{1F4A5} Error:", error);
   }
-  window.openCreateScheduleModal = openCreateScheduleModal;
   window.openEditMovieModal = openEditMovieModal;
   window.loadHallConfiguration = loadHallConfiguration2;
   window.loadPriceConfiguration = loadPriceConfiguration2;
-  window.toggleInactiveMovies = toggleInactiveMovies;
   window.openAddSessionModal = openAddSessionModal;
   window.changeTimelineDate = changeTimelineDate;
   window.resetSessions = resetSessions;
   window.updateSession = updateSession;
   window.openModal = openModal;
   window.closeModal = closeModal;
+  window.initAccordeon = initAccordeon;
+  window.toggleAccordeonSection = toggleAccordeonSection;
+  window.openAccordeonSection = openAccordeonSection;
+  window.closeAccordeonSection = closeAccordeonSection;
+  window.closeAllAccordeonSections = closeAllAccordeonSections;
+  window.openAllAccordeonSections = openAllAccordeonSections;
   window.closeAddHallModal = closeAddHallModal;
   window.closeAddMovieModal = closeAddMovieModal;
   window.closeAddSessionModal = closeAddSessionModal;
@@ -836,4 +1325,12 @@ document.addEventListener("DOMContentLoaded", function() {
   window.saveHallConfiguration = saveHallConfiguration;
   window.savePrices = savePrices;
   window.resetPrices = resetPrices;
+  window.toggleInactiveMovies = toggleInactiveMovies;
+  window.initMovieFilter = initMovieFilter;
+  window.toggleMovieActive = toggleMovieActive;
+  window.fetchMovies = fetchMovies;
+  window.previewMoviePoster = previewMoviePoster;
+  window.openCreateScheduleModal = openCreateScheduleModal;
+  window.openEditScheduleModal = openEditScheduleModal;
+  window.deleteSchedule = deleteSchedule;
 });

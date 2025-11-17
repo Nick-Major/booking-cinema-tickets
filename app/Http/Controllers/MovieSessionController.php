@@ -48,21 +48,49 @@ class MovieSessionController extends Controller
             ->get();
     }
 
+    private function validateSessionAgainstSchedule($sessionStart, $movieDuration, $cinemaHallId, $date)
+    {
+        $hall = CinemaHall::find($cinemaHallId);
+        $schedule = $hall->getScheduleForDate($date);
+        
+        if (!$schedule) {
+            return [
+                'is_valid' => false,
+                'errors' => ['Для выбранной даты не создано расписание зала']
+            ];
+        }
+        
+        $totalDuration = $movieDuration + 10 + 15; // фильм + реклама + уборка
+        $sessionEnd = $sessionStart->copy()->addMinutes($totalDuration);
+        
+        $workStart = \Carbon\Carbon::parse($schedule->date->format('Y-m-d') . ' ' . $schedule->start_time);
+        $workEnd = \Carbon\Carbon::parse($schedule->date->format('Y-m-d') . ' ' . $schedule->end_time);
+        
+        if ($schedule->overnight) {
+            $workEnd->addDay();
+        }
+        
+        $errors = [];
+        
+        if ($sessionStart->lt($workStart)) {
+            $errors[] = "Сеанс не может начинаться раньше {$schedule->start_time}";
+        }
+        
+        if ($sessionEnd->gt($workEnd)) {
+            $errors[] = "Сеанс не может заканчиваться позже {$schedule->end_time}";
+        }
+        
+        return [
+            'is_valid' => empty($errors),
+            'errors' => $errors
+        ];
+    }
+
     public function store(Request $request)
     {
         \Log::info('🎯 === SESSION STORE METHOD CALLED ===');
-        \Log::info('📦 All request data:', $request->all());
-        \Log::info('📦 Headers:', $request->headers->all());
         
         try {
-            // ВРЕМЕННО: логируем все залы и фильмы для проверки
-            $allHalls = CinemaHall::pluck('id', 'hall_name')->toArray();
-            $allMovies = Movie::pluck('id', 'title')->toArray();
-            
-            \Log::info('🏛️ Available halls:', $allHalls);
-            \Log::info('🎬 Available movies:', $allMovies);
-
-            // ВАЛИДАЦИЯ
             $validated = $request->validate([
                 'movie_id' => 'required|exists:movies,id',
                 'cinema_hall_id' => 'required|exists:cinema_halls,id',
@@ -70,32 +98,16 @@ class MovieSessionController extends Controller
                 'session_time' => 'required|date_format:H:i',
             ]);
 
-            \Log::info('✅ Validation passed:', $validated);
-
-            // Проверим существование зала и фильма вручную
+            // Проверка существования зала и фильма
             $hall = CinemaHall::find($validated['cinema_hall_id']);
             $movie = Movie::find($validated['movie_id']);
             
-            if (!$hall) {
-                \Log::error('❌ Hall not found with ID: ' . $validated['cinema_hall_id']);
+            if (!$hall || !$movie) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Зал не найден'
+                    'message' => 'Зал или фильм не найден'
                 ], 422);
             }
-            
-            if (!$movie) {
-                \Log::error('❌ Movie not found with ID: ' . $validated['movie_id']);
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Фильм не найден'
-                ], 422);
-            }
-
-            \Log::info('✅ Hall and movie confirmed:', [
-                'hall' => $hall->hall_name,
-                'movie' => $movie->title
-            ]);
 
             // СОЗДАНИЕ СЕАНСА
             $sessionStart = \Carbon\Carbon::createFromFormat(
@@ -103,15 +115,53 @@ class MovieSessionController extends Controller
                 $validated['session_date'] . ' ' . $validated['session_time']
             );
 
-            $session = \App\Models\MovieSession::create([
+            // ВАЛИДАЦИЯ ПРОТИВ РАСПИСАНИЯ
+            $scheduleValidation = $this->validateSessionAgainstSchedule(
+                $sessionStart,
+                $movie->movie_duration,
+                $hall->id,
+                $validated['session_date']
+            );
+
+            if (!$scheduleValidation['is_valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => implode(', ', $scheduleValidation['errors'])
+                ], 422);
+            }
+
+            // Общая валидация времени
+            $timeValidation = $this->validateSessionTime($sessionStart, $movie->movie_duration);
+            if (!$timeValidation['is_valid']) {
+                return response()->json([
+                    'success' => false,
+                    'message' => implode(', ', $timeValidation['errors'])
+                ], 422);
+            }
+
+            // Проверка конфликтов
+            $tempSession = new MovieSession([
                 'movie_id' => $validated['movie_id'],
                 'cinema_hall_id' => $validated['cinema_hall_id'],
                 'session_start' => $sessionStart,
-                'session_end' => $sessionStart->copy()->addHours(3),
-                'is_actual' => true
+                'session_end' => $timeValidation['session_end']
             ]);
 
-            \Log::info('🎉 Session created successfully:', ['id' => $session->id]);
+            if ($tempSession->hasTimeConflict()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'В выбранном зале в это время уже есть сеанс'
+                ], 422);
+            }
+
+            // СОЗДАНИЕ СЕАНСА
+            $session = MovieSession::create([
+                'movie_id' => $validated['movie_id'],
+                'cinema_hall_id' => $validated['cinema_hall_id'],
+                'session_start' => $sessionStart,
+                'session_end' => $timeValidation['session_end'],
+                'is_actual' => true
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -120,15 +170,12 @@ class MovieSessionController extends Controller
             ]);
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('🚨 VALIDATION ERROR:', $e->errors());
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка валидации: ' . implode(', ', array_merge(...array_values($e->errors())))
             ], 422);
         } catch (\Exception $e) {
             \Log::error('💥 CRITICAL ERROR: ' . $e->getMessage());
-            \Log::error('📝 Stack trace: ' . $e->getTraceAsString());
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Критическая ошибка: ' . $e->getMessage()

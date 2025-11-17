@@ -7,6 +7,7 @@ use App\Http\Controllers\MovieController;
 use App\Http\Controllers\MovieSessionController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\HallScheduleController;
 use Illuminate\Support\Facades\Route;
 
 // Главная страница
@@ -53,8 +54,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/halls/{hall}/reset-configuration', [CinemaHallController::class, 'resetConfiguration'])->name('halls.reset-configuration');
 
     // Маршруты для расписания залов
-    Route::post('/admin/hall-schedules', [HallScheduleController::class, 'store'])->name('hall-schedules.store');
-    Route::put('/admin/hall-schedules/{hallSchedule}', [HallScheduleController::class, 'update'])->name('hall-schedules.update');
+    Route::resource('hall-schedules', HallScheduleController::class)->only(['store', 'update', 'edit']);
+    Route::delete('/admin/hall-schedules/{hall_schedule}', [HallScheduleController::class, 'destroy'])->name('hall-schedules.destroy');
     
     // Маршруты для фильмов
     Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');

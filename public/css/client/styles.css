@@ -11,7 +11,7 @@ html {
 }
 
 body {
-  background-image: url("../i/background.jpg");
+  background-image: url("/images/client/background.jpg");
   background-size: cover;
   background-attachment: fixed;
   background-position: right;

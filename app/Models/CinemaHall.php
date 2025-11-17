@@ -23,12 +23,6 @@ class CinemaHall extends Model
         'is_active' => 'boolean'
     ];
 
-    // Отношение с расписанием
-    // public function schedules()
-    // {
-    //     return $this->hasMany(HallSchedule::class);
-    // }
-
     public function schedules()
     {
         return $this->hasMany(\App\Models\HallSchedule::class, 'cinema_hall_id');
@@ -52,33 +46,10 @@ class CinemaHall extends Model
         return $query->where('is_active', true);
     }
 
-    // Метод для получения расписания на конкретную дату
-    // public function getScheduleForDate($date)
-    // {
-    //     $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : $date;
-        
-    //     // Если отношения уже загружены, ищем в коллекции
-    //     if ($this->relationLoaded('schedules')) {
-    //         return $this->schedules->firstWhere('date', $dateString);
-    //     }
-        
-    //     // Иначе делаем запрос к БД
-    //     return $this->schedules()->where('date', $dateString)->first();
-    // }
-
     public function getScheduleForDate($date)
     {
-        try {
-            $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : $date;
-            
-            // Простая версия - всегда возвращаем null
-            return null;
-            
-            // Или если хотите проверить:
-            // return $this->schedules()->where('date', $dateString)->first();
-        } catch (\Exception $e) {
-            \Log::error('Error in getScheduleForDate: ' . $e->getMessage());
-            return null;
-        }
+        $dateString = $date instanceof \Carbon\Carbon ? $date->toDateString() : $date;
+        
+        return $this->schedules()->where('date', $dateString)->first();
     }
 }

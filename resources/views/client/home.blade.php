@@ -33,7 +33,7 @@
           <div class="movie__info">
             <div class="movie__poster">
               @if($movie->movie_poster)
-                <img class="movie__poster-image" alt="{{ $movie->title }} постер" src="{{ asset('storage/' . $movie->movie_poster) }}">
+                <img class="movie__poster-image" alt="{{ $movie->title }} постер" src="{{ Storage::url($movie->movie_poster) }}">
               @else
                 <img class="movie__poster-image" alt="Постер отсутствует" src="{{ asset('images/placeholder-poster.jpg') }}">
               @endif

@@ -315,7 +315,10 @@ select {
 }
 
 .conf-step__hint {
-  margin-top: 10px;
+  color: #6c757d;
+  font-size: 1.2rem;
+  display: block;
+  margin-top: 5px;
 }
 
 .conf-step__label,
@@ -663,25 +666,31 @@ select {
 .conf-step__timeline-hall .conf-step__timeline-scroll-container {
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 10px;
+  padding: 15px 0;
+  margin: 15px 0;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fafafa;
 }
 .conf-step__timeline-hall .conf-step__timeline-scroll-container::-webkit-scrollbar {
-  height: 8px;
+  height: 10px;
 }
 .conf-step__timeline-hall .conf-step__timeline-scroll-container::-webkit-scrollbar-track {
   background: #f1f1f1;
-  border-radius: 4px;
+  border-radius: 5px;
+  margin: 0 10px;
 }
 .conf-step__timeline-hall .conf-step__timeline-scroll-container::-webkit-scrollbar-thumb {
   background: #63536C;
-  border-radius: 4px;
+  border-radius: 5px;
+  border: 2px solid #f1f1f1;
 }
 .conf-step__timeline-hall .conf-step__timeline-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #7a6785;
 }
 .conf-step__timeline-hall .conf-step__timeline-content {
   min-width: 1200px;
-  padding-left: 24px;
+  padding: 0 20px;
   position: relative;
 }
 
@@ -1252,6 +1261,88 @@ select {
   color: #666;
   font-size: 16px;
   margin-bottom: 15px;
+}
+
+.conf-step__info-box {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 5px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.conf-step__info-item {
+  margin-bottom: 8px;
+  font-size: 1.4rem;
+}
+.conf-step__info-item:last-child {
+  margin-bottom: 0;
+}
+.conf-step__info-item strong {
+  color: #63536C;
+}
+
+.time-input:invalid {
+  border-color: #dc3545;
+}
+
+.time-input:valid {
+  border-color: #28a745;
+}
+
+.conf-step__overnight-info {
+  font-size: 1.2rem;
+}
+
+.conf-step__schedule-controls {
+  display: flex;
+  gap: 8px;
+  margin-left: 15px;
+}
+.conf-step__schedule-controls .conf-step__button {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  padding: 0;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  background: white;
+  transition: all 0.2s ease;
+}
+.conf-step__schedule-controls .conf-step__button:hover {
+  transform: scale(1.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+.conf-step__schedule-controls .conf-step__button.conf-step__button-regular {
+  color: #63536C;
+  border-color: #63536C;
+}
+.conf-step__schedule-controls .conf-step__button.conf-step__button-regular:hover {
+  background: #63536C;
+  color: white;
+}
+.conf-step__schedule-controls .conf-step__button.conf-step__button-warning {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+.conf-step__schedule-controls .conf-step__button.conf-step__button-warning:hover {
+  background: #dc3545;
+  color: white;
+}
+
+.conf-step__hall-title-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.conf-step__hall-title-section .conf-step__seances-title {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #63536c;
 }
 
 /*# sourceMappingURL=styles.css.map */

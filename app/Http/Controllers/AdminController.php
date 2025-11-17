@@ -5,88 +5,45 @@ namespace App\Http\Controllers;
 use App\Models\CinemaHall;
 use App\Models\Movie;
 use App\Models\MovieSession;
+use App\Models\HallSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    // public function dashboard(Request $request)
-    // {
-    //     $currentDate = $request->get('date', now()->format('Y-m-d'));
-    //     $selectedDate = Carbon::parse($currentDate);
-        
-    //     // Загружаем залы с их расписаниями на выбранную дату
-    //     $halls = CinemaHall::with(['schedules' => function($query) use ($selectedDate) {
-    //         $query->where('date', $selectedDate->toDateString());
-    //     }])->get();
-
-    //     $movies = Movie::all();
-        
-    //     // Получаем сеансы для выбранной даты
-    //     $sessions = MovieSession::with(['movie', 'cinemaHall'])
-    //         ->whereDate('session_start', $selectedDate)
-    //         ->orderBy('session_start')
-    //         ->get();
-
-    //     // Даты для навигации
-    //     $prevDate = $selectedDate->copy()->subDay()->format('Y-m-d');
-    //     $nextDate = $selectedDate->copy()->addDay()->format('Y-m-d');
-
-    //     // Передаем пустую переменную $movie для модального окна
-    //     $movie = null;
-
-    //     return view('admin.dashboard', compact(
-    //         'halls', 
-    //         'movies', 
-    //         'sessions', 
-    //         'currentDate', 
-    //         'selectedDate',
-    //         'prevDate',
-    //         'nextDate',
-    //         'movie' // Добавляем переменную
-    //     ));
-    // }
-
-    public function dashboard(Request $request)
+    public function dashboard()
     {
-        try {
-            \Log::info('=== DASHBOARD START ===');
-            
-            $currentDate = $request->get('date', now()->format('Y-m-d'));
-            $selectedDate = \Carbon\Carbon::parse($currentDate);
-            
-            \Log::info('Loading basic data...');
-            
-            // Минимальная версия - только основные данные
-            $halls = \App\Models\CinemaHall::all();
-            $movies = \App\Models\Movie::all();
-            
-            $sessions = \App\Models\MovieSession::with(['movie', 'cinemaHall'])
-                ->whereDate('session_start', $selectedDate)
-                ->orderBy('session_start')
-                ->get();
-
-            // Даты для навигации
-            $prevDate = $selectedDate->copy()->subDay()->format('Y-m-d');
-            $nextDate = $selectedDate->copy()->addDay()->format('Y-m-d');
-
-            \Log::info('Rendering view...');
-            
-            return view('admin.dashboard', compact(
-                'halls', 
-                'movies', 
-                'sessions', 
-                'currentDate', 
-                'selectedDate',
-                'prevDate',
-                'nextDate'
-            ));
-            
-        } catch (\Exception $e) {
-            \Log::error('DASHBOARD ERROR: ' . $e->getMessage());
-            \Log::error($e->getTraceAsString());
-            return response()->view('errors.500', ['message' => $e->getMessage()], 500);
-        }
+        $currentDate = request('date', now()->format('Y-m-d'));
+        $selectedDate = Carbon::parse($currentDate);
+        
+        $halls = CinemaHall::all();
+        $movies = Movie::all();
+        
+        // Получаем расписания для каждого зала на выбранную дату
+        $hallSchedules = HallSchedule::where('date', $currentDate)
+            ->get()
+            ->keyBy('cinema_hall_id');
+        
+        // Получаем сеансы для отображения в таймлайне
+        $sessions = MovieSession::whereDate('session_start', $currentDate)
+            ->with('movie')
+            ->get()
+            ->groupBy('cinema_hall_id');
+        
+        // Вычисляем даты для навигации ← ДОБАВИТЬ ЭТО
+        $prevDate = $selectedDate->copy()->subDay()->format('Y-m-d');
+        $nextDate = $selectedDate->copy()->addDay()->format('Y-m-d');
+        
+        return view('admin.dashboard', compact(
+            'halls', 
+            'movies', 
+            'currentDate', 
+            'selectedDate',
+            'hallSchedules',
+            'sessions',
+            'prevDate',    // ← ДОБАВИТЬ ЭТО
+            'nextDate'     // ← ДОБАВИТЬ ЭТО
+        ));
     }
 
     public function toggleSales(Request $request)
