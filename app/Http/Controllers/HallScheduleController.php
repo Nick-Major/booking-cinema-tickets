@@ -98,9 +98,16 @@ class HallScheduleController extends Controller
                 'end_time' => 'required|date_format:H:i',
             ]);
 
+            \Log::info('Updating schedule', [
+                'schedule_id' => $hallSchedule->id,
+                'start_time' => $validated['start_time'],
+                'end_time' => $validated['end_time'],
+                'current_date' => $hallSchedule->date
+            ]);
+
             // Определяем ночной режим
-            $start = Carbon::parse($validated['start_time']);
-            $end = Carbon::parse($validated['end_time']);
+            $start = \Carbon\Carbon::parse($validated['start_time']);
+            $end = \Carbon\Carbon::parse($validated['end_time']);
             $overnight = $end->lessThan($start);
 
             // Проверяем конфликты с существующими сеансами
@@ -117,13 +124,19 @@ class HallScheduleController extends Controller
                 'overnight' => $overnight,
             ]);
 
+            \Log::info('Schedule updated successfully', ['schedule_id' => $hallSchedule->id]);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Расписание успешно обновлено!'
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error updating hall schedule: ' . $e->getMessage());
+            \Log::error('Error updating hall schedule: ' . $e->getMessage(), [
+                'schedule_id' => $hallSchedule->id,
+                'request_data' => $request->all(),
+                'exception' => $e
+            ]);
             
             return response()->json([
                 'success' => false,
@@ -134,21 +147,47 @@ class HallScheduleController extends Controller
 
     private function hasSessionConflicts($hallId, $date, $startTime, $endTime, $overnight, $excludeScheduleId = null)
     {
-        $scheduleStart = Carbon::parse($date . ' ' . $startTime);
-        $scheduleEnd = $overnight 
-            ? Carbon::parse($date . ' ' . $endTime)->addDay()
-            : Carbon::parse($date . ' ' . $endTime);
+        try {
+            // Правильно формируем дату и время
+            $scheduleStart = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $date->format('Y-m-d') . ' ' . $startTime);
+            
+            $scheduleEnd = \Carbon\Carbon::createFromFormat('Y-m-d H:i', $date->format('Y-m-d') . ' ' . $endTime);
+            if ($overnight) {
+                $scheduleEnd->addDay();
+            }
 
-        // Ищем сеансы, которые пересекаются с новым расписанием
-        $query = MovieSession::where('cinema_hall_id', $hallId)
-            ->where(function($query) use ($scheduleStart, $scheduleEnd) {
-                $query->where(function($q) use ($scheduleStart, $scheduleEnd) {
-                    $q->where('session_start', '<', $scheduleEnd)
-                      ->where('session_end', '>', $scheduleStart);
+            \Log::info('Checking session conflicts', [
+                'hall_id' => $hallId,
+                'date' => $date->format('Y-m-d'),
+                'start' => $scheduleStart->format('Y-m-d H:i'),
+                'end' => $scheduleEnd->format('Y-m-d H:i'),
+                'overnight' => $overnight
+            ]);
+
+            // Ищем сеансы, которые пересекаются с новым расписанием
+            $query = MovieSession::where('cinema_hall_id', $hallId)
+                ->where(function($query) use ($scheduleStart, $scheduleEnd) {
+                    $query->where(function($q) use ($scheduleStart, $scheduleEnd) {
+                        $q->where('session_start', '<', $scheduleEnd)
+                        ->where('session_end', '>', $scheduleStart);
+                    });
                 });
-            });
 
-        return $query->exists();
+            if ($excludeScheduleId) {
+                // Для обновления исключаем текущее расписание
+                $query->where('id', '!=', $excludeScheduleId);
+            }
+
+            $hasConflicts = $query->exists();
+            
+            \Log::info('Conflict check result', ['has_conflicts' => $hasConflicts]);
+
+            return $hasConflicts;
+
+        } catch (\Exception $e) {
+            \Log::error('Error in hasSessionConflicts: ' . $e->getMessage());
+            return true; // В случае ошибки считаем, что есть конфликт
+        }
     }
 
     public function isWithinSchedule(\Carbon\Carbon $time): bool

@@ -114,166 +114,174 @@
     <!-- Сетка сеансов - УПРОЩЕННАЯ ВЕРСИЯ -->
     @if($halls->count() > 0)
     <section class="conf-step" id="sessionsSection">
-      <header class="conf-step__header conf-step__header_opened">
-        <h2 class="conf-step__title">Сетка сеансов</h2>
-      </header>
-      <div class="conf-step__wrapper">
-        <p class="conf-step__paragraph">
-          <button class="conf-step__button conf-step__button-accent" 
-                  data-open-modal="addMovieModal">
-            Добавить фильм
-          </button>
-          <button class="conf-step__button conf-step__button-accent" 
-                  data-open-modal="addSessionModal">
-            Добавить сеанс
-          </button>
-        </p>
-        
-        <div class="conf-step__filter">
-          <label class="conf-step__label">
-            <input type="checkbox" id="showInactiveMovies" checked onchange="toggleInactiveMovies(this.checked)">
-            Показывать неактивные фильмы
-          </label>
-        </div>
-        
-        <div class="conf-step__movies" id="moviesList">
-          @forelse($movies as $movie)
-              @if($movie)
-              <div class="conf-step__movie @if(!$movie->is_active) conf-step__movie-inactive @endif" 
-                  data-movie-id="{{ $movie->id }}" 
-                  data-movie-duration="{{ $movie->movie_duration }}" 
-                  style="position: relative;">
-                  @if($movie->movie_poster)
-                      <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
-                          src="{{ Storage::url($movie->movie_poster) }}">
-                  @else
-                      <img class="conf-step__movie-poster" alt="Постер отсутствует"
-                          src="{{ asset('images/admin/poster-placeholder.png') }}">
-                  @endif
-                  <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
-                  <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
-
-                  <!-- ИНДИКАТОР АКТИВНОСТИ -->
-                  @if(!$movie->is_active)
-                    <div class="conf-step__movie-status">Неактивен</div>
-                  @endif
-
-                  <!-- Кнопки управления фильмом -->
-                  <div class="conf-step__movie-controls">
-                      <button class="conf-step__button conf-step__button-small conf-step__button-regular"
-                              onclick="openEditMovieModal({{ $movie->id }})"
-                              title="Редактировать фильм">
-                      </button>
-                      <button class="conf-step__button conf-step__button-small conf-step__button-trash"
-                              data-delete-movie="{{ $movie->id }}"
-                              data-movie-name="{{ $movie->title }}"
-                              title="Удалить фильм"></button>
-                  </div>
-              </div>
-              @endif
-          @empty
-              <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
-          @endforelse
-        </div>
-        
-        <!-- УПРОЩЕННАЯ СЕКЦИЯ ТАЙМЛАЙНА -->
-        <div class="conf-step__seances-timeline-wrapper">
-            <!-- Навигация по датам -->
-            <div class="conf-step__timeline-nav">
-                <button class="conf-step__button conf-step__button-regular" 
-                        onclick="changeTimelineDate('{{ $prevDate }}')"
-                        style="width: 100px;">
-                    ← Назад
+        <header class="conf-step__header conf-step__header_opened">
+            <h2 class="conf-step__title">Сетка сеансов</h2>
+        </header>
+        <div class="conf-step__wrapper">
+            <p class="conf-step__paragraph">
+                <button class="conf-step__button conf-step__button-accent" 
+                        data-open-modal="addMovieModal">
+                    Добавить фильм
                 </button>
-                
-                <input type="date" 
-                      value="{{ $currentDate }}" 
-                      onchange="changeTimelineDate(this.value)"
-                      class="conf-step__input"
-                      style="width: 150px;">
-                
-                <button class="conf-step__button conf-step__button-regular"
-                        onclick="changeTimelineDate('{{ $nextDate }}')"
-                        style="width: 100px;">
-                    Вперед →
+                <button class="conf-step__button conf-step__button-accent" 
+                        data-open-modal="addSessionModal">
+                    Добавить сеанс
                 </button>
+            </p>
+            
+            <div class="conf-step__filter">
+                <label class="conf-step__label">
+                    <input type="checkbox" id="showInactiveMovies" checked onchange="toggleInactiveMovies(this.checked)">
+                    Показывать неактивные фильмы
+                </label>
             </div>
+            
+            <div class="conf-step__movies" id="moviesList">
+                @forelse($movies as $movie)
+                    @if($movie)
+                    <div class="conf-step__movie @if(!$movie->is_active) conf-step__movie-inactive @endif" 
+                        data-movie-id="{{ $movie->id }}" 
+                        data-movie-duration="{{ $movie->movie_duration }}" 
+                        style="position: relative;">
+                        @if($movie->movie_poster)
+                            <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
+                                src="{{ Storage::url($movie->movie_poster) }}">
+                        @else
+                            <img class="conf-step__movie-poster" alt="Постер отсутствует"
+                                src="{{ asset('images/admin/poster-placeholder.png') }}">
+                        @endif
+                        <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
+                        <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
 
-            <!-- Простой список залов с кнопками расписания -->
-            <div class="conf-step__timeline-vertical">
-                @foreach($halls as $hall)
-                    @php
-                        $schedule = $hallSchedules[$hall->id] ?? null;
-                        $hallSessions = $sessions[$hall->id] ?? collect();
-                    @endphp
+                        <!-- ИНДИКАТОР АКТИВНОСТИ -->
+                        @if(!$movie->is_active)
+                            <div class="conf-step__movie-status">Неактивен</div>
+                        @endif
 
-                    <div class="conf-step__timeline-hall" data-hall-id="{{ $hall->id }}">
-                        <div class="conf-step__hall-header">
-                            <div class="conf-step__hall-title-section">
-                                <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+                        <!-- Кнопки управления фильмом -->
+                        <div class="conf-step__movie-controls">
+                            <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                                    onclick="openEditMovieModal({{ $movie->id }})"
+                                    title="Редактировать фильм">
+                            </button>
+                            <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                                    data-delete-movie="{{ $movie->id }}"
+                                    data-movie-name="{{ $movie->title }}"
+                                    title="Удалить фильм"></button>
+                        </div>
+                    </div>
+                    @endif
+                @empty
+                    <div class="conf-step__empty-movies">Нет добавленных фильмов</div>
+                @endforelse
+            </div>
+            
+            <!-- УПРОЩЕННАЯ СЕКЦИЯ ТАЙМЛАЙНА -->
+            <div class="conf-step__seances-timeline-wrapper">
+                <!-- Навигация по датам -->
+                <div class="conf-step__timeline-nav">
+                    <button class="conf-step__button conf-step__button-regular" 
+                            onclick="changeTimelineDate('{{ $prevDate }}')"
+                            style="width: 100px;">
+                        ← Назад
+                    </button>
+                    
+                    <input type="date" 
+                          value="{{ $currentDate }}" 
+                          onchange="changeTimelineDate(this.value)"
+                          class="conf-step__input"
+                          style="width: 150px;">
+                    
+                    <button class="conf-step__button conf-step__button-regular"
+                            onclick="changeTimelineDate('{{ $nextDate }}')"
+                            style="width: 100px;">
+                        Вперед →
+                    </button>
+                </div>
 
-                                @if($schedule)
-                                    <!-- Кнопки управления расписанием - ПРАВЫЙ ВЕРХНИЙ УГОЛ -->
-                                    <div class="conf-step__schedule-controls">
-                                        <button class="conf-step__button conf-step__button-small conf-step__button-regular"
-                                                onclick="openEditScheduleModal({{ $schedule->id }})"
-                                                title="Редактировать расписание">
-                                        </button>
-                                        <button class="conf-step__button conf-step__button-small conf-step__button-trash"
-                                                onclick="openDeleteScheduleModal({{ $schedule->id }}, {{ $hall->id }}, '{{ $hall->hall_name }}', '{{ $currentDate }}')"
-                                                title="Удалить расписание">
-                                        </button>
-                                    </div>
+                <!-- Простой список залов с кнопками расписания -->
+                <div class="conf-step__timeline-vertical">
+                    @foreach($halls as $hall)
+                        @php
+                            $schedule = $hallSchedules[$hall->id] ?? null;
+                            $hallSessions = $sessions[$hall->id] ?? collect();
+                        @endphp
+
+                        <div class="conf-step__timeline-hall" data-hall-id="{{ $hall->id }}">
+                            <div class="conf-step__hall-header">
+                                <div class="conf-step__hall-title-section">
+                                    <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+
+                                    @if($schedule)
+                                        <!-- Кнопки управления расписанием - ПРАВЫЙ ВЕРХНИЙ УГОЛ -->
+                                        <div class="conf-step__schedule-controls">
+                                            <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                                                    onclick="openEditScheduleModal({{ $schedule->id }})"
+                                                    title="Редактировать расписание">
+                                            </button>
+                                            <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                                                    onclick="openDeleteScheduleModal({{ $schedule->id }}, {{ $hall->id }}, '{{ $hall->hall_name }}', '{{ $currentDate }}')"
+                                                    title="Удалить расписание">
+                                            </button>
+                                        </div>
+                                    @endif
+
+                                </div>
+
+                                @if(!$schedule)
+                                    <button class="conf-step__button conf-step__button-schedule"
+                                            onclick="openCreateScheduleModal({{ $hall->id }}, '{{ $selectedDate->format('Y-m-d') }}', '{{ $hall->hall_name }}')">
+                                        Создать расписание
+                                    </button>
                                 @endif
-
                             </div>
 
-                            @if(!$schedule)
-                                <button class="conf-step__button conf-step__button-schedule"
-                                        onclick="openCreateScheduleModal({{ $hall->id }}, '{{ $selectedDate->format('Y-m-d') }}', '{{ $hall->hall_name }}')">
-                                    Создать расписание
-                                </button>
+                            @if($schedule)
+                                <!-- Блок когда расписание создано -->
+                                <div class="conf-step__schedule-created">
+                                    <div class="conf-step__schedule-info">
+                                        <span class="schedule-label">Расписание:</span>
+                                        <span class="schedule-time">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</span>
+                                        @if($schedule->overnight)
+                                            <span class="schedule-overnight">(ночной режим)</span>
+                                        @endif
+                                    </div>
+
+                                    <!-- Таймлайн с сеансами -->
+                                    <div class="conf-step__timeline-scroll-container">
+                                        <div class="conf-step__timeline-content">
+                                            @include('admin.components.dynamic-timeline', [
+                                                'hallSessions' => $hallSessions,
+                                                'selectedDate' => $selectedDate,
+                                                'hall' => $hall
+                                            ])
+                                        </div>
+                                    </div>
+                                </div>
+                            @else
+                                <!-- Блок когда расписание не создано -->
+                                <div class="conf-step__no-schedule">
+                                    <p>Расписание еще не создано</p>
+                                </div>
                             @endif
                         </div>
+                    @endforeach
+                </div>
+            </div>
+            
+            <fieldset class="conf-step__buttons text-center">
+                <button class="conf-step__button conf-step__button-regular" onclick="resetSessions()">Отмена</button>
+                <button class="conf-step__button conf-step__button-accent" onclick="updateSession()">Сохранить</button>
+            </fieldset>
 
-                        @if($schedule)
-                            <!-- Блок когда расписание создано -->
-                            <div class="conf-step__schedule-created">
-                                <div class="conf-step__schedule-info">
-                                    <span class="schedule-label">Расписание:</span>
-                                    <span class="schedule-time">{{ $schedule->start_time }} - {{ $schedule->end_time }}</span>
-                                    @if($schedule->overnight)
-                                        <span class="schedule-overnight">(ночной режим)</span>
-                                    @endif
-                                </div>
-
-                                <!-- Таймлайн с сеансами -->
-                                <div class="conf-step__timeline-scroll-container">
-                                    <div class="conf-step__timeline-content">
-                                        @include('admin.components.dynamic-timeline', [
-                                            'hallSessions' => $hallSessions,
-                                            'selectedDate' => $selectedDate,
-                                            'hall' => $hall
-                                        ])
-                                    </div>
-                                </div>
-                            </div>
-                        @else
-                            <!-- Блок когда расписание не создано -->
-                            <div class="conf-step__no-schedule">
-                                <p>Расписание еще не создано</p>
-                            </div>
-                        @endif
-                    </div>
-                @endforeach
+            <div class="conf-step__legend" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
+                <p class="conf-step__paragraph" style="margin: 0; color: #333; font-size: 14px;">
+                    💡 <strong>Управление сеансами:</strong> 
+                    Двойной клик по сеансу для редактирования • Наведите для подробной информации • 
+                    Используйте горизонтальную прокрутку для длинных сеансов
+                </p>
             </div>
         </div>
-        
-        <fieldset class="conf-step__buttons text-center">
-          <button class="conf-step__button conf-step__button-regular" onclick="resetSessions()">Отмена</button>
-          <button class="conf-step__button conf-step__button-accent" onclick="updateSession()">Сохранить</button>
-        </fieldset>  
-      </div>
     </section>
     @endif
     
@@ -296,8 +304,8 @@
                     </div>
                     <button class="conf-step__button conf-step__button-small {{ $hall->is_active ? 'conf-step__button-warning' : 'conf-step__button-accent' }}"
                             data-toggle-sales="{{ $hall->id }}"
-                            data-is-active="{{ $hall->is_active }}">
-                        {{ $hall->is_active ? 'Приостановить продажи' : 'Открыть продажи' }}
+                            data-is-active="{{ $hall->is_active ? 'true' : 'false' }}">
+                        {{ $hall->is_active ? 'Приостановить продажу билетов' : 'Открыть продажу билетов' }}
                     </button>
                 </li>
                 @endforeach

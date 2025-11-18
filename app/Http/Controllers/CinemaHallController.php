@@ -297,4 +297,30 @@ class CinemaHallController extends Controller
         
         return $html;
     }
+
+    public function scheduleInfo(CinemaHall $hall, Request $request)
+    {
+        try {
+            $date = $request->get('date', now()->format('Y-m-d'));
+            
+            $schedule = $hall->getScheduleForDate($date);
+            
+            return response()->json([
+                'success' => true,
+                'schedule' => $schedule ? [
+                    'start_time' => $schedule->start_time,
+                    'end_time' => $schedule->end_time,
+                    'overnight' => $schedule->overnight,
+                    'formatted_time' => $schedule->getFormattedTimeAttribute()
+                ] : null
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error getting schedule info: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении информации о расписании'
+            ], 500);
+        }
+    }
 }

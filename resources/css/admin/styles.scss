@@ -1003,7 +1003,7 @@ select {
     margin-top: 25px;
 }
 
-// ===== УЛУЧШЕННЫЕ СЕАНСЫ =====
+// ===== УНИФИЦИРОВАННЫЕ СЕАНСЫ =====
 .conf-step__seances-movie {
     position: absolute;
     top: 5px;
@@ -1017,37 +1017,13 @@ select {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     border: 1px solid rgba(255,255,255,0.3);
-    min-width: 80px; // Минимальная ширина для коротких сеансов
+    min-width: 80px;
 
     &:hover {
         background: linear-gradient(135deg, #13868f, #117880);
         box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         transform: translateY(-1px);
         z-index: 100;
-    }
-
-    &--long {
-        background: linear-gradient(135deg, #f9953a, #e8852a);
-        
-        &:hover {
-            background: linear-gradient(135deg, #e8852a, #d6751a);
-        }
-    }
-
-    &--very-long {
-        background: linear-gradient(135deg, #5a4b63, #4a3b53);
-        min-width: 150px;
-
-        .conf-step__seances-movie-title {
-            font-size: 1.1rem;
-            white-space: normal;
-            line-height: 1.3;
-        }
-    }
-
-    &--overnight {
-        background: linear-gradient(135deg, #6a5b73, #5a4b63);
-        border: 1px solid rgba(255,255,255,0.4);
     }
 }
 
@@ -1068,13 +1044,12 @@ select {
     text-overflow: ellipsis;
 }
 
-// Улучшаем отображение времени в сеансах
 .conf-step__seances-movie-time {
     display: flex;
     align-items: center;
     gap: 4px;
     font-size: 1.2rem;
-    color: #666;
+    color: rgba(255,255,255,0.9);
     margin-top: 4px;
 }
 
@@ -1583,4 +1558,46 @@ input[type="text"]:disabled {
     background: #f8f9fa;
     color: #6c757d;
     cursor: not-allowed;
+}
+
+.conf-step__schedule-hint {
+    margin: 15px 0;
+    
+    .conf-step__alert--info {
+        background: #e3f2fd;
+        border: 1px solid #bbdefb;
+        border-radius: 6px;
+        padding: 10px 15px;
+        color: #1565c0;
+        
+        strong {
+            font-weight: 600;
+        }
+    }
+}
+
+.conf-step__input[type="time"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+}
+
+.conf-step__input[type="time"]::-webkit-calendar-picker-indicator {
+    background: none;
+    display: none;
+}
+
+.conf-step__input[type="time"]:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.conf-step__button-danger {
+  background-color: #dc3545 !important;
+  padding: 12px 6px;
+  margin-top: 17px;
+  
+  &:hover {
+    background-color: #c82333 !important;
+  }
 }

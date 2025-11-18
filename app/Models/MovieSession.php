@@ -100,19 +100,17 @@ class MovieSession extends Model
         $sessionStart = $this->session_start;
         $movieEnd = $this->getMovieEndTime();
 
-        // ИСПРАВЛЕНИЕ: Меняем порядок расчета!
-        // Было: $sessionStart->diffInMinutes($dayStart) - это дает отрицательные значения
-        // Стало: $dayStart->diffInMinutes($sessionStart) - это дает положительные значения
+        // Расчет позиции относительно переданного начала дня
         $left = $dayStart->diffInMinutes($sessionStart) * $pixelsPerMinute;
-
-        // Ширина элемента (только фильм + реклама)
+        
+        // Ширина элемента (фильм + реклама)
         $width = $this->getDisplayDuration() * $pixelsPerMinute;
 
         // Проверка на ночной сеанс
         $isOvernight = !$sessionStart->isSameDay($movieEnd);
 
         return [
-            'left' => max(0, $left), // Защита от отрицательных значений
+            'left' => max(0, $left),
             'width' => $width,
             'is_overnight' => $isOvernight,
             'start_time' => $sessionStart->format('H:i'),
@@ -132,18 +130,40 @@ class MovieSession extends Model
     // Проверка пересечения сеансов
     public function hasTimeConflict(): bool
     {
-        $sessionEnd = $this->session_start->copy()->addMinutes($this->getTotalDuration());
+        $sessionEnd = $this->session_end ?? $this->session_start->copy()->addMinutes($this->getTotalDuration());
         
-        return MovieSession::where('cinema_hall_id', $this->cinema_hall_id)
+        $conflictingSessions = MovieSession::where('cinema_hall_id', $this->cinema_hall_id)
             ->where('id', '!=', $this->id ?? 0)
+            ->where('is_actual', true)
             ->where(function($query) use ($sessionEnd) {
-                $query->whereBetween('session_start', [$this->session_start, $sessionEnd])
-                    ->orWhereBetween('session_end', [$this->session_start, $sessionEnd])
-                    ->orWhere(function($q) use ($sessionEnd) {
-                        $q->where('session_start', '<', $this->session_start)
-                          ->where('session_end', '>', $sessionEnd);
-                    });
+                // Только реальные пересечения интервалов
+                $query->where(function($q) use ($sessionEnd) {
+                    // Новый сеанс начинается во время существующего
+                    $q->where('session_start', '<', $sessionEnd)
+                    ->where('session_end', '>', $this->session_start);
+                });
             })
-            ->exists();
+            ->get();
+
+        if ($conflictingSessions->isNotEmpty()) {
+            \Log::info('Обнаружены конфликтующие сеансы', [
+                'current_session' => [
+                    'start' => $this->session_start->format('Y-m-d H:i'),
+                    'end' => $sessionEnd->format('Y-m-d H:i'),
+                    'movie' => $this->movie->title ?? 'Unknown'
+                ],
+                'conflicting_sessions' => $conflictingSessions->map(function($session) {
+                    return [
+                        'id' => $session->id,
+                        'start' => $session->session_start->format('Y-m-d H:i'),
+                        'end' => $session->session_end->format('Y-m-d H:i'),
+                        'movie' => $session->movie->title ?? 'Unknown'
+                    ];
+                })->toArray()
+            ]);
+            return true;
+        }
+
+        return false;
     }
 }

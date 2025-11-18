@@ -13,6 +13,13 @@
         <form id="addSessionForm" method="POST" action="{{ route('sessions.store') }}">
           @csrf
           <input type="hidden" name="_token" value="{{ csrf_token() }}">
+    
+          <!-- Временно добавим вывод для отладки -->
+          <div style="background: #f0f0f0; padding: 10px; margin-bottom: 10px;">
+              <strong>Debug Info:</strong><br>
+              Halls count: {{ $halls->count() }}<br>
+              Movies count: {{ $movies->count() }}
+          </div>
 
           <label class="conf-step__label conf-step__label-fullsize" for="movie_id">
             Фильм
@@ -43,23 +50,11 @@
           </label>
 
           <label class="conf-step__label conf-step__label-fullsize" for="session_time">
-              Время начала
-              <input class="conf-step__input" 
-                    type="time" 
-                    name="session_time" 
-                    id="session_time" 
-                    value="14:30"
-                    required>
+              Время (ЧЧ:ММ)
+              <input class="conf-step__input" type="text" name="session_time" id="session_time" 
+                    placeholder="14:30" pattern="^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$" required>
               <small>Формат: ЧЧ:ММ (например, 14:30)</small>
           </label>
-
-          <!-- Подсказка о расписании -->
-          <div class="conf-step__schedule-hint" id="scheduleHint" style="display: none;">
-            <div class="conf-step__alert conf-step__alert--info">
-              💡 <strong>Расписание зала:</strong> 
-              <span id="allowedTimeRange"></span>
-            </div>
-          </div>
           
           <div class="conf-step__buttons text-center">
             <button type="submit" class="conf-step__button conf-step__button-accent">

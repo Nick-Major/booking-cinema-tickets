@@ -1008,10 +1008,6 @@ async function fetchMovies() {
 }
 
 // public/js/modules/schedules.js
-function parseTime(timeString) {
-  const [hours, minutes] = timeString.split(":").map(Number);
-  return hours * 60 + minutes;
-}
 function formatDateForDisplay(dateString) {
   const date = new Date(dateString);
   return date.toLocaleDateString("ru-RU", {
@@ -1021,333 +1017,472 @@ function formatDateForDisplay(dateString) {
     day: "numeric"
   });
 }
-function validateTime(timeString) {
-  const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
-  return timeRegex.test(timeString);
-}
-function formatTime(input) {
-  let value = input.value.replace(/[^\d:]/g, "");
-  if (value.length === 2 && !value.includes(":")) {
-    value = value + ":";
-  }
-  if (value.length > 5) {
-    value = value.substring(0, 5);
-  }
-  input.value = value;
-}
-function checkOvernightMode() {
-  const startTimeInput = document.getElementById("start_time");
-  const endTimeInput = document.getElementById("end_time");
-  const overnightInfo = document.getElementById("overnightInfo");
-  const overnightEndDate = document.getElementById("overnight_end_date");
-  if (startTimeInput && endTimeInput) {
-    const startTime = startTimeInput.value;
-    const endTime = endTimeInput.value;
-    const scheduleDate = document.getElementById("schedule_date").value;
-    if (startTime && endTime) {
-      const start = parseTime(startTime);
-      const end = parseTime(endTime);
-      if (end < start) {
-        if (overnightInfo) overnightInfo.style.display = "block";
-        const nextDay = new Date(scheduleDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        if (overnightEndDate) overnightEndDate.textContent = nextDay.toLocaleDateString("ru-RU");
-      } else {
-        if (overnightInfo) overnightInfo.style.display = "none";
-      }
-    }
-  }
-}
-function checkEditOvernightMode() {
-  const startTimeInput = document.getElementById("edit_start_time");
-  const endTimeInput = document.getElementById("edit_end_time");
-  const overnightInfo = document.getElementById("edit_overnightInfo");
-  const overnightEndDate = document.getElementById("edit_overnight_end_date");
-  if (startTimeInput && endTimeInput) {
-    const startTime = startTimeInput.value;
-    const endTime = endTimeInput.value;
-    const scheduleDate = document.getElementById("edit_schedule_date").value;
-    if (startTime && endTime) {
-      const start = parseTime(startTime);
-      const end = parseTime(endTime);
-      if (end < start) {
-        if (overnightInfo) overnightInfo.style.display = "block";
-        const nextDay = new Date(scheduleDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        if (overnightEndDate) overnightEndDate.textContent = nextDay.toLocaleDateString("ru-RU");
-      } else {
-        if (overnightInfo) overnightInfo.style.display = "none";
-      }
-    }
-  }
-}
-function setupScheduleTimeValidation() {
-  const startTimeInput = document.getElementById("start_time");
-  const endTimeInput = document.getElementById("end_time");
-  if (startTimeInput && endTimeInput) {
-    startTimeInput.addEventListener("input", checkOvernightMode);
-    endTimeInput.addEventListener("input", checkOvernightMode);
-  }
-}
-function setupEditScheduleTimeValidation() {
-  const startTimeInput = document.getElementById("edit_start_time");
-  const endTimeInput = document.getElementById("edit_end_time");
-  if (startTimeInput && endTimeInput) {
-    startTimeInput.addEventListener("input", checkEditOvernightMode);
-    endTimeInput.addEventListener("input", checkEditOvernightMode);
-  }
-}
 async function createSchedule(form) {
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
   try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "\u0421\u043E\u0437\u0434\u0430\u043D\u0438\u0435...";
     const formData = new FormData(form);
-    const startTime = formData.get("start_time");
-    const endTime = formData.get("end_time");
-    if (!validateTime(startTime) || !validateTime(endTime)) {
-      throw new Error("\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0444\u043E\u0440\u043C\u0430\u0442 \u0432\u0440\u0435\u043C\u0435\u043D\u0438");
-    }
     const response = await fetch(form.action, {
       method: "POST",
       headers: {
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-        "X-Requested-With": "XMLHttpRequest"
+        "Accept": "application/json"
       },
       body: formData
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
     const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || `HTTP error! status: ${response.status}`);
+    }
     if (result.success) {
       if (window.notifications) {
-        window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D\u043E!", "success");
+        window.notifications.show(result.message, "success");
       }
       closeModal("hallScheduleModal");
-      form.reset();
-      setTimeout(() => location.reload(), 1e3);
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
     } else {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
     }
   } catch (error) {
     console.error("Error creating schedule:", error);
-    if (window.notifications && typeof window.notifications.show === "function") {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message, "error");
-    } else {
-      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
     }
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
   }
 }
 async function updateSchedule(form) {
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
   try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435...";
     const formData = new FormData(form);
-    const startTime = formData.get("start_time");
-    const endTime = formData.get("end_time");
-    if (!validateTime(startTime) || !validateTime(endTime)) {
-      throw new Error("\u041F\u043E\u0436\u0430\u043B\u0443\u0439\u0441\u0442\u0430, \u043F\u0440\u043E\u0432\u0435\u0440\u044C\u0442\u0435 \u0444\u043E\u0440\u043C\u0430\u0442 \u0432\u0440\u0435\u043C\u0435\u043D\u0438");
-    }
     const response = await fetch(form.action, {
       method: "POST",
       headers: {
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-        "X-Requested-With": "XMLHttpRequest"
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
       },
-      body: formData
+      body: JSON.stringify({
+        start_time: formData.get("start_time"),
+        end_time: formData.get("end_time"),
+        _method: "PUT"
+      })
     });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
     const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || `HTTP error! status: ${response.status}`);
+    }
     if (result.success) {
-      if (window.notifications) {
-        window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E!", "success");
-      }
+      window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E!", "success");
       closeModal("editScheduleModal");
-      setTimeout(() => location.reload(), 1e3);
+      setTimeout(() => window.location.reload(), 1e3);
     } else {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
     }
   } catch (error) {
     console.error("Error updating schedule:", error);
-    if (window.notifications && typeof window.notifications.show === "function") {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message, "error");
-    } else {
-      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message);
-    }
-  }
-}
-function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
-  const scheduleIdInput = document.getElementById("scheduleIdToDelete");
-  const currentDateInput = document.getElementById("currentScheduleDate");
-  const hallNameSpan = document.getElementById("scheduleHallName");
-  const scheduleDateSpan = document.getElementById("scheduleDate");
-  if (scheduleIdInput && currentDateInput && hallNameSpan && scheduleDateSpan) {
-    scheduleIdInput.value = scheduleId;
-    currentDateInput.value = currentDate;
-    hallNameSpan.textContent = hallName;
-    scheduleDateSpan.textContent = formatDateForDisplay(currentDate);
-    openModal("deleteScheduleModal");
-  }
-}
-async function deleteScheduleHandler(form) {
-  try {
-    const scheduleId = document.getElementById("scheduleIdToDelete").value;
-    const currentDate = document.getElementById("currentScheduleDate").value;
-    const response = await fetch(`/admin/hall-schedules/${scheduleId}`, {
-      method: "DELETE",
-      headers: {
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
-        "Accept": "application/json",
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        current_date: currentDate,
-        _method: "DELETE"
-      })
-    });
-    const result = await response.json();
-    if (result.success) {
-      if (window.notifications) {
-        window.notifications.show(result.message, "success");
-      }
-      closeModal("deleteScheduleModal");
-      setTimeout(() => location.reload(), 1e3);
-    } else {
-      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
-    }
-  } catch (error) {
-    console.error("Error deleting schedule:", error);
-    if (window.notifications && typeof window.notifications.show === "function") {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message, "error");
-    }
-  }
-}
-async function checkScheduleEditPossibility(scheduleId) {
-  try {
-    const response = await fetch(`/admin/hall-schedules/${scheduleId}/check-edit`);
-    const result = await response.json();
-    return result;
-  } catch (error) {
-    console.error("Error checking schedule edit possibility:", error);
-    return { success: false, min_end_time: "00:00" };
-  }
-}
-function openCreateScheduleModal(hallId, date, hallName = "") {
-  const hallIdInput = document.getElementById("hall_id");
-  const scheduleDateInput = document.getElementById("schedule_date");
-  const hallNameSpan = document.getElementById("modal_hall_name");
-  const scheduleDateSpan = document.getElementById("modal_schedule_date");
-  if (hallIdInput && scheduleDateInput && hallNameSpan && scheduleDateSpan) {
-    hallIdInput.value = hallId;
-    scheduleDateInput.value = date;
-    hallNameSpan.textContent = hallName || `\u0417\u0430\u043B #${hallId}`;
-    scheduleDateSpan.textContent = formatDateForDisplay(date);
-    document.getElementById("hallScheduleModalTitle").textContent = "\u0421\u043E\u0437\u0434\u0430\u043D\u0438\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u0440\u0430\u0431\u043E\u0442\u044B \u0437\u0430\u043B\u0430";
-    document.getElementById("hallScheduleForm").action = "/admin/hall-schedules";
-    document.getElementById("hallScheduleSubmitBtn").textContent = "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435";
-    const methodInput = document.querySelector('input[name="_method"]');
-    if (methodInput) methodInput.remove();
-    document.getElementById("hallScheduleForm").reset();
-    openModal("hallScheduleModal");
-    setTimeout(checkOvernightMode, 100);
+    window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
   }
 }
 function openEditScheduleModal(scheduleId) {
-  checkScheduleEditPossibility(scheduleId).then((editCheck) => {
-    if (!editCheck.success) {
-      if (window.notifications) {
-        window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043F\u0440\u043E\u0432\u0435\u0440\u043A\u0435 \u0432\u043E\u0437\u043C\u043E\u0436\u043D\u043E\u0441\u0442\u0438 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F", "error");
-      }
-      return;
-    }
-    return fetch(`/admin/hall-schedules/${scheduleId}/edit`).then((response) => response.json()).then((schedule) => {
-      const scheduleIdInput = document.getElementById("edit_hall_schedule_id");
-      const hallIdInput = document.getElementById("edit_hall_id");
-      const scheduleDateInput = document.getElementById("edit_schedule_date");
-      const hallNameSpan = document.getElementById("edit_modal_hall_name");
-      const scheduleDateSpan = document.getElementById("edit_modal_schedule_date");
-      const startTimeInput = document.getElementById("edit_start_time");
-      const endTimeInput = document.getElementById("edit_end_time");
-      if (scheduleIdInput && hallIdInput && scheduleDateInput && hallNameSpan && scheduleDateSpan && startTimeInput && endTimeInput) {
-        scheduleIdInput.value = schedule.id;
-        hallIdInput.value = schedule.cinema_hall_id;
-        scheduleDateInput.value = schedule.date;
-        hallNameSpan.textContent = schedule.hall_name || `\u0417\u0430\u043B #${schedule.cinema_hall_id}`;
-        scheduleDateSpan.textContent = formatDateForDisplay(schedule.date);
-        startTimeInput.value = schedule.start_time;
-        endTimeInput.value = schedule.end_time;
-        if (editCheck.has_sessions) {
-          endTimeInput.min = editCheck.min_end_time;
-          endTimeInput.title = `\u041C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u044F: ${editCheck.min_end_time} (\u0438\u0437-\u0437\u0430 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0445 \u0441\u0435\u0430\u043D\u0441\u043E\u0432)`;
-          if (window.notifications) {
-            window.notifications.show(`\u0412\u043D\u0438\u043C\u0430\u043D\u0438\u0435: \u043C\u0438\u043D\u0438\u043C\u0430\u043B\u044C\u043D\u043E\u0435 \u0432\u0440\u0435\u043C\u044F \u043E\u043A\u043E\u043D\u0447\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u043E ${editCheck.min_end_time} \u0438\u0437-\u0437\u0430 \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044E\u0449\u0438\u0445 \u0441\u0435\u0430\u043D\u0441\u043E\u0432`, "info");
-          }
-        } else {
-          endTimeInput.removeAttribute("min");
-          endTimeInput.removeAttribute("title");
-        }
-        document.getElementById("editScheduleForm").action = `/admin/hall-schedules/${scheduleId}`;
-        openModal("editScheduleModal");
-        setTimeout(checkEditOvernightMode, 100);
-      }
-    });
+  fetch(`/admin/hall-schedules/${scheduleId}/edit`).then((response) => response.json()).then((schedule) => {
+    console.log("Loading schedule data:", schedule);
+    document.getElementById("edit_hall_schedule_id").value = schedule.id;
+    document.getElementById("edit_hall_id").value = schedule.cinema_hall_id;
+    document.getElementById("edit_schedule_date").value = schedule.date;
+    document.getElementById("edit_modal_hall_name").textContent = schedule.hall_name;
+    document.getElementById("edit_modal_schedule_date").textContent = formatDateForDisplay(schedule.date);
+    document.getElementById("edit_start_time").value = schedule.start_time.substring(0, 5);
+    document.getElementById("edit_end_time").value = schedule.end_time.substring(0, 5);
+    document.getElementById("editScheduleForm").action = `/admin/hall-schedules/${scheduleId}`;
+    openModal("editScheduleModal");
   }).catch((error) => {
     console.error("Error loading schedule:", error);
-    if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F", "error");
-    }
+    window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F: " + error.message, "error");
   });
 }
+function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
+  document.getElementById("scheduleIdToDelete").value = scheduleId;
+  document.getElementById("currentScheduleDate").value = currentDate;
+  document.getElementById("scheduleHallName").textContent = hallName;
+  document.getElementById("scheduleDate").textContent = new Date(currentDate).toLocaleDateString("ru-RU");
+  openModal("deleteScheduleModal");
+}
+function openCreateScheduleModal(hallId, date, hallName = "") {
+  document.getElementById("hall_id").value = hallId;
+  document.getElementById("schedule_date").value = date;
+  document.getElementById("modal_hall_name").textContent = hallName;
+  document.getElementById("modal_schedule_date").textContent = new Date(date).toLocaleDateString("ru-RU");
+  openModal("hallScheduleModal");
+}
 function initSchedules() {
-  setupScheduleTimeValidation();
-  setupEditScheduleTimeValidation();
-  const hallScheduleForm = document.getElementById("hallScheduleForm");
-  if (hallScheduleForm) {
-    hallScheduleForm.querySelectorAll(".time-input").forEach((input) => {
-      input.addEventListener("input", function() {
-        formatTime(this);
-      });
-      input.addEventListener("blur", function() {
-        if (this.value && !validateTime(this.value)) {
-          this.setCustomValidity("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0432\u0440\u0435\u043C\u044F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 \u0427\u0427:\u041C\u041C");
-          this.reportValidity();
-        } else {
-          this.setCustomValidity("");
-        }
-      });
-    });
-    hallScheduleForm.addEventListener("submit", async function(e) {
-      e.preventDefault();
-      await createSchedule(this);
-    });
-  }
   const editScheduleForm = document.getElementById("editScheduleForm");
   if (editScheduleForm) {
-    editScheduleForm.querySelectorAll(".time-input").forEach((input) => {
-      input.addEventListener("input", function() {
-        formatTime(this);
-        checkEditOvernightMode();
-      });
-      input.addEventListener("blur", function() {
-        if (this.value && !validateTime(this.value)) {
-          this.setCustomValidity("\u0412\u0432\u0435\u0434\u0438\u0442\u0435 \u0432\u0440\u0435\u043C\u044F \u0432 \u0444\u043E\u0440\u043C\u0430\u0442\u0435 \u0427\u0427:\u041C\u041C");
-          this.reportValidity();
-        } else {
-          this.setCustomValidity("");
-        }
-      });
-    });
     editScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       await updateSchedule(this);
+    });
+  }
+  const hallScheduleForm = document.getElementById("hallScheduleForm");
+  if (hallScheduleForm) {
+    hallScheduleForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      await createSchedule(this);
     });
   }
   const deleteScheduleForm = document.getElementById("deleteScheduleForm");
   if (deleteScheduleForm) {
     deleteScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      await deleteScheduleHandler(this);
     });
   }
 }
+
+// public/js/modules/sessions.js
+async function loadScheduleInfo(hallId, date) {
+  try {
+    const response = await fetch(`/admin/halls/${hallId}/schedule-info?date=${date}`);
+    if (!response.ok) throw new Error("\u041E\u0448\u0438\u0431\u043A\u0430 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
+    const data = await response.json();
+    return data.success ? data : null;
+  } catch (error) {
+    console.error("Error loading schedule info:", error);
+    return null;
+  }
+}
+function updateScheduleHint() {
+  const hallSelect = document.getElementById("cinema_hall_id");
+  const dateInput = document.getElementById("session_date");
+  const scheduleHint = document.getElementById("scheduleHint");
+  const allowedTimeRange = document.getElementById("allowedTimeRange");
+  if (!hallSelect || !dateInput || !scheduleHint || !allowedTimeRange) return;
+  const hallId = hallSelect.value;
+  const date = dateInput.value;
+  if (hallId && date) {
+    loadScheduleInfo(hallId, date).then((data) => {
+      if (data && data.schedule) {
+        let timeRange = `${data.schedule.start_time} - ${data.schedule.end_time}`;
+        if (data.schedule.overnight) {
+          timeRange += " \u{1F319} (\u043D\u043E\u0447\u043D\u043E\u0439 \u0440\u0435\u0436\u0438\u043C)";
+        }
+        allowedTimeRange.textContent = timeRange;
+        scheduleHint.style.display = "block";
+      } else {
+        scheduleHint.style.display = "none";
+      }
+    });
+  } else {
+    scheduleHint.style.display = "none";
+  }
+}
+function openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime) {
+  console.log("\u{1F3AF} openDeleteSessionModal \u0432\u044B\u0437\u0432\u0430\u043D\u0430 \u0441 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u043C\u0438:", {
+    sessionId,
+    movieTitle,
+    hallName,
+    sessionTime
+  });
+  closeModal("editSessionModal");
+  console.log("\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043A\u0440\u044B\u0442\u043E");
+  document.getElementById("sessionIdToDelete").value = sessionId;
+  document.getElementById("sessionMovieNameToDelete").textContent = movieTitle;
+  document.getElementById("sessionHallNameToDelete").textContent = hallName;
+  document.getElementById("sessionTimeToDelete").textContent = sessionTime;
+  openModal("deleteSessionModal");
+  console.log("\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u043E\u0442\u043A\u0440\u044B\u0442\u043E");
+  setTimeout(() => {
+    const modal = document.getElementById("deleteSessionModal");
+    if (modal) {
+      const computedStyle = window.getComputedStyle(modal);
+      console.log("\u{1F50D} \u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0441\u0442\u0438\u043B\u0438 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F:", {
+        display: computedStyle.display,
+        zIndex: computedStyle.zIndex,
+        opacity: computedStyle.opacity,
+        visibility: computedStyle.visibility
+      });
+    }
+  }, 100);
+}
+async function deleteMovieSession(sessionId) {
+  try {
+    const response = await fetch(`/admin/sessions/${sessionId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content"),
+        "Content-Type": "application/json"
+      }
+    });
+    const data = await response.json();
+    if (data.success) {
+      if (window.notifications) {
+        window.notifications.show("\u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D", "success");
+      }
+      closeModal("deleteSessionModal");
+      closeModal("editSessionModal");
+      setTimeout(() => {
+        location.reload();
+      }, 1500);
+    } else {
+      throw new Error(data.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430");
+    }
+  } catch (error) {
+    console.error("Error deleting session:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
+    }
+  }
+}
+function initSessionFormHandlers() {
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
+  document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach((button) => {
+    button.addEventListener("click", function(e) {
+      console.log('\u{1F3AF} \u041A\u043D\u043E\u043F\u043A\u0430 "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0435\u0430\u043D\u0441" \u043D\u0430\u0436\u0430\u0442\u0430');
+      openModal("addSessionModal");
+      setTimeout(updateScheduleHint, 100);
+    });
+  });
+  const hallSelect = document.getElementById("cinema_hall_id");
+  const dateInput = document.getElementById("session_date");
+  if (hallSelect) {
+    hallSelect.addEventListener("change", updateScheduleHint);
+  }
+  if (dateInput) {
+    dateInput.addEventListener("change", updateScheduleHint);
+  }
+  const addSessionForm = document.getElementById("addSessionForm");
+  if (addSessionForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 addSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    addSessionForm.addEventListener("submit", async function(e) {
+      console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430");
+      e.preventDefault();
+      const formData = new FormData(this);
+      try {
+        const response = await fetch("/admin/sessions", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log("\u2705 \u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
+          closeModal("addSessionModal");
+          if (window.notifications) {
+            window.notifications.show(result.message, "success");
+          }
+          this.reset();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1e3);
+        } else {
+          console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", result.message);
+          if (window.notifications) {
+            window.notifications.show(result.message, "error");
+          }
+        }
+      } catch (error) {
+        console.error("\u{1F4A5} \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
+        if (window.notifications) {
+          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+        }
+      }
+    });
+  } else {
+    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 addSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+  }
+  const editSessionForm = document.getElementById("editSessionForm");
+  if (editSessionForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 editSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    editSessionForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      await updateSession(this);
+    });
+  } else {
+    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 editSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+  }
+  const deleteSessionForm = document.getElementById("deleteSessionForm");
+  if (deleteSessionForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 deleteSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    deleteSessionForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      console.log("\u{1F3AF} \u0424\u043E\u0440\u043C\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430");
+      const sessionId = document.getElementById("sessionIdToDelete").value;
+      console.log("\u{1F3AF} ID \u0441\u0435\u0430\u043D\u0441\u0430 \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F:", sessionId);
+      await deleteMovieSession(sessionId);
+    });
+  } else {
+    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 deleteSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+  }
+}
+function openEditSessionModal(sessionId) {
+  console.log("\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430:", sessionId);
+  fetch(`/admin/sessions/${sessionId}/edit`).then((response) => response.json()).then((session) => {
+    console.log("\u0414\u0430\u043D\u043D\u044B\u0435 \u0441\u0435\u0430\u043D\u0441\u0430 \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F:", session);
+    document.getElementById("edit_session_id").value = session.id;
+    document.getElementById("edit_current_movie").textContent = session.movie.title;
+    document.getElementById("edit_current_hall").textContent = session.cinema_hall.hall_name;
+    document.getElementById("edit_current_time").textContent = new Date(session.session_start).toLocaleString("ru-RU");
+    document.getElementById("edit_movie_id").value = session.movie_id;
+    document.getElementById("edit_cinema_hall_id").value = session.cinema_hall_id;
+    const sessionStart = new Date(session.session_start);
+    document.getElementById("edit_session_date").value = sessionStart.toISOString().split("T")[0];
+    document.getElementById("edit_session_time").value = sessionStart.toTimeString().slice(0, 5);
+    document.getElementById("edit_is_actual").checked = session.is_actual;
+    document.getElementById("editSessionForm").action = `/admin/sessions/${sessionId}`;
+    openModal("editSessionModal");
+  }).catch((error) => {
+    console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+    }
+  });
+}
+async function updateSession(form) {
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435...";
+    const formData = new FormData(form);
+    const response = await fetch(form.action, {
+      method: "POST",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "X-Requested-With": "XMLHttpRequest",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        movie_id: formData.get("movie_id"),
+        cinema_hall_id: formData.get("cinema_hall_id"),
+        session_date: formData.get("session_date"),
+        session_time: formData.get("session_time"),
+        is_actual: formData.get("is_actual") === "1",
+        _method: "PUT"
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || `HTTP error! status: ${response.status}`);
+    }
+    if (result.success) {
+      window.notifications.show("\u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D!", "success");
+      closeModal("editSessionModal");
+      setTimeout(() => window.location.reload(), 1e3);
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430");
+    }
+  } catch (error) {
+    console.error("Error updating session:", error);
+    window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
+
+// public/js/modules/sales.js
+var SalesManager = class {
+  constructor(notificationSystem) {
+    this.notifications = notificationSystem;
+    this.init();
+  }
+  init() {
+    this.bindEvents();
+    console.log("\u2705 SalesManager initialized");
+  }
+  bindEvents() {
+    document.addEventListener("click", (e) => {
+      if (e.target.hasAttribute("data-toggle-sales")) {
+        e.preventDefault();
+        this.handleToggleSales(e.target);
+      }
+    });
+  }
+  async handleToggleSales(button) {
+    const hallId = button.getAttribute("data-toggle-sales");
+    const isActive = button.getAttribute("data-is-active") === "true";
+    try {
+      await this.toggleHallSales(hallId, isActive, button);
+    } catch (error) {
+      console.error("Error toggling sales:", error);
+      this.showNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0438 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u043F\u0440\u043E\u0434\u0430\u0436", "error");
+    }
+  }
+  async toggleHallSales(hallId, currentStatus, button) {
+    const response = await fetch("/admin/toggle-sales", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+      },
+      body: JSON.stringify({
+        hall_id: hallId,
+        action: currentStatus ? "deactivate" : "activate"
+      })
+    });
+    const data = await response.json();
+    if (data.success) {
+      this.updateUI(button, data.is_active);
+      this.showNotification(data.message, "success");
+    } else {
+      this.showNotification(data.message, "error");
+    }
+  }
+  updateUI(button, isActive) {
+    button.setAttribute("data-is-active", isActive);
+    button.textContent = isActive ? "\u041F\u0440\u0438\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0434\u0430\u0436\u0443 \u0431\u0438\u043B\u0435\u0442\u043E\u0432" : "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0440\u043E\u0434\u0430\u0436\u0443 \u0431\u0438\u043B\u0435\u0442\u043E\u0432";
+    button.classList.toggle("conf-step__button-warning", isActive);
+    button.classList.toggle("conf-step__button-accent", !isActive);
+    const listItem = button.closest("li");
+    const statusSpan = listItem.querySelector(".sales-status");
+    if (statusSpan) {
+      statusSpan.textContent = isActive ? "\u041F\u0440\u043E\u0434\u0430\u0436\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B" : "\u041F\u0440\u043E\u0434\u0430\u0436\u0438 \u043F\u0440\u0438\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B";
+      statusSpan.className = "sales-status " + (isActive ? "active" : "inactive");
+    }
+  }
+  showNotification(message, type = "info") {
+    if (this.notifications && typeof this.notifications.show === "function") {
+      this.notifications.show(message, type);
+    } else {
+      console.log(`${type.toUpperCase()}: ${message}`);
+    }
+  }
+  // Метод для принудительного обновления статуса (может пригодиться)
+  updateSalesStatus(hallId, isActive) {
+    const button = document.querySelector(`[data-toggle-sales="${hallId}"]`);
+    if (button) {
+      this.updateUI(button, isActive);
+    }
+  }
+  // Метод для массового управления (может пригодиться в будущем)
+  bulkToggleSales(action) {
+    const buttons = document.querySelectorAll("[data-toggle-sales]");
+    buttons.forEach((button) => {
+      const isActive = button.getAttribute("data-is-active") === "true";
+      if (action === "activate" && !isActive || action === "deactivate" && isActive) {
+        this.handleToggleSales(button);
+      }
+    });
+  }
+};
+var sales_default = SalesManager;
 
 // public/js/views/admin/dashboard.js
 async function loadHallConfiguration2(hallId) {
@@ -1430,7 +1565,7 @@ function changeTimelineDate(date) {
 function resetSessions() {
   console.log("Reset sessions");
 }
-function updateSession() {
+function updateSession2() {
   console.log("Update sessions");
 }
 document.addEventListener("DOMContentLoaded", function() {
@@ -1442,11 +1577,15 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("\u2705 NotificationSystem initialized");
     window.hallsManager = new halls_default(window.notifications);
     console.log("\u2705 HallsManager initialized");
+    window.salesManager = new sales_default(window.notifications);
+    console.log("\u2705 SalesManager initialized");
     initMovies();
     initMovieFilter();
     console.log("\u2705 Movies module initialized");
     initSchedules();
     console.log("\u2705 Schedules module initialized");
+    initSessionFormHandlers();
+    console.log("\u2705 Session form handlers initialized");
     initAccordeon();
     console.log("\u2705 Accordeon initialized");
   } catch (error) {
@@ -1458,7 +1597,7 @@ document.addEventListener("DOMContentLoaded", function() {
   window.openAddSessionModal = openAddSessionModal;
   window.changeTimelineDate = changeTimelineDate;
   window.resetSessions = resetSessions;
-  window.updateSession = updateSession;
+  window.updateSession = updateSession2;
   window.openModal = openModal;
   window.closeModal = closeModal;
   window.initAccordeon = initAccordeon;
@@ -1492,5 +1631,6 @@ document.addEventListener("DOMContentLoaded", function() {
   window.openCreateScheduleModal = openCreateScheduleModal;
   window.openEditScheduleModal = openEditScheduleModal;
   window.openDeleteScheduleModal = openDeleteScheduleModal;
-  window.deleteSchedule = openDeleteScheduleModal;
+  window.openEditSessionModal = openEditSessionModal;
+  window.openDeleteSessionModal = openDeleteSessionModal;
 });

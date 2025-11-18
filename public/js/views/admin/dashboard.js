@@ -60,9 +60,19 @@ import {
     openCreateScheduleModal,
     openEditScheduleModal,
     openDeleteScheduleModal,
-    initSchedules,
-    deleteSchedule
+    initSchedules
 } from '../../modules/schedules.js';
+
+// Импортируем функции управления сеансами
+import { 
+    initSessionFormHandlers, 
+    openEditSessionModal,
+    openDeleteSessionModal
+} from '../../modules/sessions.js';
+
+
+// Импортируем модуль продаж
+import SalesManager from '../../modules/sales.js';
 
 // Реальная функция загрузки конфигурации зала
 async function loadHallConfiguration(hallId) {
@@ -192,6 +202,10 @@ document.addEventListener('DOMContentLoaded', function() {
         window.hallsManager = new HallsManager(window.notifications);
         console.log('✅ HallsManager initialized');
 
+        // Инициализируем менеджер продаж
+        window.salesManager = new SalesManager(window.notifications);
+        console.log('✅ SalesManager initialized');
+
         // Инициализируем функциональность фильмов
         initMovies();
         initMovieFilter();
@@ -200,6 +214,9 @@ document.addEventListener('DOMContentLoaded', function() {
         // Инициализируем функциональность расписаний
         initSchedules();
         console.log('✅ Schedules module initialized');
+
+        initSessionFormHandlers();
+        console.log('✅ Session form handlers initialized');
         
         // Инициализируем аккордеон
         initAccordeon();
@@ -258,9 +275,12 @@ document.addEventListener('DOMContentLoaded', function() {
     window.fetchMovies = fetchMovies;
     window.previewMoviePoster = previewMoviePoster;
 
-    // Экспортируем функции управления расписанием (из импорта)
+    // Экспортируем функции управления расписанием
     window.openCreateScheduleModal = openCreateScheduleModal;
     window.openEditScheduleModal = openEditScheduleModal;
     window.openDeleteScheduleModal = openDeleteScheduleModal;
-    window.deleteSchedule = deleteSchedule;
+
+    // Экспортируем функции управления сеансами
+    window.openEditSessionModal = openEditSessionModal;
+    window.openDeleteSessionModal = openDeleteSessionModal;
 });

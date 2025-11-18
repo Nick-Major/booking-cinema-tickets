@@ -52,4 +52,20 @@ class CinemaHall extends Model
         
         return $this->schedules()->where('date', $dateString)->first();
     }
+
+    public function isTimeSlotAvailable($startTime, $endTime, $ignoreSessionId = null)
+    {
+        $query = $this->movieSessions()
+            ->where('is_actual', true)
+            ->where(function($q) use ($startTime, $endTime) {
+                $q->where('session_start', '<', $endTime)
+                ->where('session_end', '>', $startTime);
+            });
+
+        if ($ignoreSessionId) {
+            $query->where('id', '!=', $ignoreSessionId);
+        }
+
+        return !$query->exists();
+    }
 }

@@ -52,10 +52,10 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::post('/halls/{hall}/save-configuration', [CinemaHallController::class, 'saveConfiguration'])->name('halls.save-configuration');
     Route::post('/halls/{hall}/update-prices', [CinemaHallController::class, 'updatePrices'])->name('halls.update-prices');
     Route::post('/halls/{hall}/reset-configuration', [CinemaHallController::class, 'resetConfiguration'])->name('halls.reset-configuration');
-
+    Route::get('/halls/{hall}/schedule-info', [CinemaHallController::class, 'scheduleInfo'])->name('halls.schedule-info');
+    
     // Маршруты для расписания залов
     Route::resource('hall-schedules', HallScheduleController::class)->only(['store', 'update', 'edit']);
-    Route::delete('/admin/hall-schedules/{hall_schedule}', [HallScheduleController::class, 'destroy'])->name('hall-schedules.destroy');
     Route::delete('/hall-schedules/{hall_schedule}', [HallScheduleController::class, 'destroy'])->name('hall-schedules.destroy');
     Route::get('/hall-schedules/{hall_schedule}/check-edit', [HallScheduleController::class, 'checkEditPossibility'])->name('hall-schedules.check-edit');
     
