@@ -59,6 +59,7 @@ import {
 import {
     openCreateScheduleModal,
     openEditScheduleModal,
+    openDeleteScheduleModal,
     initSchedules,
     deleteSchedule
 } from '../../modules/schedules.js';
@@ -260,5 +261,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Экспортируем функции управления расписанием (из импорта)
     window.openCreateScheduleModal = openCreateScheduleModal;
     window.openEditScheduleModal = openEditScheduleModal;
+    window.openDeleteScheduleModal = openDeleteScheduleModal;
     window.deleteSchedule = deleteSchedule;
 });

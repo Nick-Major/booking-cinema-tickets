@@ -56,6 +56,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     // Маршруты для расписания залов
     Route::resource('hall-schedules', HallScheduleController::class)->only(['store', 'update', 'edit']);
     Route::delete('/admin/hall-schedules/{hall_schedule}', [HallScheduleController::class, 'destroy'])->name('hall-schedules.destroy');
+    Route::delete('/hall-schedules/{hall_schedule}', [HallScheduleController::class, 'destroy'])->name('hall-schedules.destroy');
+    Route::get('/hall-schedules/{hall_schedule}/check-edit', [HallScheduleController::class, 'checkEditPossibility'])->name('hall-schedules.check-edit');
     
     // Маршруты для фильмов
     Route::get('/movies', [MovieController::class, 'index'])->name('movies.index');

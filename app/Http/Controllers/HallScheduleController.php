@@ -163,7 +163,7 @@ class HallScheduleController extends Controller
         return $time->between($scheduleTime, $scheduleEndTime);
     }
 
-    public function destroy(HallSchedule $hallSchedule)
+    public function destroy(Request $request, HallSchedule $hallSchedule)
     {
         try {
             // Проверяем, активен ли зал
@@ -174,17 +174,70 @@ class HallScheduleController extends Controller
                 ], 422);
             }
 
+            // Получаем дату из запроса (текущая дата в интерфейсе)
+            $currentDate = $request->input('current_date');
+            
+            // Проверяем, что удаляем расписание на правильную дату
+            if ($hallSchedule->date->format('Y-m-d') !== $currentDate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Нельзя удалить расписание на другую дату'
+                ], 422);
+            }
+
+            // Удаляем все сеансы на эту дату в этом зале
+            $deletedSessionsCount = MovieSession::where('cinema_hall_id', $hallSchedule->cinema_hall_id)
+                ->whereDate('session_start', $hallSchedule->date)
+                ->delete();
+
+            // Удаляем само расписание
             $hallSchedule->delete();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Расписание успешно удалено'
+                'message' => "Расписание удалено. Удалено сеансов: {$deletedSessionsCount}",
+                'deleted_sessions_count' => $deletedSessionsCount
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error deleting schedule: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при удалении расписания: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Метод для проверки возможности редактирования расписания
+    public function checkEditPossibility(HallSchedule $hallSchedule)
+    {
+        try {
+            // Находим самый поздний сеанс на эту дату
+            $latestSession = MovieSession::where('cinema_hall_id', $hallSchedule->cinema_hall_id)
+                ->whereDate('session_start', $hallSchedule->date)
+                ->orderBy('session_start', 'desc')
+                ->first();
+
+            $minEndTime = '00:00'; // Минимальное время окончания
+            
+            if ($latestSession) {
+                // Время окончания последнего сеанса (фильм + реклама + уборка)
+                $sessionEnd = $latestSession->session_start->copy()
+                    ->addMinutes($latestSession->getTotalDuration());
+                $minEndTime = $sessionEnd->format('H:i');
+            }
+
+            return response()->json([
+                'success' => true,
+                'min_end_time' => $minEndTime,
+                'has_sessions' => !is_null($latestSession),
+                'latest_session_end' => $minEndTime
             ]);
 
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ошибка при удалении расписания: ' . $e->getMessage()
+                'message' => 'Ошибка при проверке возможности редактирования'
             ], 500);
         }
     }

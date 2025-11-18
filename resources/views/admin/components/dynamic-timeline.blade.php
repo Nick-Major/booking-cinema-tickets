@@ -63,7 +63,7 @@
                         <div class="conf-step__seances-movie-time">
                             <span>{{ $position['start_time'] }}</span>
                             @if($isOvernight)
-                                <span class="conf-step__overnight-indicator">🌙</span>
+                                <span class="conf-step__overnight-indicator" title="Ночной сеанс"></span>
                             @endif
                         </div>
                     </div>

@@ -467,12 +467,6 @@ select {
   margin: 35px;
 }
 
-.conf-step__seances-title {
-  font-weight: 500;
-  font-size: 1.6rem;
-  text-transform: uppercase;
-}
-
 .conf-step__timeline-hour {
   position: absolute;
   top: 0;
@@ -956,13 +950,12 @@ select {
 }
 
 .conf-step__seances-movie-time {
-  font-size: 1rem;
-  margin: 0;
-  opacity: 0.9;
-  font-weight: 500;
   display: flex;
   align-items: center;
   gap: 4px;
+  font-size: 1.2rem;
+  color: #666;
+  margin-top: 4px;
 }
 
 .conf-step__duration-indicator {
@@ -976,10 +969,6 @@ select {
   font-size: 0.8rem;
   font-weight: 500;
   z-index: 10;
-}
-
-.conf-step__overnight-indicator {
-  font-size: 0.9rem;
 }
 
 .conf-step__empty-sessions {
@@ -1223,13 +1212,6 @@ select {
   z-index: 2;
 }
 
-/* Стили для расписания залов */
-.conf-step__hall-title-section {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-}
-
 .conf-step__hall-schedule {
   background: #e3f2fd;
   padding: 4px 8px;
@@ -1240,13 +1222,14 @@ select {
 }
 
 .conf-step__button-schedule {
-  background-color: #4caf50;
+  background: #63536C;
   color: white;
-  padding: 4px;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 1.4rem;
 }
-
 .conf-step__button-schedule:hover {
-  background-color: #45a049;
+  background: #7a6785;
 }
 
 .conf-step__no-schedule {
@@ -1296,53 +1279,126 @@ select {
 
 .conf-step__schedule-controls {
   display: flex;
-  gap: 8px;
-  margin-left: 15px;
+  gap: 5px;
 }
 .conf-step__schedule-controls .conf-step__button {
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  padding: 0;
+  margin: 0;
+  border-radius: 3px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.4rem;
-  padding: 0;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-  background: white;
+  opacity: 1;
   transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.3);
 }
 .conf-step__schedule-controls .conf-step__button:hover {
   transform: scale(1.1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-color: rgba(0, 0, 0, 0.6);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+.conf-step__schedule-controls .conf-step__button.conf-step__button-small {
+  background-size: 14px 14px !important;
 }
 .conf-step__schedule-controls .conf-step__button.conf-step__button-regular {
-  color: #63536C;
-  border-color: #63536C;
+  background-color: #ffffff;
+  background-image: url("/images/admin/pencil.png");
+  background-size: 14px 14px !important;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 .conf-step__schedule-controls .conf-step__button.conf-step__button-regular:hover {
-  background: #63536C;
-  color: white;
+  background-color: #f8f8f8;
 }
-.conf-step__schedule-controls .conf-step__button.conf-step__button-warning {
-  color: #dc3545;
-  border-color: #dc3545;
+.conf-step__schedule-controls .conf-step__button.conf-step__button-trash {
+  background-color: #ffffff;
+  background-image: url("/images/admin/trash-icon.png") !important;
+  background-repeat: no-repeat;
+  background-size: 14px 14px !important;
+  background-position: center;
 }
-.conf-step__schedule-controls .conf-step__button.conf-step__button-warning:hover {
-  background: #dc3545;
-  color: white;
+.conf-step__schedule-controls .conf-step__button.conf-step__button-trash:hover {
+  background-color: #fff5f5;
 }
 
 .conf-step__hall-title-section {
   display: flex;
   align-items: center;
   gap: 15px;
+  position: relative;
+  width: 100%;
+  justify-content: space-between;
 }
-.conf-step__hall-title-section .conf-step__seances-title {
-  margin: 0;
-  font-size: 1.8rem;
-  font-weight: 700;
-  color: #63536c;
+
+.conf-step__schedule-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px 15px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border-left: 4px solid #63536C;
+  font-size: 1.4rem;
+}
+.conf-step__schedule-info .schedule-label {
+  font-weight: 600;
+  color: #63536C;
+}
+.conf-step__schedule-info .schedule-time {
+  color: #333;
+  font-weight: 500;
+}
+.conf-step__schedule-info .schedule-overnight {
+  color: #8560a8;
+  font-style: italic;
+  font-size: 1.3rem;
+}
+
+.conf-step__overnight-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 6px;
+  padding: 2px 6px 2px 4px;
+  background: rgba(133, 96, 168, 0.1);
+  border-radius: 4px;
+  color: #8560a8;
+  font-weight: 500;
+}
+.conf-step__overnight-indicator::before {
+  content: "";
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  background: currentColor;
+  border-radius: 50%;
+  box-shadow: -3px -3px 0 currentColor;
+  opacity: 0.8;
+}
+.conf-step__overnight-indicator--large {
+  font-size: 1.1rem;
+}
+.conf-step__overnight-indicator--small {
+  font-size: 0.9rem;
+}
+
+.conf-step__paragraph--warning {
+  color: #dc3545;
+  background: #fff5f5;
+  padding: 10px;
+  border-radius: 4px;
+  border-left: 4px solid #dc3545;
+}
+
+input[type=time]:disabled,
+input[type=text]:disabled {
+  background: #f8f9fa;
+  color: #6c757d;
+  cursor: not-allowed;
 }
 
 /*# sourceMappingURL=styles.css.map */

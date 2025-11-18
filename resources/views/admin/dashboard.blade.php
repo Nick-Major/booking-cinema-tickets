@@ -211,21 +211,21 @@
                         <div class="conf-step__hall-header">
                             <div class="conf-step__hall-title-section">
                                 <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
+
                                 @if($schedule)
-                                    <!-- Кнопки управления расписанием ПЕРЕНЕСЕМ СЮДА -->
+                                    <!-- Кнопки управления расписанием - ПРАВЫЙ ВЕРХНИЙ УГОЛ -->
                                     <div class="conf-step__schedule-controls">
                                         <button class="conf-step__button conf-step__button-small conf-step__button-regular"
                                                 onclick="openEditScheduleModal({{ $schedule->id }})"
                                                 title="Редактировать расписание">
-                                            ✏️
                                         </button>
-                                        <button class="conf-step__button conf-step__button-small conf-step__button-warning"
-                                                onclick="deleteSchedule({{ $schedule->id }}, {{ $hall->id }})"
+                                        <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                                                onclick="openDeleteScheduleModal({{ $schedule->id }}, {{ $hall->id }}, '{{ $hall->hall_name }}', '{{ $currentDate }}')"
                                                 title="Удалить расписание">
-                                            🗑️
                                         </button>
                                     </div>
                                 @endif
+
                             </div>
 
                             @if(!$schedule)
@@ -240,10 +240,10 @@
                             <!-- Блок когда расписание создано -->
                             <div class="conf-step__schedule-created">
                                 <div class="conf-step__schedule-info">
-                                    <strong>Расписание:</strong>
-                                    <span class="schedule-time">{{ $schedule->formatted_time }}</span>
+                                    <span class="schedule-label">Расписание:</span>
+                                    <span class="schedule-time">{{ $schedule->start_time }} - {{ $schedule->end_time }}</span>
                                     @if($schedule->overnight)
-                                        <span class="schedule-overnight">🌙 (до следующего дня)</span>
+                                        <span class="schedule-overnight">(ночной режим)</span>
                                     @endif
                                 </div>
 
@@ -318,6 +318,8 @@
   @include('admin.modals.edit-session-modal')
   @include('admin.modals.reset-hall-configuration-modal')
   @include('admin.modals.hall-schedule-modal')
+  @include('admin.modals.edit-schedule-modal')
+  @include('admin.modals.delete-schedule-modal')
   
   <!-- Выход -->
   <form action="{{ route('logout') }}" method="POST" style="text-align: center; margin-top: 20px;">
