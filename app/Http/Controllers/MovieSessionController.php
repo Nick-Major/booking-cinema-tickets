@@ -92,137 +92,6 @@ class MovieSessionController extends Controller
         ];
     }
 
-    // public function store(Request $request)
-    // {
-    //     \Log::info('🎯 === SESSION STORE METHOD CALLED ===');
-        
-    //     try {
-    //         $validated = $request->validate([
-    //             'movie_id' => 'required|exists:movies,id',
-    //             'cinema_hall_id' => 'required|exists:cinema_halls,id',
-    //             'session_date' => 'required|date',
-    //             'session_time' => 'required|date_format:H:i',
-    //         ]);
-
-    //         // Проверка существования зала и фильма
-    //         $hall = CinemaHall::find($validated['cinema_hall_id']);
-    //         $movie = Movie::find($validated['movie_id']);
-            
-    //         if (!$hall || !$movie) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'Зал или фильм не найден'
-    //             ], 422);
-    //         }
-
-    //         // СОЗДАНИЕ СЕАНСА
-    //         $sessionStart = \Carbon\Carbon::createFromFormat(
-    //             'Y-m-d H:i', 
-    //             $validated['session_date'] . ' ' . $validated['session_time']
-    //         );
-
-    //         // РАССЧИТЫВАЕМ session_end ЕДИНООБРАЗНО
-    //         $totalDuration = $movie->movie_duration + 10 + 15; // фильм + реклама + уборка
-    //         $sessionEnd = $sessionStart->copy()->addMinutes($totalDuration);
-
-    //         // ВАЛИДАЦИЯ ПРОТИВ РАСПИСАНИЯ
-    //         $scheduleValidation = $this->validateSessionAgainstSchedule(
-    //             $sessionStart,
-    //             $sessionEnd,
-    //             $hall->id,
-    //             $validated['session_date']
-    //         );
-
-    //         if (!$scheduleValidation['is_valid']) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => implode(', ', $scheduleValidation['errors'])
-    //             ], 422);
-    //         }
-
-    //         // ОБЩАЯ ВАЛИДАЦИЯ ВРЕМЕНИ
-    //         $timeValidation = $this->validateSessionTime($sessionStart, $sessionEnd);
-    //         if (!$timeValidation['is_valid']) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => implode(', ', $timeValidation['errors'])
-    //             ], 422);
-    //         }
-
-    //         // === НОВАЯ ПРОВЕРКА КОНФЛИКТОВ ===
-    //         // Проверка конфликтов с улучшенной логикой
-    //         $isTimeSlotAvailable = $hall->isTimeSlotAvailable($sessionStart, $sessionEnd);
-
-    //         if (!$isTimeSlotAvailable) {
-    //             \Log::info('Время занято - обнаружены конфликтующие сеансы', [
-    //                 'hall_id' => $hall->id,
-    //                 'requested_start' => $sessionStart->format('Y-m-d H:i'),
-    //                 'requested_end' => $sessionEnd->format('Y-m-d H:i'),
-    //                 'movie' => $movie->title
-    //             ]);
-                
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'В выбранном зале в это время уже есть сеанс'
-    //             ], 422);
-    //         }
-
-    //         // Также оставляем проверку через hasTimeConflict() для двойной проверки
-    //         $tempSession = new MovieSession([
-    //             'movie_id' => $validated['movie_id'],
-    //             'cinema_hall_id' => $validated['cinema_hall_id'],
-    //             'session_start' => $sessionStart,
-    //             'session_end' => $sessionEnd
-    //         ]);
-
-    //         if ($tempSession->hasTimeConflict()) {
-    //             return response()->json([
-    //                 'success' => false,
-    //                 'message' => 'В выбранном зале в это время уже есть сеанс'
-    //             ], 422);
-    //         }
-    //         // === КОНЕЦ НОВОЙ ПРОВЕРКИ КОНФЛИКТОВ ===
-
-    //         // СОЗДАНИЕ СЕАНСА
-    //         $session = MovieSession::create([
-    //             'movie_id' => $validated['movie_id'],
-    //             'cinema_hall_id' => $validated['cinema_hall_id'],
-    //             'session_start' => $sessionStart,
-    //             'session_end' => $sessionEnd,
-    //             'is_actual' => true
-    //         ]);
-
-    //         \Log::info('✅ Сеанс успешно создан', [
-    //             'session_id' => $session->id,
-    //             'movie' => $movie->title,
-    //             'hall' => $hall->hall_name,
-    //             'start' => $sessionStart->format('Y-m-d H:i'),
-    //             'end' => $sessionEnd->format('Y-m-d H:i')
-    //         ]);
-
-    //         return response()->json([
-    //             'success' => true,
-    //             'message' => 'Сеанс успешно создан!',
-    //             'session' => $session->load(['movie', 'cinemaHall'])
-    //         ]);
-
-    //     } catch (\Illuminate\Validation\ValidationException $e) {
-    //         \Log::error('Ошибка валидации при создании сеанса', ['errors' => $e->errors()]);
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Ошибка валидации: ' . implode(', ', array_merge(...array_values($e->errors())))
-    //         ], 422);
-    //     } catch (\Exception $e) {
-    //         \Log::error('💥 CRITICAL ERROR при создании сеанса: ' . $e->getMessage(), [
-    //             'trace' => $e->getTraceAsString()
-    //         ]);
-    //         return response()->json([
-    //             'success' => false,
-    //             'message' => 'Критическая ошибка: ' . $e->getMessage()
-    //         ], 500);
-    //     }
-    // }
-
     public function store(Request $request)
     {
         try {
@@ -377,7 +246,19 @@ class MovieSessionController extends Controller
 
     public function show(MovieSession $movieSession)
     {
-        return $movieSession->load(['movie', 'cinemaHall', 'tickets.seat']);
+        // Загружаем связанные данные
+        $movieSession->load(['movie', 'cinemaHall']);
+        
+        return response()->json([
+            'id' => $movieSession->id,
+            'movie_id' => $movieSession->movie_id,
+            'cinema_hall_id' => $movieSession->cinema_hall_id,
+            'session_start' => $movieSession->session_start,
+            'session_end' => $movieSession->session_end,
+            'is_actual' => $movieSession->is_actual,
+            'movie' => $movieSession->movie,
+            'cinema_hall' => $movieSession->cinemaHall
+        ]);
     }
 
     public function update(Request $request, MovieSession $movieSession)
@@ -403,15 +284,17 @@ class MovieSessionController extends Controller
             $totalDuration = $movie->movie_duration + 10 + 15;
             $sessionEnd = $sessionStart->copy()->addMinutes($totalDuration);
 
-            // Проверяем конфликты (исключая текущий сеанс)
-            $tempSession = new MovieSession([
-                'movie_id' => $validated['movie_id'],
-                'cinema_hall_id' => $validated['cinema_hall_id'],
-                'session_start' => $sessionStart,
-                'session_end' => $sessionEnd
-            ]);
+            // ПРЯМАЯ ПРОВЕРКА КОНФЛИКТОВ (исключая текущий сеанс)
+            $conflictingSession = MovieSession::where('cinema_hall_id', $validated['cinema_hall_id'])
+                ->where('id', '!=', $movieSession->id)
+                ->where('is_actual', true)
+                ->where(function($query) use ($sessionStart, $sessionEnd) {
+                    $query->where('session_start', '<', $sessionEnd)
+                        ->where('session_end', '>', $sessionStart);
+                })
+                ->first();
 
-            if ($tempSession->hasTimeConflict()) {
+            if ($conflictingSession) {
                 return response()->json([
                     'success' => false,
                     'message' => 'В выбранном зале в это время уже есть сеанс'

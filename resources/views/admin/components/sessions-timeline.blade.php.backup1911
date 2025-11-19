@@ -30,8 +30,8 @@
     <div class="conf-step__timeline-vertical">
         @forelse($halls as $hall)
             @php
-                $hallSchedule = $hallSchedules[$hall->id] ?? null;
-                $hallSessions = $sessions->get($hall->id, collect())->sortBy('session_start');
+                $hallSessions = $sessions->where('cinema_hall_id', $hall->id)
+                    ->sortBy('session_start');
                     
                 // Проверяем, есть ли очень длинные сеансы для подсказки прокрутки
                 $hasLongSessions = $hallSessions->contains(function($session) {
@@ -58,8 +58,7 @@
                             'hallSessions' => $hallSessions,
                             'selectedDate' => $selectedDate,
                             'currentDate' => $currentDate,
-                            'hall' => $hall,
-                            'schedule' => $hallSchedule  // ПЕРЕДАЕМ РАСПИСАНИЕ В КОМПОНЕНТ
+                            'hall' => $hall
                         ])
                     </div>
                 </div>

@@ -205,6 +205,13 @@ class HallScheduleController extends Controller
     public function destroy(Request $request, HallSchedule $hallSchedule)
     {
         try {
+            \Log::info('🗑️ Удаление расписания', [
+                'schedule_id' => $hallSchedule->id,
+                'hall_id' => $hallSchedule->cinema_hall_id,
+                'date' => $hallSchedule->date,
+                'request_data' => $request->all()
+            ]);
+
             // Проверяем, активен ли зал
             if ($hallSchedule->cinemaHall->is_active) {
                 return response()->json([
@@ -215,7 +222,7 @@ class HallScheduleController extends Controller
 
             // Получаем дату из запроса (текущая дата в интерфейсе)
             $currentDate = $request->input('current_date');
-            
+
             // Проверяем, что удаляем расписание на правильную дату
             if ($hallSchedule->date->format('Y-m-d') !== $currentDate) {
                 return response()->json([
@@ -224,13 +231,22 @@ class HallScheduleController extends Controller
                 ], 422);
             }
 
-            // Удаляем все сеансы на эту дату в этом зале
+            // Удаляем все сеансы, которые попадают в это расписание
+            $scheduleStart = $hallSchedule->getScheduleStart();
+            $scheduleEnd = $hallSchedule->getScheduleEnd();
+
             $deletedSessionsCount = MovieSession::where('cinema_hall_id', $hallSchedule->cinema_hall_id)
-                ->whereDate('session_start', $hallSchedule->date)
+                ->where('session_start', '>=', $scheduleStart)
+                ->where('session_start', '<', $scheduleEnd)
                 ->delete();
 
             // Удаляем само расписание
             $hallSchedule->delete();
+
+            \Log::info('✅ Расписание удалено', [
+                'schedule_id' => $hallSchedule->id,
+                'deleted_sessions' => $deletedSessionsCount
+            ]);
 
             return response()->json([
                 'success' => true,
@@ -239,7 +255,10 @@ class HallScheduleController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('Error deleting schedule: ' . $e->getMessage());
+            \Log::error('❌ Ошибка удаления расписания: ' . $e->getMessage(), [
+                'schedule_id' => $hallSchedule->id,
+                'error' => $e->getMessage()
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при удалении расписания: ' . $e->getMessage()

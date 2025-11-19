@@ -4,16 +4,31 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Редактирование сеанса
-          <a class="popup__dismiss" href="#" onclick="closeEditSessionModal(event)">
+          <a class="popup__dismiss" href="#" onclick="closeModal('editSessionModal')">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
       </div>
+      
       <div class="popup__wrapper">
         <form id="editSessionForm" method="POST">
           @csrf
-          @method('PUT')
-          
+          <input type="hidden" name="_method" value="PUT">
+          <input type="hidden" id="edit_session_id" name="session_id">
+
+          <!-- Информация о текущем сеансе -->
+          <div class="conf-step__info-box">
+            <div class="conf-step__info-item">
+              <strong>Текущий сеанс:</strong> <span id="edit_current_movie">-</span>
+            </div>
+            <div class="conf-step__info-item">
+              <strong>Текущий зал:</strong> <span id="edit_current_hall">-</span>
+            </div>
+            <div class="conf-step__info-item">
+              <strong>Текущее время:</strong> <span id="edit_current_time">-</span>
+            </div>
+          </div>
+
           <label class="conf-step__label conf-step__label-fullsize" for="edit_movie_id">
             Фильм
             <select class="conf-step__input" name="movie_id" id="edit_movie_id" required>
@@ -29,35 +44,51 @@
             <select class="conf-step__input" name="cinema_hall_id" id="edit_cinema_hall_id" required>
               <option value="">Выберите зал</option>
               @foreach($halls as $hall)
-                @if(isset($movie) && $movie)
                 <option value="{{ $hall->id }}">{{ $hall->hall_name }}</option>
-                @endif
               @endforeach
             </select>
           </label>
-          
-          <label class="conf-step__label conf-step__label-fullsize" for="edit_session_start">
-            Время начала
-            <input class="conf-step__input" type="datetime-local" name="session_start" id="edit_session_start" required>
+
+          <label class="conf-step__label conf-step__label-fullsize" for="edit_session_date">
+            Дата
+            <input class="conf-step__input" 
+                  type="date" 
+                  name="session_date" 
+                  id="edit_session_date" 
+                  required>
           </label>
-          
+
+          <label class="conf-step__label conf-step__label-fullsize" for="edit_session_time">
+            Время начала
+            <input class="conf-step__input" 
+                  type="time" 
+                  name="session_time" 
+                  id="edit_session_time" 
+                  required>
+          </label>
+
           <label class="conf-step__label">
             <input type="checkbox" name="is_actual" id="edit_is_actual" value="1">
             Активный сеанс
           </label>
           
-          <div class="conf-step__buttons text-center">
+          <div class="conf-step__buttons text-center" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <button type="submit" class="conf-step__button conf-step__button-accent">
-              Сохранить
+              Сохранить изменения
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeEditSessionModal(event)">
+                    onclick="closeModal('editSessionModal')">
               Отменить
             </button>
-            <button type="button" class="conf-step__button conf-step__button-regular" 
-                    id="edit_delete_button" 
-                    style="background-color: #ff4444; color: white;">
-              Удалить
+            <button type="button" class="conf-step__button conf-step__button-danger" 
+                    id="edit_delete_button"
+                    onclick="openDeleteSessionModal(
+                        document.getElementById('edit_session_id').value,
+                        document.getElementById('edit_current_movie').textContent,
+                        document.getElementById('edit_current_hall').textContent,
+                        document.getElementById('edit_current_time').textContent
+                    )">
+                Удалить сеанс
             </button>
           </div>
         </form>

@@ -47,27 +47,20 @@ class TicketController extends Controller
             'seat_id' => 'required|exists:seats,id',
         ]);
 
-        // Для гостей создаем временного пользователя
-        // В реальном приложении здесь была бы регистрация/авторизация
-        $guestUser = User::firstOrCreate(
-            ['email' => 'guest@cinema.local'],
-            [
-                'name' => 'Гость',
-                'password' => bcrypt(uniqid()),
-                'is_admin' => false
-            ]
-        );
-
         // Используем транзакцию для защиты от дублирования
-        return DB::transaction(function () use ($validated, $guestUser) {
+        return DB::transaction(function () use ($validated) {
+            // ПРОВЕРКА ДОСТУПНОСТИ - ДОБАВЛЕНО
             $checkResult = $this->checkBookingAvailability(
-                $validated['movie_session_id'], 
+                $validated['movie_session_id'],
                 $validated['seat_id']
             );
 
             if (!$checkResult['available']) {
                 return back()->with('error', $checkResult['message']);
             }
+
+            // УЛУЧШЕННАЯ СИСТЕМА ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ
+            $guestUser = $this->createGuestUser();
 
             // Создаем билет
             $ticket = Ticket::create([
@@ -82,6 +75,19 @@ class TicketController extends Controller
             // Перенаправляем на страницу подтверждения
             return redirect()->route('tickets.confirmation', $ticket);
         });
+    }
+
+    private function createGuestUser(): User
+    {
+        $timestamp = now()->timestamp;
+        $random = \Str::random(8);
+        
+        return User::create([
+            'name' => 'Гость_' . $timestamp,
+            'email' => "guest_{$timestamp}_{$random}@cinema.local",
+            'password' => bcrypt(\Str::random(32)),
+            'is_admin' => false
+        ]);
     }
 
     // Страница подтверждения бронирования

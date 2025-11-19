@@ -56,7 +56,7 @@
           <!-- Подсказка о расписании -->
           <div class="conf-step__schedule-hint" id="scheduleHint" style="display: none;">
             <div class="conf-step__alert conf-step__alert--info">
-              💡 <strong>Расписание зала:</strong> 
+              <strong>Расписание зала:</strong> 
               <span id="allowedTimeRange"></span>
             </div>
           </div>

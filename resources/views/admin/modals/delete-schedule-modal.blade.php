@@ -4,7 +4,7 @@
       <div class="popup__header">
         <h2 class="popup__title">
           Удаление расписания
-          <a class="popup__dismiss" href="#" data-close-modal="deleteScheduleModal">
+          <a class="popup__dismiss" href="#" onclick="closeModal('deleteScheduleModal')">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
@@ -15,13 +15,25 @@
           @method('DELETE')
           <input type="hidden" name="schedule_id" id="scheduleIdToDelete">
           <input type="hidden" name="current_date" id="currentScheduleDate">
-          <p class="conf-step__paragraph">Вы действительно хотите удалить расписание для зала <span id="scheduleHallName">"Название зала"</span> на <span id="scheduleDate">"дату"</span>?</p>
-          <p class="conf-step__paragraph conf-step__paragraph--warning">
-            Вместе с расписанием будут удалены все сеансы на эту дату.
+          
+          <p class="conf-step__paragraph">
+            Вы действительно хотите удалить расписание для зала 
+            <strong><span id="scheduleHallName">"Название зала"</span></strong> 
+            на <strong><span id="scheduleDate">"дату"</span></strong>?
           </p>
+          
+          <p class="conf-step__paragraph conf-step__paragraph--warning">
+              Вместе с расписанием будут удалены все сеансы на эту дату.
+          </p>
+          
           <div class="conf-step__buttons text-center">
-            <button type="submit" class="conf-step__button conf-step__button-accent">Удалить</button>
-            <button type="button" class="conf-step__button conf-step__button-regular" data-close-modal="deleteScheduleModal">Отменить</button>
+            <button type="submit" class="conf-step__button conf-step__button-accent">
+              Удалить
+            </button>
+            <button type="button" class="conf-step__button conf-step__button-regular" 
+                    onclick="closeModal('deleteScheduleModal')">
+              Отменить
+            </button>
           </div>
         </form>
       </div>

@@ -24,13 +24,28 @@ class AdminController extends Controller
             ->get()
             ->keyBy('cinema_hall_id');
         
-        // Получаем сеансы для отображения в таймлайне
-        $sessions = MovieSession::whereDate('session_start', $currentDate)
-            ->with('movie')
-            ->get()
-            ->groupBy('cinema_hall_id');
+        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Правильно получаем сеансы для каждой даты
+        $sessions = collect();
         
-        // Вычисляем даты для навигации ← ДОБАВИТЬ ЭТО
+        foreach ($halls as $hall) {
+            $schedule = $hallSchedules[$hall->id] ?? null;
+            
+            if ($schedule) {
+                // Используем новый метод из модели HallSchedule
+                $hallSessions = $schedule->getSessionsWithinSchedule();
+                $sessions = $sessions->merge($hallSessions);
+            } else {
+                // Если расписания нет, используем старую логику
+                $hallSessions = MovieSession::where('cinema_hall_id', $hall->id)
+                    ->whereDate('session_start', $currentDate)
+                    ->with('movie')
+                    ->get();
+                $sessions = $sessions->merge($hallSessions);
+            }
+        }
+        
+        $sessions = $sessions->groupBy('cinema_hall_id');
+
         $prevDate = $selectedDate->copy()->subDay()->format('Y-m-d');
         $nextDate = $selectedDate->copy()->addDay()->format('Y-m-d');
         
@@ -41,8 +56,8 @@ class AdminController extends Controller
             'selectedDate',
             'hallSchedules',
             'sessions',
-            'prevDate',    // ← ДОБАВИТЬ ЭТО
-            'nextDate'     // ← ДОБАВИТЬ ЭТО
+            'prevDate',
+            'nextDate'
         ));
     }
 

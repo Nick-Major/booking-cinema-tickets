@@ -63,6 +63,63 @@ async function createSchedule(form) {
     }
 }
 
+// Функция для удаления расписания
+async function deleteSchedule(form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+
+    try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Удаление...';
+
+        const scheduleId = document.getElementById('scheduleIdToDelete').value;
+        const currentDate = document.getElementById('currentScheduleDate').value;
+
+        console.log('🗑️ Удаление расписания:', { scheduleId, currentDate });
+
+        const response = await fetch(`/admin/hall-schedules/${scheduleId}`, {
+            method: 'DELETE',
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                current_date: currentDate
+            })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || `HTTP error! status: ${response.status}`);
+        }
+
+        if (result.success) {
+            console.log('✅ Расписание успешно удалено');
+            if (window.notifications) {
+                window.notifications.show(result.message, 'success');
+            }
+            closeModal('deleteScheduleModal');
+            // Перезагружаем страницу через 1 секунду
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            throw new Error(result.message || 'Ошибка при удалении расписания');
+        }
+
+    } catch (error) {
+        console.error('❌ Ошибка удаления расписания:', error);
+        if (window.notifications) {
+            window.notifications.show('Ошибка: ' + error.message, 'error');
+        }
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+    }
+}
+
 // Основные функции работы с расписаниями
 async function updateSchedule(form) {
     const submitBtn = form.querySelector('button[type="submit"]');
@@ -140,6 +197,10 @@ export function openEditScheduleModal(scheduleId) {
 }
 
 export function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
+    console.log('🗑️ Открытие модального окна удаления расписания:', {
+        scheduleId, hallId, hallName, currentDate
+    });
+
     document.getElementById('scheduleIdToDelete').value = scheduleId;
     document.getElementById('currentScheduleDate').value = currentDate;
     document.getElementById('scheduleHallName').textContent = hallName;
@@ -159,6 +220,8 @@ export function openCreateScheduleModal(hallId, date, hallName = '') {
 
 // Инициализация
 export function initSchedules() {
+    console.log('🎯 Инициализация модуля расписаний...');
+
     // Обработчики для формы редактирования
     const editScheduleForm = document.getElementById('editScheduleForm');
     if (editScheduleForm) {
@@ -166,6 +229,7 @@ export function initSchedules() {
             e.preventDefault();
             await updateSchedule(this);
         });
+        console.log('✅ Обработчик формы редактирования установлен');
     }
 
     // Обработчики для формы создания расписания
@@ -173,15 +237,21 @@ export function initSchedules() {
     if (hallScheduleForm) {
         hallScheduleForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            await createSchedule(this); // ← ДОБАВЛЕНО ВЫЗОВ ФУНКЦИИ!
+            await createSchedule(this);
         });
+        console.log('✅ Обработчик формы создания установлен');
     }
 
+    // Обработчики для формы удаления расписания - ИСПРАВЛЕНО
     const deleteScheduleForm = document.getElementById('deleteScheduleForm');
     if (deleteScheduleForm) {
+        console.log('✅ Форма удаления расписания найдена');
         deleteScheduleForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            // Логика удаления расписания
+            console.log('🗑️ Отправка формы удаления расписания');
+            await deleteSchedule(this);
         });
+    } else {
+        console.log('❌ Форма deleteScheduleForm не найдена');
     }
 }

@@ -55,7 +55,7 @@ class HallSchedule extends Model
         $end = Carbon::parse($this->end_time)->format('H:i');
         
         if ($this->overnight) {
-            return "{$start} - {$end} 🌙";
+            return "{$start} - {$end}";
         }
         
         return "{$start} - {$end}";
@@ -66,6 +66,56 @@ class HallSchedule extends Model
         $start = \Carbon\Carbon::parse($this->start_time)->format('H:i');
         $end = \Carbon\Carbon::parse($this->end_time)->format('H:i');
         
-        return $this->overnight ? "{$start} - {$end} 🌙" : "{$start} - {$end}";
+        return $this->overnight ? "{$start} - {$end}" : "{$start} - {$end}";
+    }
+
+    // НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С РАСПИСАНИЕМ
+    
+    /**
+     * Получить время начала расписания как Carbon объект
+     */
+    public function getScheduleStart(): Carbon
+    {
+        return Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->start_time);
+    }
+
+    /**
+     * Получить время окончания расписания как Carbon объект (с учетом ночного режима)
+     */
+    public function getScheduleEnd(): Carbon
+    {
+        $end = Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->end_time);
+        return $this->overnight ? $end->addDay() : $end;
+    }
+
+    /**
+     * Получить общую длительность расписания в минутах
+     */
+    public function getTotalDuration(): int
+    {
+        return $this->getScheduleStart()->diffInMinutes($this->getScheduleEnd());
+    }
+
+    /**
+     * Проверить, попадает ли время в расписание (включая ночные сеансы)
+     */
+    public function isTimeWithinSchedule(Carbon $time): bool
+    {
+        $scheduleStart = $this->getScheduleStart();
+        $scheduleEnd = $this->getScheduleEnd();
+        
+        return $time->between($scheduleStart, $scheduleEnd);
+    }
+
+    /**
+     * Получить все сеансы, которые попадают в это расписание
+     */
+    public function getSessionsWithinSchedule()
+    {
+        return MovieSession::where('cinema_hall_id', $this->cinema_hall_id)
+            ->where('session_start', '>=', $this->getScheduleStart())
+            ->where('session_start', '<', $this->getScheduleEnd())
+            ->with('movie')
+            ->get();
     }
 }

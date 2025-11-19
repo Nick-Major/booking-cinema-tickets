@@ -213,6 +213,12 @@
                                     <h3 class="conf-step__seances-title">{{ $hall->hall_name }}</h3>
 
                                     @if($schedule)
+                                        <!-- Кнопка добавления сеанса - всегда отображается -->
+                                        <button class="conf-step__button conf-step__button-accent"
+                                                onclick="openAddSessionModal({{ $hall->id ?? 0 }}, '{{ $selectedDate->format('Y-m-d') }}')">
+                                            + Добавить сеанс
+                                        </button>
+                                        
                                         <!-- Кнопки управления расписанием - ПРАВЫЙ ВЕРХНИЙ УГОЛ -->
                                         <div class="conf-step__schedule-controls">
                                             <button class="conf-step__button conf-step__button-small conf-step__button-regular"
@@ -253,7 +259,8 @@
                                             @include('admin.components.dynamic-timeline', [
                                                 'hallSessions' => $hallSessions,
                                                 'selectedDate' => $selectedDate,
-                                                'hall' => $hall
+                                                'hall' => $hall,
+                                                'schedule' => $schedule
                                             ])
                                         </div>
                                     </div>

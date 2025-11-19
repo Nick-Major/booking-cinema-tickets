@@ -305,14 +305,24 @@ class CinemaHallController extends Controller
             
             $schedule = $hall->getScheduleForDate($date);
             
+            if ($schedule) {
+                // ФОРМАТИРУЕМ ВРЕМЯ БЕЗ СЕКУНД
+                $startTime = \Carbon\Carbon::parse($schedule->start_time)->format('H:i');
+                $endTime = \Carbon\Carbon::parse($schedule->end_time)->format('H:i');
+                
+                return response()->json([
+                    'success' => true,
+                    'schedule' => [
+                        'start_time' => $startTime,
+                        'end_time' => $endTime,
+                        'overnight' => $schedule->overnight
+                    ]
+                ]);
+            }
+            
             return response()->json([
-                'success' => true,
-                'schedule' => $schedule ? [
-                    'start_time' => $schedule->start_time,
-                    'end_time' => $schedule->end_time,
-                    'overnight' => $schedule->overnight,
-                    'formatted_time' => $schedule->getFormattedTimeAttribute()
-                ] : null
+                'success' => false,
+                'message' => 'Расписание не найдено'
             ]);
             
         } catch (\Exception $e) {

@@ -94,7 +94,7 @@ class MovieSession extends Model
         return $this->session_start->copy()->addMinutes($this->getDisplayDuration());
     }
 
-    // Расчет позиции для таймлайна в пикселях
+    // Расчет позиции для таймлайна в пикселях (старый метод - оставляем для обратной совместимости)
     public function getTimelinePosition($dayStart, $pixelsPerMinute = 2): array
     {
         $sessionStart = $this->session_start;
@@ -116,6 +116,39 @@ class MovieSession extends Model
             'start_time' => $sessionStart->format('H:i'),
             'end_time' => $movieEnd->format('H:i'),
             'display_duration' => $this->getDisplayDuration()
+        ];
+    }
+
+    // НОВЫЙ МЕТОД: Расчет позиции относительно расписания зала
+    public function getTimelinePositionForSchedule(HallSchedule $schedule, $pixelsPerMinute = 2): array
+    {
+        $sessionStart = $this->session_start;
+        $movieEnd = $this->getMovieEndTime();
+        
+        $scheduleStart = $schedule->getScheduleStart();
+        $scheduleEnd = $schedule->getScheduleEnd();
+        
+        // Расчет позиции относительно начала расписания
+        $left = $scheduleStart->diffInMinutes($sessionStart) * $pixelsPerMinute;
+        
+        // Ширина элемента (фильм + реклама)
+        $width = $this->getDisplayDuration() * $pixelsPerMinute;
+        
+        // Максимальная ширина - не выходить за пределы расписания
+        $maxWidth = $scheduleStart->diffInMinutes($scheduleEnd) * $pixelsPerMinute - $left;
+        $width = min($width, $maxWidth);
+        
+        // Проверка на ночной сеанс
+        $isOvernight = !$sessionStart->isSameDay($movieEnd);
+
+        return [
+            'left' => max(0, $left),
+            'width' => max(10, $width), // минимальная ширина 10px
+            'is_overnight' => $isOvernight,
+            'start_time' => $sessionStart->format('H:i'),
+            'end_time' => $movieEnd->format('H:i'),
+            'display_duration' => $this->getDisplayDuration(),
+            'within_schedule' => $schedule->isTimeWithinSchedule($sessionStart)
         ];
     }
 

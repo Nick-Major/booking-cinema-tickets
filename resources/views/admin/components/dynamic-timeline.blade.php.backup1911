@@ -82,6 +82,7 @@
                      style="left: {{ $mark['position'] }}px;">
                     <span class="conf-step__timeline-label">
                         {{ $mark['displayHour'] }}
+                        @if($mark['isOvernight'])@endif
                     </span>
                     <div class="conf-step__timeline-line"></div>
                 </div>
@@ -121,7 +122,6 @@
             @if($session->movie)
                 @php
                     try {
-                        // ВОЗВРАЩАЕМ СТАРУЮ ЛОГИКУ ДЛЯ ПОКАЗА СЕАНСОВ
                         $position = $session->getTimelinePosition($dayStart, $pixelsPerMinute);
                         
                         // Пропускаем сеансы за пределами видимой области
@@ -142,14 +142,16 @@
                     'session' => $session,
                     'position' => $position,
                     'isLong' => $isLong,
-                    'isVeryLong' => $isVeryLong,
-                    'dayStart' => $dayStart,
-                    'pixelsPerMinute' => $pixelsPerMinute
+                    'isVeryLong' => $isVeryLong
                 ])
             @endif
         @empty
             <div class="conf-step__empty-track">
                 <p class="no-seances">Нет сеансов на выбранную дату</p>
+                <button class="conf-step__button conf-step__button-accent"
+                        onclick="openAddSessionModal({{ $hall->id ?? 0 }}, '{{ $selectedDate->format('Y-m-d') }}')">
+                    Добавить сеанс
+                </button>
             </div>
         @endforelse
     </div>

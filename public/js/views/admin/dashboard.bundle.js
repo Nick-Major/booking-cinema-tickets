@@ -1057,6 +1057,52 @@ async function createSchedule(form) {
     submitBtn.textContent = originalText;
   }
 }
+async function deleteSchedule(form) {
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
+  try {
+    submitBtn.disabled = true;
+    submitBtn.textContent = "\u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435...";
+    const scheduleId = document.getElementById("scheduleIdToDelete").value;
+    const currentDate = document.getElementById("currentScheduleDate").value;
+    console.log("\u{1F5D1}\uFE0F \u0423\u0434\u0430\u043B\u0435\u043D\u0438\u0435 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", { scheduleId, currentDate });
+    const response = await fetch(`/admin/hall-schedules/${scheduleId}`, {
+      method: "DELETE",
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+      },
+      body: JSON.stringify({
+        current_date: currentDate
+      })
+    });
+    const result = await response.json();
+    if (!response.ok) {
+      throw new Error(result.message || `HTTP error! status: ${response.status}`);
+    }
+    if (result.success) {
+      console.log("\u2705 \u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D\u043E");
+      if (window.notifications) {
+        window.notifications.show(result.message, "success");
+      }
+      closeModal("deleteScheduleModal");
+      setTimeout(() => {
+        window.location.reload();
+      }, 1e3);
+    } else {
+      throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
+    }
+  } catch (error) {
+    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", error);
+    if (window.notifications) {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
+    }
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+  }
+}
 async function updateSchedule(form) {
   const submitBtn = form.querySelector('button[type="submit"]');
   const originalText = submitBtn.textContent;
@@ -1115,6 +1161,12 @@ function openEditScheduleModal(scheduleId) {
   });
 }
 function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
+  console.log("\u{1F5D1}\uFE0F \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", {
+    scheduleId,
+    hallId,
+    hallName,
+    currentDate
+  });
   document.getElementById("scheduleIdToDelete").value = scheduleId;
   document.getElementById("currentScheduleDate").value = currentDate;
   document.getElementById("scheduleHallName").textContent = hallName;
@@ -1129,12 +1181,14 @@ function openCreateScheduleModal(hallId, date, hallName = "") {
   openModal("hallScheduleModal");
 }
 function initSchedules() {
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043C\u043E\u0434\u0443\u043B\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0439...");
   const editScheduleForm = document.getElementById("editScheduleForm");
   if (editScheduleForm) {
     editScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       await updateSchedule(this);
     });
+    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const hallScheduleForm = document.getElementById("hallScheduleForm");
   if (hallScheduleForm) {
@@ -1142,12 +1196,18 @@ function initSchedules() {
       e.preventDefault();
       await createSchedule(this);
     });
+    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const deleteScheduleForm = document.getElementById("deleteScheduleForm");
   if (deleteScheduleForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     deleteScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
+      console.log("\u{1F5D1}\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
+      await deleteSchedule(this);
     });
+  } else {
+    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 deleteScheduleForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
 }
 
@@ -1168,25 +1228,31 @@ function updateScheduleHint() {
   const dateInput = document.getElementById("session_date");
   const scheduleHint = document.getElementById("scheduleHint");
   const allowedTimeRange = document.getElementById("allowedTimeRange");
-  if (!hallSelect || !dateInput || !scheduleHint || !allowedTimeRange) return;
+  if (!hallSelect || !dateInput || !scheduleHint || !allowedTimeRange) {
+    console.log("\u274C \u042D\u043B\u0435\u043C\u0435\u043D\u0442\u044B \u0434\u043B\u044F \u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
+    return;
+  }
   const hallId = hallSelect.value;
   const date = dateInput.value;
-  if (hallId && date) {
-    loadScheduleInfo(hallId, date).then((data) => {
-      if (data && data.schedule) {
-        let timeRange = `${data.schedule.start_time} - ${data.schedule.end_time}`;
-        if (data.schedule.overnight) {
-          timeRange += " \u{1F319} (\u043D\u043E\u0447\u043D\u043E\u0439 \u0440\u0435\u0436\u0438\u043C)";
-        }
-        allowedTimeRange.textContent = timeRange;
-        scheduleHint.style.display = "block";
-      } else {
-        scheduleHint.style.display = "none";
-      }
-    });
-  } else {
+  if (!hallId || !date) {
     scheduleHint.style.display = "none";
+    return;
   }
+  loadScheduleInfo(hallId, date).then((data) => {
+    if (data && data.schedule) {
+      const formatTime = (timeString) => timeString.substring(0, 5);
+      const startTime = formatTime(data.schedule.start_time);
+      const endTime = formatTime(data.schedule.end_time);
+      let timeRange = `${startTime} - ${endTime}`;
+      if (data.schedule.overnight) {
+        timeRange += " (\u043D\u043E\u0447\u043D\u043E\u0439 \u0440\u0435\u0436\u0438\u043C)";
+      }
+      allowedTimeRange.textContent = timeRange;
+      scheduleHint.style.display = "block";
+    } else {
+      scheduleHint.style.display = "none";
+    }
+  });
 }
 function openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime) {
   console.log("\u{1F3AF} openDeleteSessionModal \u0432\u044B\u0437\u0432\u0430\u043D\u0430 \u0441 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u043C\u0438:", {
@@ -1258,9 +1324,11 @@ function initSessionFormHandlers() {
   const dateInput = document.getElementById("session_date");
   if (hallSelect) {
     hallSelect.addEventListener("change", updateScheduleHint);
+    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0437\u0430\u043B\u0430 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   if (dateInput) {
     dateInput.addEventListener("change", updateScheduleHint);
+    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0434\u0430\u0442\u044B \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const addSessionForm = document.getElementById("addSessionForm");
   if (addSessionForm) {
@@ -1269,7 +1337,11 @@ function initSessionFormHandlers() {
       console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430");
       e.preventDefault();
       const formData = new FormData(this);
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
       try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435...";
         const response = await fetch("/admin/sessions", {
           method: "POST",
           body: formData,
@@ -1301,6 +1373,9 @@ function initSessionFormHandlers() {
         if (window.notifications) {
           window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
         }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
     });
   } else {
@@ -1332,24 +1407,67 @@ function initSessionFormHandlers() {
 }
 function openEditSessionModal(sessionId) {
   console.log("\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430:", sessionId);
-  fetch(`/admin/sessions/${sessionId}/edit`).then((response) => response.json()).then((session) => {
-    console.log("\u0414\u0430\u043D\u043D\u044B\u0435 \u0441\u0435\u0430\u043D\u0441\u0430 \u0434\u043B\u044F \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F:", session);
-    document.getElementById("edit_session_id").value = session.id;
-    document.getElementById("edit_current_movie").textContent = session.movie.title;
-    document.getElementById("edit_current_hall").textContent = session.cinema_hall.hall_name;
-    document.getElementById("edit_current_time").textContent = new Date(session.session_start).toLocaleString("ru-RU");
-    document.getElementById("edit_movie_id").value = session.movie_id;
-    document.getElementById("edit_cinema_hall_id").value = session.cinema_hall_id;
+  fetch(`/admin/sessions/${sessionId}`).then((response) => {
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }).then((session) => {
+    console.log("\u2705 \u0414\u0430\u043D\u043D\u044B\u0435 \u0441\u0435\u0430\u043D\u0441\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u044B:", session);
+    const sessionIdInput = document.getElementById("edit_session_id");
+    const hallSelect = document.getElementById("edit_cinema_hall_id");
+    const movieSelect = document.getElementById("edit_movie_id");
+    const dateInput = document.getElementById("edit_session_date");
+    const timeInput = document.getElementById("edit_session_time");
+    const form = document.getElementById("editSessionForm");
+    if (!sessionIdInput || !hallSelect || !movieSelect || !dateInput || !timeInput || !form) {
+      console.error("\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u044B \u0444\u043E\u0440\u043C\u044B \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F:", {
+        sessionIdInput: !!sessionIdInput,
+        hallSelect: !!hallSelect,
+        movieSelect: !!movieSelect,
+        dateInput: !!dateInput,
+        timeInput: !!timeInput,
+        form: !!form
+      });
+      throw new Error("\u0424\u043E\u0440\u043C\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 DOM");
+    }
+    sessionIdInput.value = session.id;
+    hallSelect.value = session.cinema_hall_id;
+    console.log("\u2705 \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D \u0437\u0430\u043B:", session.cinema_hall_id);
+    movieSelect.value = session.movie_id;
+    console.log("\u2705 \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D \u0444\u0438\u043B\u044C\u043C:", session.movie_id);
+    if (movieSelect && movieSelect.options) {
+      console.log(
+        "\u{1F3AC} \u0414\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0435 \u043E\u043F\u0446\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u043E\u0432:",
+        Array.from(movieSelect.options).map((opt) => ({
+          value: opt.value,
+          text: opt.text,
+          selected: opt.selected
+        }))
+      );
+    }
     const sessionStart = new Date(session.session_start);
-    document.getElementById("edit_session_date").value = sessionStart.toISOString().split("T")[0];
-    document.getElementById("edit_session_time").value = sessionStart.toTimeString().slice(0, 5);
-    document.getElementById("edit_is_actual").checked = session.is_actual;
-    document.getElementById("editSessionForm").action = `/admin/sessions/${sessionId}`;
+    const sessionDate = sessionStart.toISOString().split("T")[0];
+    const sessionTime = sessionStart.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+    console.log("\u{1F4C5} \u0420\u0430\u0437\u043E\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0432\u0440\u0435\u043C\u044F:", {
+      original: session.session_start,
+      date: sessionDate,
+      time: sessionTime,
+      localeTime: sessionStart.toLocaleTimeString()
+    });
+    dateInput.value = sessionDate;
+    timeInput.value = sessionTime;
+    form.action = `/admin/sessions/${sessionId}`;
     openModal("editSessionModal");
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430");
   }).catch((error) => {
-    console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
     if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
     }
   });
 }
@@ -1360,37 +1478,44 @@ async function updateSession(form) {
     submitBtn.disabled = true;
     submitBtn.textContent = "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435...";
     const formData = new FormData(form);
+    formData.append("_method", "PUT");
+    console.log("\u{1F50D} \u0414\u0430\u043D\u043D\u044B\u0435 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0434 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u043E\u0439:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
     const response = await fetch(form.action, {
       method: "POST",
       headers: {
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
-        "X-Requested-With": "XMLHttpRequest",
-        "Content-Type": "application/json",
-        "Accept": "application/json"
+        "X-Requested-With": "XMLHttpRequest"
       },
-      body: JSON.stringify({
-        movie_id: formData.get("movie_id"),
-        cinema_hall_id: formData.get("cinema_hall_id"),
-        session_date: formData.get("session_date"),
-        session_time: formData.get("session_time"),
-        is_actual: formData.get("is_actual") === "1",
-        _method: "PUT"
-      })
+      body: formData
     });
+    console.log("\u{1F4E8} \u0421\u0442\u0430\u0442\u0443\u0441 \u043E\u0442\u0432\u0435\u0442\u0430:", response.status);
     const result = await response.json();
+    console.log("\u{1F4E8} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430:", result);
     if (!response.ok) {
       throw new Error(result.message || `HTTP error! status: ${response.status}`);
     }
     if (result.success) {
-      window.notifications.show("\u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D!", "success");
+      console.log("\u2705 \u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D");
+      if (window.notifications) {
+        window.notifications.show("\u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D!", "success");
+      }
       closeModal("editSessionModal");
-      setTimeout(() => window.location.reload(), 1e3);
+      setTimeout(() => {
+        location.reload();
+      }, 1e3);
     } else {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430");
     }
   } catch (error) {
-    console.error("Error updating session:", error);
-    window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
+    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+    if (window.notifications && typeof window.notifications.show === "function") {
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
+    } else {
+      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message);
+    }
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
