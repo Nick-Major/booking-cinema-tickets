@@ -20,7 +20,7 @@ class Seat extends Model
 
     protected $casts = [
         'row_number' => 'integer',
-        'row_seat_number' => 'integer'
+        'row_seat_number' => 'integer',
     ];
 
     // Связь: место принадлежит залу
@@ -72,7 +72,6 @@ class Seat extends Model
             return 0.00;
         }
 
-        // Цена берется из настроек зала
         return match($this->seat_status) {
             'vip' => $this->cinemaHall->vip_price,
             'regular' => $this->cinemaHall->regular_price,

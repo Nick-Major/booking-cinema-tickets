@@ -48,25 +48,13 @@ class HallSchedule extends Model
         return $this->overnight ? $end->addDay() : $end;
     }
 
-    // Геттер для отображения времени в читаемом формате
-    public function getDisplayTimeAttribute()
+    // ЕДИНСТВЕННЫЙ метод для форматированного времени (заменяет оба дублирующих)
+    public function getFormattedTimeAttribute()
     {
         $start = Carbon::parse($this->start_time)->format('H:i');
         $end = Carbon::parse($this->end_time)->format('H:i');
         
-        if ($this->overnight) {
-            return "{$start} - {$end}";
-        }
-        
-        return "{$start} - {$end}";
-    }
-
-    public function getFormattedTimeAttribute()
-    {
-        $start = \Carbon\Carbon::parse($this->start_time)->format('H:i');
-        $end = \Carbon\Carbon::parse($this->end_time)->format('H:i');
-        
-        return $this->overnight ? "{$start} - {$end}" : "{$start} - {$end}";
+        return $this->overnight ? "{$start} - {$end} (ночной)" : "{$start} - {$end}";
     }
 
     // НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С РАСПИСАНИЕМ
