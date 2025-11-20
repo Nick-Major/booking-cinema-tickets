@@ -359,34 +359,56 @@ class MovieSessionController extends Controller
     public function edit(MovieSession $movieSession)
     {
         try {
+            \Log::info('🔄 Запрос данных сеанса для редактирования', [
+                'session_id' => $movieSession->id,
+                'movie_id' => $movieSession->movie_id,
+                'hall_id' => $movieSession->cinema_hall_id,
+                'original_session_start' => $movieSession->session_start
+            ]);
+
             $movieSession->load(['movie', 'cinemaHall']);
 
-            if (!$movieSession->movie || !$movieSession->cinemaHall) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Данные сеанса неполные'
-                ], 404);
-            }
+            // ПРЕОБРАЗОВАНИЕ ВРЕМЕНИ С УЧЕТОМ ЧАСОВОГО ПОЯСА ПРИЛОЖЕНИЯ
+            $sessionStart = $movieSession->session_start;
+            $timezone = config('app.timezone', 'UTC');
+            
+            \Log::info('📅 Информация о времени:', [
+                'original_utc' => $movieSession->session_start->format('Y-m-d H:i:s'),
+                'app_timezone' => $timezone,
+                'converted_local' => $sessionStart->setTimezone($timezone)->format('Y-m-d H:i:s')
+            ]);
 
-            return response()->json([
+            $responseData = [
                 'id' => $movieSession->id,
                 'movie_id' => $movieSession->movie_id,
                 'cinema_hall_id' => $movieSession->cinema_hall_id,
                 'session_start' => $movieSession->session_start->toISOString(),
                 'is_actual' => $movieSession->is_actual,
                 'movie' => [
-                    'id' => $movieSession->movie->id,
-                    'title' => $movieSession->movie->title,
-                    'movie_duration' => $movieSession->movie->movie_duration,
+                    'id' => $movieSession->movie->id ?? null,
+                    'title' => $movieSession->movie->title ?? 'Неизвестный фильм',
+                    'movie_duration' => $movieSession->movie->movie_duration ?? 0,
                 ],
                 'cinema_hall' => [
-                    'id' => $movieSession->cinemaHall->id,
-                    'hall_name' => $movieSession->cinemaHall->hall_name,
-                ]
-            ]);
+                    'id' => $movieSession->cinemaHall->id ?? null,
+                    'hall_name' => $movieSession->cinemaHall->hall_name ?? 'Неизвестный зал',
+                ],
+                // ДОБАВЛЯЕМ РАЗОБРАННЫЕ ДАННЫЕ В ЛОКАЛЬНОМ ЧАСОВОМ ПОЯСЕ
+                'parsed_date' => $sessionStart->setTimezone($timezone)->format('Y-m-d'),
+                'parsed_time' => $sessionStart->setTimezone($timezone)->format('H:i'),
+                'timezone' => $timezone,
+                'timezone_offset' => $sessionStart->setTimezone($timezone)->format('P')
+            ];
+
+            \Log::info('✅ Данные сеанса подготовлены для ответа', $responseData);
+
+            return response()->json($responseData);
 
         } catch (\Exception $e) {
-            \Log::error('Error in session edit method: ' . $e->getMessage());
+            \Log::error('❌ Ошибка в методе edit сеанса: ' . $e->getMessage(), [
+                'session_id' => $movieSession->id,
+                'exception' => $e
+            ]);
             return response()->json([
                 'success' => false,
                 'message' => 'Ошибка при загрузке данных сеанса: ' . $e->getMessage()

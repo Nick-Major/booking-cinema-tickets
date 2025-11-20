@@ -15,7 +15,7 @@ import {
     closeAllModals
 } from '../../core/modals.js';
 
-import HallsManager from '../../modules/halls.js';
+import HallsManager, { initHallFormHandlers } from '../../modules/halls.js';
 import NotificationSystem from '../../core/notifications.js';
 
 // Импортируем функции аккордеона
@@ -173,12 +173,6 @@ function openAddSessionModal() {
     openModal('addSessionModal');
 }
 
-// УДАЛИЛ ДУБЛИРУЮЩУЮ ФУНКЦИЮ - теперь используем импортированную
-// function changeTimelineDate(date) {
-//     console.log('Change timeline date:', date);
-//     window.location.href = `/admin/dashboard?date=${date}`;
-// }
-
 function resetSessions() {
     console.log('Reset sessions');
     // Временная заглушка
@@ -204,6 +198,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Инициализируем менеджер залов с настоящей системой уведомлений
         window.hallsManager = new HallsManager(window.notifications);
         console.log('✅ HallsManager initialized');
+
+        // Инициализируем обработчики форм залов
+        initHallFormHandlers();
+        console.log('✅ Hall form handlers initialized');
 
         // Инициализируем менеджер продаж
         window.salesManager = new SalesManager(window.notifications);
@@ -238,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadHallConfiguration = loadHallConfiguration;
     window.loadPriceConfiguration = loadPriceConfiguration;
     window.openAddSessionModal = openAddSessionModal;
-    window.changeTimelineDate = changeTimelineDate; // ← Теперь использует импортированную функцию
+    window.changeTimelineDate = changeTimelineDate;
     window.resetSessions = resetSessions;
     window.updateSession = updateSession;
     window.openModal = openModal;

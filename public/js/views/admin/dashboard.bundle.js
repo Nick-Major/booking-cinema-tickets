@@ -2,29 +2,46 @@
 function openModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.add("active");
+    modal.style.display = "flex";
     document.body.style.overflow = "hidden";
+    console.log(`\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
+  } else {
+    console.error(`\u274C \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E: ${modalId}`);
   }
 }
 function closeModal(modalId) {
   const modal = document.getElementById(modalId);
   if (modal) {
-    modal.classList.remove("active");
+    modal.style.display = "none";
     document.body.style.overflow = "";
+    console.log(`\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
   }
 }
 function initModalHandlers() {
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D...");
   document.querySelectorAll("[data-open-modal]").forEach((button) => {
     button.addEventListener("click", function(e) {
       e.preventDefault();
       const modalId = this.getAttribute("data-open-modal");
+      console.log(`\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
       openModal(modalId);
     });
+  });
+  document.addEventListener("click", function(e) {
+    if (e.target.closest('[data-dismiss="modal"]')) {
+      e.preventDefault();
+      e.stopPropagation();
+      const modal = e.target.closest(".popup");
+      if (modal) {
+        closeModal(modal.id);
+      }
+    }
   });
   document.querySelectorAll("[data-close-modal]").forEach((button) => {
     button.addEventListener("click", function(e) {
       e.preventDefault();
       const modalId = this.getAttribute("data-close-modal");
+      console.log(`\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
       closeModal(modalId);
     });
   });
@@ -32,59 +49,54 @@ function initModalHandlers() {
     modal.addEventListener("click", function(e) {
       if (e.target === this) {
         e.preventDefault();
-        this.classList.remove("active");
-        document.body.style.overflow = "";
+        console.log(`\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E \u043A\u043B\u0438\u043A\u0443 \u043D\u0430 \u0444\u043E\u043D: ${this.id}`);
+        closeModal(this.id);
       }
     });
   });
   document.addEventListener("keydown", function(e) {
     if (e.key === "Escape") {
       e.preventDefault();
-      document.querySelectorAll(".popup.active").forEach((modal) => {
-        modal.classList.remove("active");
-        document.body.style.overflow = "";
+      console.log("\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E Escape");
+      document.querySelectorAll(".popup").forEach((modal) => {
+        if (modal.style.display === "flex") {
+          closeModal(modal.id);
+        }
       });
     }
   });
+  console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u044B");
 }
-function closeAddHallModal(event) {
-  if (event) event.preventDefault();
+function closeAddHallModal() {
   closeModal("addHallModal");
 }
-function closeAddMovieModal(event) {
-  if (event) event.preventDefault();
+function closeAddMovieModal() {
   closeModal("addMovieModal");
 }
-function closeEditMovieModal(event) {
-  if (event) event.preventDefault();
+function closeEditMovieModal() {
   closeModal("editMovieModal");
 }
-function closeAddSessionModal(event) {
-  if (event) event.preventDefault();
+function closeAddSessionModal() {
   closeModal("addSessionModal");
 }
-function closeEditSessionModal(event) {
-  if (event) event.preventDefault();
+function closeEditSessionModal() {
   closeModal("editSessionModal");
 }
-function closeDeleteHallModal(event) {
-  if (event) event.preventDefault();
+function closeDeleteHallModal() {
   closeModal("deleteHallModal");
 }
-function closeDeleteMovieModal(event) {
-  if (event) event.preventDefault();
+function closeDeleteMovieModal() {
   closeModal("deleteMovieModal");
 }
-function closeDeleteSessionModal(event) {
-  if (event) event.preventDefault();
+function closeDeleteSessionModal() {
   closeModal("deleteSessionModal");
 }
-function closeAllModals(event) {
-  if (event) event.preventDefault();
-  document.querySelectorAll(".popup.active").forEach((modal) => {
-    modal.classList.remove("active");
+function closeAllModals() {
+  document.querySelectorAll(".popup").forEach((modal) => {
+    if (modal.style.display === "flex") {
+      closeModal(modal.id);
+    }
   });
-  document.body.style.overflow = "";
 }
 
 // public/js/modules/halls.js
@@ -320,6 +332,67 @@ async function loadPriceConfiguration(hallId) {
   }
 }
 var halls_default = HallsManager;
+function initHallFormHandlers() {
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C \u0437\u0430\u043B\u043E\u0432...");
+  const addHallForm = document.getElementById("addHallForm");
+  if (addHallForm) {
+    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    addHallForm.addEventListener("submit", async function(e) {
+      e.preventDefault();
+      console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043B\u0430");
+      const formData = new FormData(this);
+      const submitBtn = this.querySelector('button[type="submit"]');
+      const originalText = submitBtn.textContent;
+      try {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435...";
+        const response = await fetch("/admin/halls", {
+          method: "POST",
+          body: formData,
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "Accept": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+        const result = await response.json();
+        if (result.success) {
+          console.log("\u2705 \u0417\u0430\u043B \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
+          closeModal("addHallModal");
+          if (window.notifications) {
+            window.notifications.show(result.message, "success");
+          }
+          this.reset();
+          setTimeout(() => {
+            window.location.reload();
+          }, 1e3);
+        } else {
+          console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430:", result.message);
+          if (window.notifications) {
+            window.notifications.show(result.message, "error");
+          }
+        }
+      } catch (error) {
+        console.error("\u{1F4A5} \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
+        if (window.notifications) {
+          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430", "error");
+        }
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+      }
+    });
+  } else {
+    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+  }
+  document.querySelectorAll('[data-open-modal="addHallModal"]').forEach((button) => {
+    button.addEventListener("click", function(e) {
+      e.preventDefault();
+      console.log('\u{1F3AF} \u041A\u043D\u043E\u043F\u043A\u0430 "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043B" \u043D\u0430\u0436\u0430\u0442\u0430');
+      openModal("addHallModal");
+    });
+  });
+}
 
 // public/js/core/notifications.js
 var NotificationSystem = class {
@@ -1230,7 +1303,6 @@ function updateScheduleHint() {
   const scheduleHint = document.getElementById("scheduleHint");
   const allowedTimeRange = document.getElementById("allowedTimeRange");
   if (!hallSelect || !dateInput || !scheduleHint || !allowedTimeRange) {
-    console.log("\u274C \u042D\u043B\u0435\u043C\u0435\u043D\u0442\u044B \u0434\u043B\u044F \u043F\u043E\u0434\u0441\u043A\u0430\u0437\u043A\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B");
     return;
   }
   const hallId = hallSelect.value;
@@ -1256,32 +1328,12 @@ function updateScheduleHint() {
   });
 }
 function openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime) {
-  console.log("\u{1F3AF} openDeleteSessionModal \u0432\u044B\u0437\u0432\u0430\u043D\u0430 \u0441 \u043F\u0430\u0440\u0430\u043C\u0435\u0442\u0440\u0430\u043C\u0438:", {
-    sessionId,
-    movieTitle,
-    hallName,
-    sessionTime
-  });
   closeModal("editSessionModal");
-  console.log("\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043A\u0440\u044B\u0442\u043E");
   document.getElementById("sessionIdToDelete").value = sessionId;
   document.getElementById("sessionMovieNameToDelete").textContent = movieTitle;
   document.getElementById("sessionHallNameToDelete").textContent = hallName;
   document.getElementById("sessionTimeToDelete").textContent = sessionTime;
   openModal("deleteSessionModal");
-  console.log("\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u043E\u0442\u043A\u0440\u044B\u0442\u043E");
-  setTimeout(() => {
-    const modal = document.getElementById("deleteSessionModal");
-    if (modal) {
-      const computedStyle = window.getComputedStyle(modal);
-      console.log("\u{1F50D} \u0424\u0438\u043D\u0430\u043B\u044C\u043D\u044B\u0435 \u0441\u0442\u0438\u043B\u0438 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F:", {
-        display: computedStyle.display,
-        zIndex: computedStyle.zIndex,
-        opacity: computedStyle.opacity,
-        visibility: computedStyle.visibility
-      });
-    }
-  }, 100);
 }
 async function deleteMovieSession(sessionId) {
   try {
@@ -1316,26 +1368,38 @@ function initSessionFormHandlers() {
   console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
   document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach((button) => {
     button.addEventListener("click", function(e) {
-      console.log('\u{1F3AF} \u041A\u043D\u043E\u043F\u043A\u0430 "\u0414\u043E\u0431\u0430\u0432\u0438\u0442\u044C \u0441\u0435\u0430\u043D\u0441" \u043D\u0430\u0436\u0430\u0442\u0430');
       openModal("addSessionModal");
       setTimeout(updateScheduleHint, 100);
     });
+  });
+  document.addEventListener("click", function(e) {
+    if (e.target.closest('[data-action="delete-session"]')) {
+      e.preventDefault();
+      const sessionId = document.getElementById("edit_session_id").value;
+      const movieTitle = document.getElementById("edit_current_movie").textContent;
+      const hallName = document.getElementById("edit_current_hall").textContent;
+      const sessionTime = document.getElementById("edit_current_time").textContent;
+      if (sessionId) {
+        openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime);
+      } else {
+        console.error("\u274C ID \u0441\u0435\u0430\u043D\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F");
+        if (window.notifications) {
+          window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: ID \u0441\u0435\u0430\u043D\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", "error");
+        }
+      }
+    }
   });
   const hallSelect = document.getElementById("cinema_hall_id");
   const dateInput = document.getElementById("session_date");
   if (hallSelect) {
     hallSelect.addEventListener("change", updateScheduleHint);
-    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0437\u0430\u043B\u0430 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   if (dateInput) {
     dateInput.addEventListener("change", updateScheduleHint);
-    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u044F \u0434\u0430\u0442\u044B \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const addSessionForm = document.getElementById("addSessionForm");
   if (addSessionForm) {
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 addSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     addSessionForm.addEventListener("submit", async function(e) {
-      console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0445\u0432\u0430\u0447\u0435\u043D\u0430");
       e.preventDefault();
       const formData = new FormData(this);
       const submitBtn = this.querySelector('button[type="submit"]');
@@ -1354,7 +1418,6 @@ function initSessionFormHandlers() {
         });
         const result = await response.json();
         if (result.success) {
-          console.log("\u2705 \u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
           closeModal("addSessionModal");
           if (window.notifications) {
             window.notifications.show(result.message, "success");
@@ -1364,7 +1427,6 @@ function initSessionFormHandlers() {
             window.location.reload();
           }, 1e3);
         } else {
-          console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", result.message);
           if (window.notifications) {
             window.notifications.show(result.message, "error");
           }
@@ -1379,56 +1441,41 @@ function initSessionFormHandlers() {
         submitBtn.textContent = originalText;
       }
     });
-  } else {
-    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 addSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
   const editSessionForm = document.getElementById("editSessionForm");
   if (editSessionForm) {
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 editSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     editSessionForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       await updateSession(this);
     });
-  } else {
-    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 editSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
   const deleteSessionForm = document.getElementById("deleteSessionForm");
   if (deleteSessionForm) {
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 deleteSessionForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     deleteSessionForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      console.log("\u{1F3AF} \u0424\u043E\u0440\u043C\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430 \u043E\u0442\u043F\u0440\u0430\u0432\u043B\u0435\u043D\u0430");
       const sessionId = document.getElementById("sessionIdToDelete").value;
-      console.log("\u{1F3AF} ID \u0441\u0435\u0430\u043D\u0441\u0430 \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F:", sessionId);
       await deleteMovieSession(sessionId);
     });
-  } else {
-    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 deleteSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
 }
 async function changeTimelineDate(date) {
-  console.log("\u{1F4C5} \u0421\u043C\u0435\u043D\u0430 \u0434\u0430\u0442\u044B \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 (AJAX):", date);
   try {
     showTimelineLoading();
-    console.log("\u{1F504} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 AJAX \u0437\u0430\u043F\u0440\u043E\u0441\u0430...");
     const response = await fetch(`/admin/sessions-timeline/load?date=${date}`, {
       headers: {
         "X-Requested-With": "XMLHttpRequest",
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
       }
     });
-    console.log("\u{1F4E8} \u041E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u0443\u0447\u0435\u043D, \u0441\u0442\u0430\u0442\u0443\u0441:", response.status);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const html = await response.text();
-    console.log("\u2705 HTML \u043F\u043E\u043B\u0443\u0447\u0435\u043D, \u0434\u043B\u0438\u043D\u0430:", html.length);
     const container = document.getElementById("sessionsTimelineWrapper");
     if (container) {
       container.innerHTML = html;
       hideTimelineLoading();
       reinitializeTimelineHandlers();
-      console.log("\u2705 \u0422\u0430\u0439\u043C\u043B\u0430\u0439\u043D \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0431\u0435\u0437 \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438");
       if (window.notifications) {
         window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E", "success");
       }
@@ -1436,75 +1483,89 @@ async function changeTimelineDate(date) {
   } catch (error) {
     console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430:", error);
     hideTimelineLoading();
-    console.log("\u{1F504} Fallback: \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B");
     window.location.href = `/admin/dashboard?date=${date}`;
   }
 }
 function openEditSessionModal(sessionId) {
-  console.log("\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430:", sessionId);
-  fetch(`/admin/sessions/${sessionId}`).then((response) => {
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    return response.json();
-  }).then((session) => {
-    console.log("\u2705 \u0414\u0430\u043D\u043D\u044B\u0435 \u0441\u0435\u0430\u043D\u0441\u0430 \u043F\u043E\u043B\u0443\u0447\u0435\u043D\u044B:", session);
-    const sessionIdInput = document.getElementById("edit_session_id");
-    const hallSelect = document.getElementById("edit_cinema_hall_id");
-    const movieSelect = document.getElementById("edit_movie_id");
-    const dateInput = document.getElementById("edit_session_date");
-    const timeInput = document.getElementById("edit_session_time");
-    const form = document.getElementById("editSessionForm");
-    if (!sessionIdInput || !hallSelect || !movieSelect || !dateInput || !timeInput || !form) {
-      console.error("\u274C \u041D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u044B \u044D\u043B\u0435\u043C\u0435\u043D\u0442\u044B \u0444\u043E\u0440\u043C\u044B \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F:", {
-        sessionIdInput: !!sessionIdInput,
-        hallSelect: !!hallSelect,
-        movieSelect: !!movieSelect,
-        dateInput: !!dateInput,
-        timeInput: !!timeInput,
-        form: !!form
-      });
-      throw new Error("\u0424\u043E\u0440\u043C\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430 \u0432 DOM");
-    }
+  openModal("editSessionModal");
+  setTimeout(() => {
+    fetch(`/admin/sessions/${sessionId}/edit`).then((response) => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    }).then((session) => {
+      fillEditSessionForm(session);
+    }).catch((error) => {
+      console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+      if (window.notifications) {
+        window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
+      }
+      closeModal("editSessionModal");
+    });
+  }, 100);
+}
+function fillEditSessionForm(session) {
+  const getElement = (id) => document.getElementById(id);
+  const sessionIdInput = getElement("edit_session_id");
+  if (sessionIdInput) {
     sessionIdInput.value = session.id;
-    hallSelect.value = session.cinema_hall_id;
-    console.log("\u2705 \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D \u0437\u0430\u043B:", session.cinema_hall_id);
-    movieSelect.value = session.movie_id;
-    console.log("\u2705 \u0423\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D \u0444\u0438\u043B\u044C\u043C:", session.movie_id);
-    if (movieSelect && movieSelect.options) {
-      console.log(
-        "\u{1F3AC} \u0414\u043E\u0441\u0442\u0443\u043F\u043D\u044B\u0435 \u043E\u043F\u0446\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u043E\u0432:",
-        Array.from(movieSelect.options).map((opt) => ({
-          value: opt.value,
-          text: opt.text,
-          selected: opt.selected
-        }))
-      );
-    }
+  }
+  const currentMovieSpan = getElement("edit_current_movie");
+  const currentHallSpan = getElement("edit_current_hall");
+  const currentTimeSpan = getElement("edit_current_time");
+  if (currentMovieSpan) {
+    currentMovieSpan.textContent = session.movie?.title || "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0444\u0438\u043B\u044C\u043C";
+  }
+  if (currentHallSpan) {
+    currentHallSpan.textContent = session.cinema_hall?.hall_name || "\u041D\u0435\u0438\u0437\u0432\u0435\u0441\u0442\u043D\u044B\u0439 \u0437\u0430\u043B";
+  }
+  if (currentTimeSpan) {
     const sessionStart = new Date(session.session_start);
-    const sessionDate = sessionStart.toISOString().split("T")[0];
-    const sessionTime = sessionStart.toLocaleTimeString("en-GB", {
+    const displayTime = sessionStart.toLocaleTimeString("ru-RU", {
       hour: "2-digit",
       minute: "2-digit",
       hour12: false
     });
-    console.log("\u{1F4C5} \u0420\u0430\u0437\u043E\u0431\u0440\u0430\u043D\u043D\u044B\u0435 \u0432\u0440\u0435\u043C\u044F:", {
-      original: session.session_start,
-      date: sessionDate,
-      time: sessionTime,
-      localeTime: sessionStart.toLocaleTimeString()
-    });
-    dateInput.value = sessionDate;
-    timeInput.value = sessionTime;
-    form.action = `/admin/sessions/${sessionId}`;
-    openModal("editSessionModal");
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0437\u0430\u043F\u043E\u043B\u043D\u0435\u043D\u0430 \u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u0430");
-  }).catch((error) => {
-    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
-    if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
+    const displayDate = sessionStart.toLocaleDateString("ru-RU");
+    currentTimeSpan.textContent = `${displayDate} ${displayTime}`;
+  }
+  const movieSelect = getElement("edit_movie_id");
+  if (movieSelect) {
+    movieSelect.value = session.movie_id.toString();
+    if (movieSelect.options) {
+      for (let i = 0; i < movieSelect.options.length; i++) {
+        if (movieSelect.options[i].value === session.movie_id.toString()) {
+          movieSelect.selectedIndex = i;
+          break;
+        }
+      }
     }
-  });
+  }
+  const hallSelect = getElement("edit_cinema_hall_id");
+  if (hallSelect) {
+    hallSelect.value = session.cinema_hall_id.toString();
+  }
+  const dateInput = getElement("edit_session_date");
+  const timeInput = getElement("edit_session_time");
+  if (dateInput && timeInput) {
+    const sessionDate = new Date(session.session_start);
+    const year = sessionDate.getFullYear();
+    const month = String(sessionDate.getMonth() + 1).padStart(2, "0");
+    const day = String(sessionDate.getDate()).padStart(2, "0");
+    const hours = String(sessionDate.getHours()).padStart(2, "0");
+    const minutes = String(sessionDate.getMinutes()).padStart(2, "0");
+    dateInput.value = `${year}-${month}-${day}`;
+    timeInput.value = `${hours}:${minutes}`;
+  }
+  const isActualCheckbox = getElement("edit_is_actual");
+  if (isActualCheckbox) {
+    isActualCheckbox.checked = Boolean(session.is_actual);
+  }
+  const form = getElement("editSessionForm");
+  if (form) {
+    form.action = `/admin/sessions/${session.id}`;
+  }
 }
 async function updateSession(form) {
   const submitBtn = form.querySelector('button[type="submit"]');
@@ -1514,10 +1575,6 @@ async function updateSession(form) {
     submitBtn.textContent = "\u0421\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0435...";
     const formData = new FormData(form);
     formData.append("_method", "PUT");
-    console.log("\u{1F50D} \u0414\u0430\u043D\u043D\u044B\u0435 \u0444\u043E\u0440\u043C\u044B \u043F\u0435\u0440\u0435\u0434 \u043E\u0442\u043F\u0440\u0430\u0432\u043A\u043E\u0439:");
-    for (let [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, value);
-    }
     const response = await fetch(form.action, {
       method: "POST",
       headers: {
@@ -1526,14 +1583,11 @@ async function updateSession(form) {
       },
       body: formData
     });
-    console.log("\u{1F4E8} \u0421\u0442\u0430\u0442\u0443\u0441 \u043E\u0442\u0432\u0435\u0442\u0430:", response.status);
     const result = await response.json();
-    console.log("\u{1F4E8} \u0422\u0435\u043B\u043E \u043E\u0442\u0432\u0435\u0442\u0430:", result);
     if (!response.ok) {
       throw new Error(result.message || `HTTP error! status: ${response.status}`);
     }
     if (result.success) {
-      console.log("\u2705 \u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D");
       if (window.notifications) {
         window.notifications.show("\u0421\u0435\u0430\u043D\u0441 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D!", "success");
       }
@@ -1548,8 +1602,6 @@ async function updateSession(form) {
     console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
     if (window.notifications && typeof window.notifications.show === "function") {
       window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
-    } else {
-      alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message);
     }
   } finally {
     submitBtn.disabled = false;
@@ -1558,44 +1610,36 @@ async function updateSession(form) {
 }
 function initTimelineHandlers() {
   if (timelineHandlersInitialized) {
-    console.log("\u26A0\uFE0F \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 \u0443\u0436\u0435 \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u044B");
     return;
   }
-  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430...");
   document.removeEventListener("click", handleTimelineClick);
   document.removeEventListener("change", handleTimelineChange);
   document.addEventListener("click", handleTimelineClick, true);
   document.addEventListener("change", handleTimelineChange, true);
   timelineHandlersInitialized = true;
-  console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B (capture phase)");
 }
 function handleTimelineClick(e) {
   const prevBtn = e.target.closest('.timeline-nav-btn[data-action="prev"]');
   const nextBtn = e.target.closest('.timeline-nav-btn[data-action="next"]');
   if (prevBtn) {
-    console.log('\u2B05\uFE0F \u041A\u043B\u0438\u043A \u043D\u0430 \u043A\u043D\u043E\u043F\u043A\u0443 "\u041D\u0430\u0437\u0430\u0434" (capture)');
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     const prevDate = prevBtn.getAttribute("data-prev-date");
-    console.log("\u{1F4C5} \u0414\u0430\u0442\u0430 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430:", prevDate);
     setTimeout(() => changeTimelineDate(prevDate), 0);
     return false;
   }
   if (nextBtn) {
-    console.log('\u27A1\uFE0F \u041A\u043B\u0438\u043A \u043D\u0430 \u043A\u043D\u043E\u043F\u043A\u0443 "\u0412\u043F\u0435\u0440\u0435\u0434" (capture)');
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     const nextDate = nextBtn.getAttribute("data-next-date");
-    console.log("\u{1F4C5} \u0414\u0430\u0442\u0430 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430:", nextDate);
     setTimeout(() => changeTimelineDate(nextDate), 0);
     return false;
   }
 }
 function handleTimelineChange(e) {
   if (e.target.classList.contains("timeline-date-input")) {
-    console.log("\u{1F4C5} \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0434\u0430\u0442\u044B \u0432 input (capture):", e.target.value);
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
@@ -1635,7 +1679,6 @@ function hideTimelineLoading() {
   }
 }
 function reinitializeTimelineHandlers() {
-  console.log("\u{1F504} \u041F\u0435\u0440\u0435\u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430...");
   timelineHandlersInitialized = false;
   initTimelineHandlers();
   if (typeof initSchedules === "function") {
@@ -1822,6 +1865,8 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("\u2705 NotificationSystem initialized");
     window.hallsManager = new halls_default(window.notifications);
     console.log("\u2705 HallsManager initialized");
+    initHallFormHandlers();
+    console.log("\u2705 Hall form handlers initialized");
     window.salesManager = new sales_default(window.notifications);
     console.log("\u2705 SalesManager initialized");
     initTimelineHandlers();

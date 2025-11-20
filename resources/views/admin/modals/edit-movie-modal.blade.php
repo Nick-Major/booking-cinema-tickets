@@ -14,7 +14,7 @@
           @csrf
           @method('PUT')
           
-          <input type="hidden" name="movie_id" id="edit_movie_id">
+          <input type="hidden" name="movie_id" id="edit_movie_form_id">
           
           <label class="conf-step__label conf-step__label-fullsize" for="edit_title">
             Название фильма

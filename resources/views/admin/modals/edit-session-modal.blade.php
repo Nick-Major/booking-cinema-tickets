@@ -1,28 +1,40 @@
-<div class="popup" id="editSessionModal">
+<div class="popup" id="editSessionModal" style="display: none;">
   <div class="popup__container">
     <div class="popup__content">
       <div class="popup__header">
         <h2 class="popup__title">
           Редактирование сеанса
-          <a class="popup__dismiss" href="#" data-close-modal="editSessionModal">
+          <a class="popup__dismiss" href="#" data-dismiss="modal">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
       </div>
+      
       <div class="popup__wrapper">
-        <form id="editSessionForm" method="POST" action="">
+        <form id="editSessionForm" method="POST">
           @csrf
-          @method('PUT')
-          <input type="hidden" name="session_id" id="edit_session_id">
+          <input type="hidden" name="_method" value="PUT">
+          <input type="hidden" id="edit_session_id" name="session_id">
+
+          <!-- Информация о текущем сеансе -->
+          <div class="conf-step__info-box">
+            <div class="conf-step__info-item">
+              <strong>Текущий фильм:</strong> <span id="edit_current_movie">-</span>
+            </div>
+            <div class="conf-step__info-item">
+              <strong>Текущий зал:</strong> <span id="edit_current_hall">-</span>
+            </div>
+            <div class="conf-step__info-item">
+              <strong>Текущее время:</strong> <span id="edit_current_time">-</span>
+            </div>
+          </div>
 
           <label class="conf-step__label conf-step__label-fullsize" for="edit_movie_id">
             Фильм
             <select class="conf-step__input" name="movie_id" id="edit_movie_id" required>
               <option value="">Выберите фильм</option>
               @foreach($movies as $movie)
-                @if($movie)
-                <option value="{{ $movie->id }}">{{ $movie->title }}</option>
-                @endif
+                <option value="{{ $movie->id }}">{{ $movie->title }} ({{ $movie->movie_duration }} мин)</option>
               @endforeach
             </select>
           </label>
@@ -38,35 +50,39 @@
           </label>
 
           <label class="conf-step__label conf-step__label-fullsize" for="edit_session_date">
-              Дата
-              <input class="conf-step__input" type="date" name="session_date" id="edit_session_date" required>
+            Дата
+            <input class="conf-step__input" 
+                  type="date" 
+                  name="session_date" 
+                  id="edit_session_date" 
+                  required>
           </label>
 
           <label class="conf-step__label conf-step__label-fullsize" for="edit_session_time">
-              Время начала
-              <input class="conf-step__input" 
-                    type="time" 
-                    name="session_time" 
-                    id="edit_session_time" 
-                    required>
-              <small>Формат: ЧЧ:ММ (например, 14:30)</small>
+            Время начала
+            <input class="conf-step__input" 
+                  type="time" 
+                  name="session_time" 
+                  id="edit_session_time" 
+                  required>
           </label>
 
-          <!-- Подсказка о расписании -->
-          <div class="conf-step__schedule-hint" id="edit_scheduleHint" style="display: none;">
-            <div class="conf-step__alert conf-step__alert--info">
-              <strong>Расписание зала:</strong> 
-              <span id="edit_allowedTimeRange"></span>
-            </div>
-          </div>
+          <label class="conf-step__label">
+            <input type="checkbox" name="is_actual" id="edit_is_actual" value="1">
+            Активный сеанс
+          </label>
           
-          <div class="conf-step__buttons text-center">
+          <div class="conf-step__buttons text-center" style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
             <button type="submit" class="conf-step__button conf-step__button-accent">
               Сохранить изменения
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    data-close-modal="editSessionModal">
+                    data-dismiss="modal">
               Отменить
+            </button>
+            <button type="button" class="conf-step__button conf-step__button-danger" 
+                    id="edit_delete_button" data-action="delete-session">
+                Удалить сеанс
             </button>
           </div>
         </form>

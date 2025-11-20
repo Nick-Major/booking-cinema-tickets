@@ -1,16 +1,16 @@
-<div class="popup" id="addSessionModal">
+<div class="popup" id="addSessionModal" style="display: none;">
   <div class="popup__container">
     <div class="popup__content">
       <div class="popup__header">
         <h2 class="popup__title">
           Добавление сеанса
-          <a class="popup__dismiss" href="#" onclick="closeAllModals(event)">
+          <a class="popup__dismiss" href="#" data-dismiss="modal">
             <img src="{{ asset('images/admin/close.png') }}" alt="Закрыть">
           </a>
         </h2>
       </div>
       <div class="popup__wrapper">
-        <form id="addSessionForm" method="POST" action="{{ route('sessions.store') }}">
+        <form id="addSessionForm" method="POST">
           @csrf
           <input type="hidden" name="_token" value="{{ csrf_token() }}">
 
@@ -66,7 +66,7 @@
               Добавить сеанс
             </button>
             <button type="button" class="conf-step__button conf-step__button-regular" 
-                    onclick="closeAllModals(event)">
+                    data-dismiss="modal">
               Отменить
             </button>
           </div>

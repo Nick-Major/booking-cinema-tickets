@@ -1,3 +1,5 @@
+import { openModal, closeModal } from '../core/modals.js';
+
 // Модуль для управления залами
 class HallsManager {
     constructor(notificationSystem) {
@@ -345,3 +347,85 @@ export async function fetchHalls() {
 
 // Экспорт класса HallsManager по умолчанию
 export default HallsManager;
+
+// Функция для инициализации обработчиков форм залов
+export function initHallFormHandlers() {
+    console.log('🎯 Инициализация обработчиков форм залов...');
+
+    // Обработчик формы добавления зала
+    const addHallForm = document.getElementById('addHallForm');
+    if (addHallForm) {
+        console.log('✅ Форма addHallForm найдена');
+        
+        addHallForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            console.log('🎯 Отправка формы создания зала');
+            
+            const formData = new FormData(this);
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            
+            try {
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Добавление...';
+
+                const response = await fetch("/admin/halls", {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    }
+                });
+                
+                const result = await response.json();
+
+                if (result.success) {
+                    console.log('✅ Зал успешно создан');
+                    
+                    // Закрываем модальное окно
+                    closeModal('addHallModal');
+                    
+                    // Показываем уведомление
+                    if (window.notifications) {
+                        window.notifications.show(result.message, 'success');
+                    }
+                    
+                    // Сбрасываем форму
+                    this.reset();
+                    
+                    // ОБНОВЛЯЕМ СТРАНИЦУ для отображения нового зала
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                    
+                } else {
+                    console.log('❌ Ошибка при создании зала:', result.message);
+                    if (window.notifications) {
+                        window.notifications.show(result.message, 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('💥 Ошибка сети:', error);
+                if (window.notifications) {
+                    window.notifications.show('Ошибка сети при создании зала', 'error');
+                }
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        });
+    } else {
+        console.log('❌ Форма addHallForm не найдена');
+    }
+
+    // Обработчик для кнопок открытия модального окна добавления зала
+    document.querySelectorAll('[data-open-modal="addHallModal"]').forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🎯 Кнопка "Создать зал" нажата');
+            openModal('addHallModal');
+        });
+    });
+}
