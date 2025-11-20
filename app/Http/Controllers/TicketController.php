@@ -40,11 +40,9 @@ class TicketController extends Controller
     public function showBookingPage($movieSession)
     {
         try {
-            \Log::info('=== SHOW BOOKING PAGE DEBUG ===');
-            \Log::info('Raw parameter: ' . $movieSession);
-            \Log::info('Parameter type: ' . gettype($movieSession));
+            \Log::info('=== SHOW BOOKING PAGE ===');
             
-            // Если пришел ID, находим сеанс
+            // Универсальный подход: работаем и с ID, и с объектом
             if (is_numeric($movieSession)) {
                 $session = \App\Models\MovieSession::with(['movie', 'cinemaHall', 'tickets'])->find($movieSession);
             } else {
@@ -56,19 +54,20 @@ class TicketController extends Controller
                 abort(404, 'Сеанс не найден');
             }
 
-            \Log::info('Session loaded - ID: ' . $session->id . ', Movie: ' . ($session->movie ? $session->movie->title : 'NULL'));
-            
-            // Явная загрузка отношений на всякий случай
+            // Явная загрузка отношений
             $session->load(['movie', 'cinemaHall', 'tickets']);
             
             if (!$session->movie) {
-                \Log::error('Movie relation failed for session: ' . $session->id);
                 abort(404, 'Фильм не найден');
             }
 
             if (!$session->cinemaHall) {
-                \Log::error('Hall relation failed for session: ' . $session->id);
                 abort(404, 'Зал не найден');
+            }
+
+            // Проверяем доступность сеанса
+            if (!$session->isAvailable()) {
+                return redirect()->route('home')->with('error', 'Этот сеанс недоступен для бронирования.');
             }
 
             // Загружаем места с правильной сортировкой
@@ -80,14 +79,13 @@ class TicketController extends Controller
             $seatsByRow = $seats->groupBy('row_number');
             $occupiedSeats = $session->tickets->pluck('seat_id')->toArray();
 
-            \Log::info('Booking page SUCCESS - seats: ' . $seats->count() . ', occupied: ' . count($occupiedSeats));
+            \Log::info('Booking page loaded - Session: ' . $session->id . ', Seats: ' . $seats->count() . ', Occupied: ' . count($occupiedSeats));
             
             return view('client.booking', compact('session', 'seatsByRow', 'occupiedSeats'));
             
         } catch (\Exception $e) {
             \Log::error('Booking page error: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
-            return redirect()->route('home')->with('error', 'Ошибка загрузки страницы бронирования: ' . $e->getMessage());
+            return redirect()->route('home')->with('error', 'Ошибка загрузки страницы бронирования.');
         }
     }
 
