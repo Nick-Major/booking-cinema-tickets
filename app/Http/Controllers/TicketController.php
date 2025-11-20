@@ -39,35 +39,81 @@ class TicketController extends Controller
     // Страница выбора места
     public function showBookingPage(MovieSession $session)
     {
-        // Загружаем сеанс с необходимыми отношениями
-        $session->load(['cinemaHall.seats', 'movie', 'cinemaHall']);
-        
-        // Проверяем, что зал существует
-        if (!$session->cinemaHall) {
-            abort(404, 'Зал для этого сеанса не найден.');
-        }
+        try {
+            \Log::info('=== SHOW BOOKING PAGE START ===');
+            \Log::info('Session ID: ' . $session->id);
+            \Log::info('Raw session data: ', $session->toArray());
 
-        // Проверяем, что сеанс доступен для бронирования
-        if (!$session->isAvailable()) {
-            return redirect()->back()->with('error', 'Этот сеанс недоступен для бронирования.');
-        }
+            // Проверим базовые данные до загрузки отношений
+            \Log::info('Movie ID from session: ' . $session->movie_id);
+            \Log::info('Hall ID from session: ' . $session->cinema_hall_id);
 
-        // Получаем все места зала
-        $seats = $session->cinemaHall->seats()
-            ->orderBy('row_number')
-            ->orderBy('row_seat_number')
-            ->get();
+            // Проверим существование фильма напрямую
+            $movieExists = \App\Models\Movie::where('id', $session->movie_id)->exists();
+            \Log::info('Movie exists in DB: ' . ($movieExists ? 'Yes' : 'No'));
+
+            // Проверим существование зала напрямую
+            $hallExists = \App\Models\CinemaHall::where('id', $session->cinema_hall_id)->exists();
+            \Log::info('Hall exists in DB: ' . ($hallExists ? 'Yes' : 'No'));
+
+            // Явно загружаем отношения с отдельными запросами
+            $movie = \App\Models\Movie::find($session->movie_id);
+            $cinemaHall = \App\Models\CinemaHall::find($session->cinema_hall_id);
+
+            \Log::info('Direct movie fetch: ' . ($movie ? $movie->title : 'NULL'));
+            \Log::info('Direct hall fetch: ' . ($cinemaHall ? $cinemaHall->hall_name : 'NULL'));
+
+            if (!$movie) {
+                \Log::error('CRITICAL: Movie not found by direct query! Session movie_id: ' . $session->movie_id);
+                abort(404, 'Фильм для этого сеанса не найден в базе данных.');
+            }
+
+            if (!$cinemaHall) {
+                \Log::error('CRITICAL: Hall not found by direct query! Session hall_id: ' . $session->cinema_hall_id);
+                abort(404, 'Зал для этого сеанса не найден в базе данных.');
+            }
+
+            // Вручную устанавливаем отношения
+            $session->setRelation('movie', $movie);
+            $session->setRelation('cinemaHall', $cinemaHall);
+
+            // Загружаем места для зала
+            $cinemaHall->load(['seats' => function($query) {
+                $query->orderBy('row_number')->orderBy('row_seat_number');
+            }]);
+
+            // Загружаем билеты
+            $session->load(['tickets' => function($query) {
+                $query->whereIn('status', ['reserved', 'paid']);
+            }]);
+
+            // Проверяем доступность сеанса
+            if (!$session->isAvailable()) {
+                \Log::warning('Session not available: ' . $session->id);
+                return redirect()->back()->with('error', 'Этот сеанс недоступен для бронирования.');
+            }
+
+            // Группируем места по рядам
+            $seatsByRow = $cinemaHall->seats->groupBy('row_number');
             
-        // Группируем места по рядам
-        $seatsByRow = $seats->groupBy('row_number');
-        
-        // Получаем занятые места на этот сеанс
-        $occupiedSeats = $session->tickets()
-            ->whereIn('status', ['reserved', 'paid'])
-            ->pluck('seat_id')
-            ->toArray();
+            // Получаем занятые места
+            $occupiedSeats = $session->tickets->pluck('seat_id')->toArray();
 
-        return view('client.booking', compact('session', 'seatsByRow', 'occupiedSeats'));
+            \Log::info('=== SHOW BOOKING PAGE SUCCESS ===');
+            \Log::info('Seats count: ' . $cinemaHall->seats->count());
+            \Log::info('Occupied seats: ' . count($occupiedSeats));
+            
+            return view('client.booking', compact('session', 'seatsByRow', 'occupiedSeats'));
+            
+        } catch (\Exception $e) {
+            \Log::error('=== SHOW BOOKING PAGE ERROR ===');
+            \Log::error('Error: ' . $e->getMessage());
+            \Log::error('File: ' . $e->getFile());
+            \Log::error('Line: ' . $e->getLine());
+            \Log::error('Session data on error: ', $session ? $session->toArray() : ['session' => 'null']);
+            
+            return redirect()->route('home')->with('error', 'Произошла ошибка при загрузке страницы бронирования.');
+        }
     }
 
     // Обработка бронирования
