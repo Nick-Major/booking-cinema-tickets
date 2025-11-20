@@ -13,29 +13,44 @@ class AdminController extends Controller
 {
     public function dashboard()
     {
-        $currentDate = request('date', now()->format('Y-m-d'));
-        $selectedDate = Carbon::parse($currentDate);
+        $data = $this->getTimelineData(request('date', now()->format('Y-m-d')));
+        $data['movies'] = Movie::all(); // Добавляем фильмы только для полной страницы
         
+        return view('admin.dashboard', $data);
+    }
+
+    public function loadSessionsTimeline(Request $request)
+    {
+        $data = $this->getTimelineData($request->get('date', now()->format('Y-m-d')));
+        
+        // Возвращаем только HTML таймлайна
+        return view('admin.components.sessions-timeline', $data);
+    }
+
+    /**
+     * Общий метод для получения данных таймлайна
+     */
+    private function getTimelineData($date)
+    {
+        $currentDate = $date;
+        $selectedDate = Carbon::parse($currentDate);
+
         $halls = CinemaHall::all();
-        $movies = Movie::all();
         
         // Получаем расписания для каждого зала на выбранную дату
         $hallSchedules = HallSchedule::where('date', $currentDate)
             ->get()
             ->keyBy('cinema_hall_id');
-        
-        // ВАЖНОЕ ИСПРАВЛЕНИЕ: Правильно получаем сеансы для каждой даты
+
+        // Получаем сеансы для каждой даты
         $sessions = collect();
-        
         foreach ($halls as $hall) {
             $schedule = $hallSchedules[$hall->id] ?? null;
-            
+
             if ($schedule) {
-                // Используем новый метод из модели HallSchedule
                 $hallSessions = $schedule->getSessionsWithinSchedule();
                 $sessions = $sessions->merge($hallSessions);
             } else {
-                // Если расписания нет, используем старую логику
                 $hallSessions = MovieSession::where('cinema_hall_id', $hall->id)
                     ->whereDate('session_start', $currentDate)
                     ->with('movie')
@@ -43,22 +58,20 @@ class AdminController extends Controller
                 $sessions = $sessions->merge($hallSessions);
             }
         }
-        
         $sessions = $sessions->groupBy('cinema_hall_id');
 
         $prevDate = $selectedDate->copy()->subDay()->format('Y-m-d');
         $nextDate = $selectedDate->copy()->addDay()->format('Y-m-d');
-        
-        return view('admin.dashboard', compact(
-            'halls', 
-            'movies', 
-            'currentDate', 
+
+        return compact(
+            'halls',
+            'currentDate',
             'selectedDate',
             'hallSchedules',
             'sessions',
             'prevDate',
             'nextDate'
-        ));
+        );
     }
 
     public function toggleSales(Request $request)

@@ -1180,7 +1180,7 @@ function openCreateScheduleModal(hallId, date, hallName = "") {
   document.getElementById("modal_schedule_date").textContent = new Date(date).toLocaleDateString("ru-RU");
   openModal("hallScheduleModal");
 }
-function initSchedules() {
+function initSchedules2() {
   console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043C\u043E\u0434\u0443\u043B\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0439...");
   const editScheduleForm = document.getElementById("editScheduleForm");
   if (editScheduleForm) {
@@ -1212,6 +1212,7 @@ function initSchedules() {
 }
 
 // public/js/modules/sessions.js
+var timelineHandlersInitialized = false;
 async function loadScheduleInfo(hallId, date) {
   try {
     const response = await fetch(`/admin/halls/${hallId}/schedule-info?date=${date}`);
@@ -1405,6 +1406,40 @@ function initSessionFormHandlers() {
     console.log("\u274C \u0424\u043E\u0440\u043C\u0430 deleteSessionForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
 }
+async function changeTimelineDate(date) {
+  console.log("\u{1F4C5} \u0421\u043C\u0435\u043D\u0430 \u0434\u0430\u0442\u044B \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 (AJAX):", date);
+  try {
+    showTimelineLoading();
+    console.log("\u{1F504} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 AJAX \u0437\u0430\u043F\u0440\u043E\u0441\u0430...");
+    const response = await fetch(`/admin/sessions-timeline/load?date=${date}`, {
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').getAttribute("content")
+      }
+    });
+    console.log("\u{1F4E8} \u041E\u0442\u0432\u0435\u0442 \u043F\u043E\u043B\u0443\u0447\u0435\u043D, \u0441\u0442\u0430\u0442\u0443\u0441:", response.status);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    console.log("\u2705 HTML \u043F\u043E\u043B\u0443\u0447\u0435\u043D, \u0434\u043B\u0438\u043D\u0430:", html.length);
+    const container = document.getElementById("sessionsTimelineWrapper");
+    if (container) {
+      container.innerHTML = html;
+      hideTimelineLoading();
+      reinitializeTimelineHandlers();
+      console.log("\u2705 \u0422\u0430\u0439\u043C\u043B\u0430\u0439\u043D \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D \u0431\u0435\u0437 \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0438");
+      if (window.notifications) {
+        window.notifications.show("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u043E", "success");
+      }
+    }
+  } catch (error) {
+    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430:", error);
+    hideTimelineLoading();
+    console.log("\u{1F504} Fallback: \u043F\u0435\u0440\u0435\u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0441\u0442\u0440\u0430\u043D\u0438\u0446\u044B");
+    window.location.href = `/admin/dashboard?date=${date}`;
+  }
+}
 function openEditSessionModal(sessionId) {
   console.log("\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0441\u0435\u0430\u043D\u0441\u0430:", sessionId);
   fetch(`/admin/sessions/${sessionId}`).then((response) => {
@@ -1519,6 +1554,95 @@ async function updateSession(form) {
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
+  }
+}
+function initTimelineHandlers() {
+  if (timelineHandlersInitialized) {
+    console.log("\u26A0\uFE0F \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 \u0443\u0436\u0435 \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u044B");
+    return;
+  }
+  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430...");
+  document.removeEventListener("click", handleTimelineClick);
+  document.removeEventListener("change", handleTimelineChange);
+  document.addEventListener("click", handleTimelineClick, true);
+  document.addEventListener("change", handleTimelineChange, true);
+  timelineHandlersInitialized = true;
+  console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430 \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B (capture phase)");
+}
+function handleTimelineClick(e) {
+  const prevBtn = e.target.closest('.timeline-nav-btn[data-action="prev"]');
+  const nextBtn = e.target.closest('.timeline-nav-btn[data-action="next"]');
+  if (prevBtn) {
+    console.log('\u2B05\uFE0F \u041A\u043B\u0438\u043A \u043D\u0430 \u043A\u043D\u043E\u043F\u043A\u0443 "\u041D\u0430\u0437\u0430\u0434" (capture)');
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const prevDate = prevBtn.getAttribute("data-prev-date");
+    console.log("\u{1F4C5} \u0414\u0430\u0442\u0430 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430:", prevDate);
+    setTimeout(() => changeTimelineDate(prevDate), 0);
+    return false;
+  }
+  if (nextBtn) {
+    console.log('\u27A1\uFE0F \u041A\u043B\u0438\u043A \u043D\u0430 \u043A\u043D\u043E\u043F\u043A\u0443 "\u0412\u043F\u0435\u0440\u0435\u0434" (capture)');
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    const nextDate = nextBtn.getAttribute("data-next-date");
+    console.log("\u{1F4C5} \u0414\u0430\u0442\u0430 \u0434\u043B\u044F \u043F\u0435\u0440\u0435\u0445\u043E\u0434\u0430:", nextDate);
+    setTimeout(() => changeTimelineDate(nextDate), 0);
+    return false;
+  }
+}
+function handleTimelineChange(e) {
+  if (e.target.classList.contains("timeline-date-input")) {
+    console.log("\u{1F4C5} \u0418\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0435 \u0434\u0430\u0442\u044B \u0432 input (capture):", e.target.value);
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+    setTimeout(() => changeTimelineDate(e.target.value), 0);
+    return false;
+  }
+}
+function showTimelineLoading() {
+  const container = document.getElementById("sessionsTimelineWrapper");
+  if (container) {
+    container.style.opacity = "0.6";
+    container.style.pointerEvents = "none";
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "timeline-loading";
+    loadingDiv.innerHTML = '<div style="text-align: center; padding: 20px;">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F...</div>';
+    loadingDiv.style.position = "absolute";
+    loadingDiv.style.top = "50%";
+    loadingDiv.style.left = "50%";
+    loadingDiv.style.transform = "translate(-50%, -50%)";
+    loadingDiv.style.background = "rgba(255,255,255,0.9)";
+    loadingDiv.style.padding = "10px 20px";
+    loadingDiv.style.borderRadius = "5px";
+    loadingDiv.style.zIndex = "1000";
+    container.style.position = "relative";
+    container.appendChild(loadingDiv);
+  }
+}
+function hideTimelineLoading() {
+  const container = document.getElementById("sessionsTimelineWrapper");
+  if (container) {
+    container.style.opacity = "1";
+    container.style.pointerEvents = "auto";
+    const loadingElement = container.querySelector(".timeline-loading");
+    if (loadingElement) {
+      loadingElement.remove();
+    }
+  }
+}
+function reinitializeTimelineHandlers() {
+  console.log("\u{1F504} \u041F\u0435\u0440\u0435\u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430...");
+  timelineHandlersInitialized = false;
+  initTimelineHandlers();
+  if (typeof initSchedules === "function") {
+    initSchedules();
+  }
+  if (typeof initSessionFormHandlers === "function") {
+    initSessionFormHandlers();
   }
 }
 
@@ -1683,10 +1807,6 @@ function openAddSessionModal() {
   console.log("Open add session modal");
   openModal("addSessionModal");
 }
-function changeTimelineDate(date) {
-  console.log("Change timeline date:", date);
-  window.location.href = `/admin/dashboard?date=${date}`;
-}
 function resetSessions() {
   console.log("Reset sessions");
 }
@@ -1704,10 +1824,12 @@ document.addEventListener("DOMContentLoaded", function() {
     console.log("\u2705 HallsManager initialized");
     window.salesManager = new sales_default(window.notifications);
     console.log("\u2705 SalesManager initialized");
+    initTimelineHandlers();
+    console.log("\u2705 Timeline handlers initialized");
     initMovies();
     initMovieFilter();
     console.log("\u2705 Movies module initialized");
-    initSchedules();
+    initSchedules2();
     console.log("\u2705 Schedules module initialized");
     initSessionFormHandlers();
     console.log("\u2705 Session form handlers initialized");

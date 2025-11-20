@@ -67,7 +67,9 @@ import {
 import { 
     initSessionFormHandlers, 
     openEditSessionModal,
-    openDeleteSessionModal
+    openDeleteSessionModal,
+    initTimelineHandlers, // ← ДОБАВИЛ ИМПОРТ
+    changeTimelineDate    // ← ДОБАВИЛ ИМПОРТ
 } from '../../modules/sessions.js';
 
 
@@ -171,10 +173,11 @@ function openAddSessionModal() {
     openModal('addSessionModal');
 }
 
-function changeTimelineDate(date) {
-    console.log('Change timeline date:', date);
-    window.location.href = `/admin/dashboard?date=${date}`;
-}
+// УДАЛИЛ ДУБЛИРУЮЩУЮ ФУНКЦИЮ - теперь используем импортированную
+// function changeTimelineDate(date) {
+//     console.log('Change timeline date:', date);
+//     window.location.href = `/admin/dashboard?date=${date}`;
+// }
 
 function resetSessions() {
     console.log('Reset sessions');
@@ -206,6 +209,10 @@ document.addEventListener('DOMContentLoaded', function() {
         window.salesManager = new SalesManager(window.notifications);
         console.log('✅ SalesManager initialized');
 
+        // ИНИЦИАЛИЗИРУЕМ ОБРАБОТЧИКИ ТАЙМЛАЙНА
+        initTimelineHandlers();
+        console.log('✅ Timeline handlers initialized');
+
         // Инициализируем функциональность фильмов
         initMovies();
         initMovieFilter();
@@ -231,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function() {
     window.loadHallConfiguration = loadHallConfiguration;
     window.loadPriceConfiguration = loadPriceConfiguration;
     window.openAddSessionModal = openAddSessionModal;
-    window.changeTimelineDate = changeTimelineDate;
+    window.changeTimelineDate = changeTimelineDate; // ← Теперь использует импортированную функцию
     window.resetSessions = resetSessions;
     window.updateSession = updateSession;
     window.openModal = openModal;

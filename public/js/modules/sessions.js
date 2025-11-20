@@ -3,6 +3,9 @@
 // Модуль для управления сеансами
 import { openModal, closeModal } from '../core/modals.js';
 
+// Переменные для отслеживания состояния
+let timelineHandlersInitialized = false;
+
 // Функция для загрузки информации о расписании
 async function loadScheduleInfo(hallId, date) {
     try {
@@ -277,9 +280,55 @@ export function openAddSessionModal(hallId, date) {
     }, 100);
 }
 
-export function changeTimelineDate(date) {
-    console.log('📅 Смена даты таймлайна:', date);
-    window.location.href = `/admin/dashboard?date=${date}`;
+// НОВАЯ УЛУЧШЕННАЯ ФУНКЦИЯ changeTimelineDate
+export async function changeTimelineDate(date) {
+    console.log('📅 Смена даты таймлайна (AJAX):', date);
+    
+    try {
+        // Показываем индикатор загрузки
+        showTimelineLoading();
+        
+        console.log('🔄 Отправка AJAX запроса...');
+        
+        const response = await fetch(`/admin/sessions-timeline/load?date=${date}`, {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        });
+        
+        console.log('📨 Ответ получен, статус:', response.status);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const html = await response.text();
+        console.log('✅ HTML получен, длина:', html.length);
+        
+        // Обновляем контейнер
+        const container = document.getElementById('sessionsTimelineWrapper');
+        if (container) {
+            container.innerHTML = html;
+            hideTimelineLoading();
+            
+            // После обновления DOM, переинициализируем обработчики
+            reinitializeTimelineHandlers();
+            
+            console.log('✅ Таймлайн обновлен без перезагрузки');
+            
+            if (window.notifications) {
+                window.notifications.show('Расписание обновлено', 'success');
+            }
+        }
+    } catch (error) {
+        console.error('❌ Ошибка при загрузке таймлайна:', error);
+        hideTimelineLoading();
+        
+        // Fallback: перезагрузка страницы (старая логика)
+        console.log('🔄 Fallback: перезагрузка страницы');
+        window.location.href = `/admin/dashboard?date=${date}`;
+    }
 }
 
 // Функции для работы с API сеансов
@@ -474,5 +523,136 @@ async function updateSession(form) {
     } finally {
         submitBtn.disabled = false;
         submitBtn.textContent = originalText;
+    }
+}
+
+// ============================================================================
+// НОВЫЕ ФУНКЦИИ ДЛЯ ТАЙМЛАЙНА
+// ============================================================================
+
+// НОВАЯ УЛУЧШЕННАЯ ФУНКЦИЯ ИНИЦИАЛИЗАЦИИ ОБРАБОТЧИКОВ ТАЙМЛАЙНА
+export function initTimelineHandlers() {
+    if (timelineHandlersInitialized) {
+        console.log('⚠️ Обработчики таймлайна уже инициализированы');
+        return;
+    }
+    
+    console.log('🎯 Инициализация обработчиков таймлайна...');
+    
+    // Удаляем все старые обработчики
+    document.removeEventListener('click', handleTimelineClick);
+    document.removeEventListener('change', handleTimelineChange);
+    
+    // Добавляем новые обработчики с использованием capture phase
+    document.addEventListener('click', handleTimelineClick, true); // capture phase
+    document.addEventListener('change', handleTimelineChange, true); // capture phase
+    
+    timelineHandlersInitialized = true;
+    console.log('✅ Обработчики таймлайна установлены (capture phase)');
+}
+
+// Обработчик кликов для таймлайна - УЛУЧШЕННАЯ ВЕРСИЯ
+function handleTimelineClick(e) {
+    // Проверяем, является ли цель кнопкой навигации
+    const prevBtn = e.target.closest('.timeline-nav-btn[data-action="prev"]');
+    const nextBtn = e.target.closest('.timeline-nav-btn[data-action="next"]');
+    
+    if (prevBtn) {
+        console.log('⬅️ Клик на кнопку "Назад" (capture)');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const prevDate = prevBtn.getAttribute('data-prev-date');
+        console.log('📅 Дата для перехода:', prevDate);
+        
+        // Вызываем асинхронно чтобы не блокировать событие
+        setTimeout(() => changeTimelineDate(prevDate), 0);
+        return false;
+    }
+    
+    if (nextBtn) {
+        console.log('➡️ Клик на кнопку "Вперед" (capture)');
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        const nextDate = nextBtn.getAttribute('data-next-date');
+        console.log('📅 Дата для перехода:', nextDate);
+        
+        setTimeout(() => changeTimelineDate(nextDate), 0);
+        return false;
+    }
+}
+
+// Обработчик изменений для таймлайна
+function handleTimelineChange(e) {
+    if (e.target.classList.contains('timeline-date-input')) {
+        console.log('📅 Изменение даты в input (capture):', e.target.value);
+        e.preventDefault();
+        e.stopPropagation();
+        e.stopImmediatePropagation();
+        
+        setTimeout(() => changeTimelineDate(e.target.value), 0);
+        return false;
+    }
+}
+
+// Вспомогательные функции для индикации загрузки
+function showTimelineLoading() {
+    const container = document.getElementById('sessionsTimelineWrapper');
+    if (container) {
+        container.style.opacity = '0.6';
+        container.style.pointerEvents = 'none';
+        
+        // Добавляем индикатор загрузки
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'timeline-loading';
+        loadingDiv.innerHTML = '<div style="text-align: center; padding: 20px;">Загрузка расписания...</div>';
+        loadingDiv.style.position = 'absolute';
+        loadingDiv.style.top = '50%';
+        loadingDiv.style.left = '50%';
+        loadingDiv.style.transform = 'translate(-50%, -50%)';
+        loadingDiv.style.background = 'rgba(255,255,255,0.9)';
+        loadingDiv.style.padding = '10px 20px';
+        loadingDiv.style.borderRadius = '5px';
+        loadingDiv.style.zIndex = '1000';
+        
+        container.style.position = 'relative';
+        container.appendChild(loadingDiv);
+    }
+}
+
+function hideTimelineLoading() {
+    const container = document.getElementById('sessionsTimelineWrapper');
+    if (container) {
+        container.style.opacity = '1';
+        container.style.pointerEvents = 'auto';
+        
+        const loadingElement = container.querySelector('.timeline-loading');
+        if (loadingElement) {
+            loadingElement.remove();
+        }
+    }
+}
+
+// Функция для переинициализации обработчиков после AJAX-обновления
+function reinitializeTimelineHandlers() {
+    console.log('🔄 Переинициализация обработчиков таймлайна...');
+    
+    // Сбрасываем флаг инициализации
+    timelineHandlersInitialized = false;
+    
+    // Переинициализируем обработчики
+    initTimelineHandlers();
+    
+    // Переинициализируем обработчики расписаний
+    if (typeof initSchedules === 'function') {
+        initSchedules();
+    }
+    
+    // Переинициализируем обработчики сеансов
+    if (typeof initSessionFormHandlers === 'function') {
+        initSessionFormHandlers();
     }
 }
