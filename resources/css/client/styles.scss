@@ -25,6 +25,9 @@ body {
 
 .page-header {
   padding: 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .page-header__title {
@@ -38,6 +41,21 @@ body {
     font-weight: 100;
   }
 }
+
+.admin-login-btn {
+  color: #fff;
+  text-decoration: none;
+  background: #4481c3;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+  
+  &:hover {
+    background: #3a70a9;
+  }
+}
+
 
 /* ~~~~~~~~~~~~ Главная ~~~~~~~~~~~~ */
 
@@ -77,6 +95,32 @@ body {
       display: block;
     }  
   }
+
+  // УБИРАЕМ конфликтующий блок и объединяем стили
+  .page-nav__day_today {
+    flex-grow: 1;
+    background-color: $white;
+    font-weight: 700;
+    transform: scale(1.1);
+    
+    // Убираем запятую и пробел для сегодняшнего дня
+    .page-nav__day-week::after {
+      content: '';
+    }
+    
+    .page-nav__day-number::before {
+      content: '';
+    }
+    
+    // Для сегодняшнего дня скрываем число и делаем неделю блочной
+    .page-nav__day-week {
+      display: block;
+    }
+    
+    .page-nav__day-number {
+      display: none; // Скрываем число для сегодняшнего дня
+    }
+  }
   
   .page-nav__day_chosen {
     flex-grow: 1;
@@ -99,16 +143,6 @@ body {
       font-size: 2.4rem;
     }    
   }
-  
-  .page-nav__day_today {
-    .page-nav__day-week::before {
-      content: 'Сегодня';
-      display: block;
-    } 
-    .page-nav__day-week, .page-nav__day-number {
-      display: inline;
-    }    
-  }   
 }
 
 .movie {
@@ -126,8 +160,6 @@ body {
     position: relative;
     width: 12.5rem;
     height: 17.5rem;
-/*    left: 1.5rem;
-    top: -1.5rem;*/
     
     .movie__poster-image {
       position: relative;
@@ -488,5 +520,11 @@ body {
   }
   .buying__info-hint {
     display: none;
+  }
+  
+  // Добавляем адаптивность для кнопки администратора
+  .admin-login-btn {
+    font-size: 16px;
+    padding: 10px 20px;
   }
 }

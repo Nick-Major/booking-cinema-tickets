@@ -10,9 +10,15 @@ class HomeController extends Controller
 {
     public function index(Request $request)
     {
+        // Устанавливаем русскую локаль
+        \Carbon\Carbon::setLocale('ru');
+
         // Получаем выбранную дату из запроса или используем сегодня
         $selectedDate = $request->get('date', now()->format('Y-m-d'));
         $currentDate = Carbon::parse($selectedDate);
+
+        \Log::info('HomeController - selectedDate: ' . $selectedDate);
+        \Log::info('HomeController - current server date: ' . now()->format('Y-m-d H:i:s'));
         
         // Генерируем даты для навигации (7 дней от сегодня)
         $dates = [];

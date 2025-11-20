@@ -19,6 +19,9 @@ body {
 
 .page-header {
   padding: 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .page-header__title {
@@ -30,6 +33,19 @@ body {
 }
 .page-header__title span {
   font-weight: 100;
+}
+
+.admin-login-btn {
+  color: #fff;
+  text-decoration: none;
+  background: #4481c3;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+.admin-login-btn:hover {
+  background: #3a70a9;
 }
 
 /* ~~~~~~~~~~~~ Главная ~~~~~~~~~~~~ */
@@ -65,6 +81,24 @@ body {
 .page-nav .page-nav__day .page-nav__day-week, .page-nav .page-nav__day .page-nav__day-number {
   display: block;
 }
+.page-nav .page-nav__day_today {
+  flex-grow: 1;
+  background-color: #FFFFFF;
+  font-weight: 700;
+  transform: scale(1.1);
+}
+.page-nav .page-nav__day_today .page-nav__day-week::after {
+  content: "";
+}
+.page-nav .page-nav__day_today .page-nav__day-number::before {
+  content: "";
+}
+.page-nav .page-nav__day_today .page-nav__day-week {
+  display: block;
+}
+.page-nav .page-nav__day_today .page-nav__day-number {
+  display: none;
+}
 .page-nav .page-nav__day_chosen {
   flex-grow: 1;
   background-color: #FFFFFF;
@@ -83,13 +117,6 @@ body {
   font-weight: 700;
   font-size: 2.4rem;
 }
-.page-nav .page-nav__day_today .page-nav__day-week::before {
-  content: "Сегодня";
-  display: block;
-}
-.page-nav .page-nav__day_today .page-nav__day-week, .page-nav .page-nav__day_today .page-nav__day-number {
-  display: inline;
-}
 
 .movie {
   position: relative;
@@ -105,8 +132,6 @@ body {
   position: relative;
   width: 12.5rem;
   height: 17.5rem;
-  /*    left: 1.5rem;
-      top: -1.5rem;*/
 }
 .movie .movie__poster .movie__poster-image {
   position: relative;
@@ -424,6 +449,10 @@ body {
   }
   .buying__info-hint {
     display: none;
+  }
+  .admin-login-btn {
+    font-size: 16px;
+    padding: 10px 20px;
   }
 }
 

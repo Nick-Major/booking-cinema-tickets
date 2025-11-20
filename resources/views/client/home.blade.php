@@ -5,6 +5,11 @@
 @section('content')
   <header class="page-header">
     <h1 class="page-header__title">Идём<span>в</span>кино</h1>
+    
+    <!-- Кнопка входа для администратора -->
+    <a href="{{ route('login') }}" class="admin-login-btn">
+      Вход для администратора
+    </a>
   </header>
   
   <nav class="page-nav">
@@ -13,19 +18,19 @@
                 {{ $date['isToday'] ? 'page-nav__day_today' : '' }} 
                 {{ $date['isSelected'] ? 'page-nav__day_chosen' : '' }}
                 {{ $date['isWeekend'] ? 'page-nav__day_weekend' : '' }}"
-         href="{{ route('home', ['date' => $date['date']]) }}">
-        <span class="page-nav__day-week">{{ $date['isToday'] ? 'Сегодня' : $date['dayOfWeek'] }}</span>
-        <span class="page-nav__day-number">{{ $date['dayNumber'] }}</span>
+        href="{{ route('home', ['date' => $date['date']]) }}">
+        
+        @if($date['isToday'])
+          <!-- Для сегодняшнего дня показываем только "Сегодня" -->
+          <span class="page-nav__day-week">Сегодня</span>
+        @else
+          <!-- Для остальных дней показываем день недели и число -->
+          <span class="page-nav__day-week">{{ $date['dayOfWeek'] }}</span>
+          <span class="page-nav__day-number">{{ $date['dayNumber'] }}</span>
+        @endif
       </a>
     @endforeach
     <a class="page-nav__day page-nav__day_next" href="{{ route('home', ['date' => $currentDate->copy()->addDays(7)->format('Y-m-d')]) }}"></a>
-    
-    <!-- Кнопка входа для администратора -->
-    <div style="margin-left: auto; padding: 0 20px;">
-      <a href="{{ route('login') }}" style="color: #fff; text-decoration: none; background: #4481c3; padding: 8px 16px; border-radius: 4px; font-size: 14px;">
-        Вход для администратора
-      </a>
-    </div>
   </nav>
   
   <main>
