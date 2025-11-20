@@ -27,7 +27,6 @@ class Ticket extends Model
 
     protected $casts = [
         'final_price' => 'decimal:2',
-        'booking_date' => 'datetime',
         'expires_at' => 'datetime'
     ];
 
@@ -49,29 +48,16 @@ class Ticket extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Scope: активные билеты (не отмененные)
+    // Scope: активные билеты (забронированные)
     public function scopeActive($query)
     {
-        return $query->whereIn('status', ['reserved', 'paid']);
+        return $query->where('status', 'booked');
     }
 
-    // Scope: оплаченные билеты
-    public function scopePaid($query)
+    // Scope: отмененные билеты
+    public function scopeCancelled($query)
     {
-        return $query->where('status', 'paid');
-    }
-
-    // Scope: забронированные билеты
-    public function scopeReserved($query)
-    {
-        return $query->where('status', 'reserved');
-    }
-
-    // Scope: просроченные бронирования
-    public function scopeExpired($query)
-    {
-        return $query->where('status', 'reserved')
-                    ->where('expires_at', '<', now());
+        return $query->where('status', 'cancelled');
     }
 
     // Генерация уникального кода билета
@@ -87,30 +73,7 @@ class Ticket extends Model
     // Проверка, активен ли билет
     public function isActive(): bool
     {
-        return in_array($this->status, ['reserved', 'paid']);
-    }
-
-    // Проверка, оплачен ли билет
-    public function isPaid(): bool
-    {
-        return $this->status === 'paid';
-    }
-
-    // Проверка, истекло ли время бронирования
-    public function isExpired(): bool
-    {
-        return $this->status === 'reserved' && 
-               $this->expires_at && 
-               $this->expires_at < now();
-    }
-
-    // Метод для оплаты билета
-    public function markAsPaid(): void
-    {
-        $this->update([
-            'status' => 'paid',
-            'expires_at' => null
-        ]);
+        return $this->status === 'booked';
     }
 
     // Метод для отмены билета
@@ -127,8 +90,8 @@ class Ticket extends Model
             'movie' => $this->movieSession->movie->title,
             'hall' => $this->movieSession->cinemaHall->hall_name,
             'seat' => $this->seat->getSeatLabelAttribute(),
-            'date' => $this->movieSession->session_start->format('d.m.Y'),
-            'time' => $this->movieSession->session_start->format('H:i'),
+            'date' => $this->movieSession->start_time->format('d.m.Y'),
+            'time' => $this->movieSession->start_time->format('H:i'),
             'price' => $this->final_price,
             'status' => $this->status
         ];

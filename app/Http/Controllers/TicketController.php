@@ -14,7 +14,7 @@ class TicketController extends Controller
     public function index()
     {
         return Ticket::with(['movieSession.movie', 'movieSession.cinemaHall', 'seat', 'user'])
-            ->orderBy('booking_date', 'desc')
+            ->orderBy('created_at', 'desc')
             ->get();
     }
 
@@ -37,82 +37,57 @@ class TicketController extends Controller
     }
 
     // Страница выбора места
-    public function showBookingPage(MovieSession $session)
+    public function showBookingPage($movieSession)
     {
         try {
-            \Log::info('=== SHOW BOOKING PAGE START ===');
-            \Log::info('Session ID: ' . $session->id);
-            \Log::info('Raw session data: ', $session->toArray());
-
-            // Проверим базовые данные до загрузки отношений
-            \Log::info('Movie ID from session: ' . $session->movie_id);
-            \Log::info('Hall ID from session: ' . $session->cinema_hall_id);
-
-            // Проверим существование фильма напрямую
-            $movieExists = \App\Models\Movie::where('id', $session->movie_id)->exists();
-            \Log::info('Movie exists in DB: ' . ($movieExists ? 'Yes' : 'No'));
-
-            // Проверим существование зала напрямую
-            $hallExists = \App\Models\CinemaHall::where('id', $session->cinema_hall_id)->exists();
-            \Log::info('Hall exists in DB: ' . ($hallExists ? 'Yes' : 'No'));
-
-            // Явно загружаем отношения с отдельными запросами
-            $movie = \App\Models\Movie::find($session->movie_id);
-            $cinemaHall = \App\Models\CinemaHall::find($session->cinema_hall_id);
-
-            \Log::info('Direct movie fetch: ' . ($movie ? $movie->title : 'NULL'));
-            \Log::info('Direct hall fetch: ' . ($cinemaHall ? $cinemaHall->hall_name : 'NULL'));
-
-            if (!$movie) {
-                \Log::error('CRITICAL: Movie not found by direct query! Session movie_id: ' . $session->movie_id);
-                abort(404, 'Фильм для этого сеанса не найден в базе данных.');
-            }
-
-            if (!$cinemaHall) {
-                \Log::error('CRITICAL: Hall not found by direct query! Session hall_id: ' . $session->cinema_hall_id);
-                abort(404, 'Зал для этого сеанса не найден в базе данных.');
-            }
-
-            // Вручную устанавливаем отношения
-            $session->setRelation('movie', $movie);
-            $session->setRelation('cinemaHall', $cinemaHall);
-
-            // Загружаем места для зала
-            $cinemaHall->load(['seats' => function($query) {
-                $query->orderBy('row_number')->orderBy('row_seat_number');
-            }]);
-
-            // Загружаем билеты
-            $session->load(['tickets' => function($query) {
-                $query->whereIn('status', ['reserved', 'paid']);
-            }]);
-
-            // Проверяем доступность сеанса
-            if (!$session->isAvailable()) {
-                \Log::warning('Session not available: ' . $session->id);
-                return redirect()->back()->with('error', 'Этот сеанс недоступен для бронирования.');
-            }
-
-            // Группируем места по рядам
-            $seatsByRow = $cinemaHall->seats->groupBy('row_number');
+            \Log::info('=== SHOW BOOKING PAGE DEBUG ===');
+            \Log::info('Raw parameter: ' . $movieSession);
+            \Log::info('Parameter type: ' . gettype($movieSession));
             
-            // Получаем занятые места
+            // Если пришел ID, находим сеанс
+            if (is_numeric($movieSession)) {
+                $session = \App\Models\MovieSession::with(['movie', 'cinemaHall', 'tickets'])->find($movieSession);
+            } else {
+                $session = $movieSession;
+            }
+            
+            if (!$session) {
+                \Log::error('Session not found. Parameter was: ' . $movieSession);
+                abort(404, 'Сеанс не найден');
+            }
+
+            \Log::info('Session loaded - ID: ' . $session->id . ', Movie: ' . ($session->movie ? $session->movie->title : 'NULL'));
+            
+            // Явная загрузка отношений на всякий случай
+            $session->load(['movie', 'cinemaHall', 'tickets']);
+            
+            if (!$session->movie) {
+                \Log::error('Movie relation failed for session: ' . $session->id);
+                abort(404, 'Фильм не найден');
+            }
+
+            if (!$session->cinemaHall) {
+                \Log::error('Hall relation failed for session: ' . $session->id);
+                abort(404, 'Зал не найден');
+            }
+
+            // Загружаем места с правильной сортировкой
+            $seats = $session->cinemaHall->seats()
+                ->orderBy('row_number')
+                ->orderBy('row_seat_number')
+                ->get();
+
+            $seatsByRow = $seats->groupBy('row_number');
             $occupiedSeats = $session->tickets->pluck('seat_id')->toArray();
 
-            \Log::info('=== SHOW BOOKING PAGE SUCCESS ===');
-            \Log::info('Seats count: ' . $cinemaHall->seats->count());
-            \Log::info('Occupied seats: ' . count($occupiedSeats));
+            \Log::info('Booking page SUCCESS - seats: ' . $seats->count() . ', occupied: ' . count($occupiedSeats));
             
             return view('client.booking', compact('session', 'seatsByRow', 'occupiedSeats'));
             
         } catch (\Exception $e) {
-            \Log::error('=== SHOW BOOKING PAGE ERROR ===');
-            \Log::error('Error: ' . $e->getMessage());
-            \Log::error('File: ' . $e->getFile());
-            \Log::error('Line: ' . $e->getLine());
-            \Log::error('Session data on error: ', $session ? $session->toArray() : ['session' => 'null']);
-            
-            return redirect()->route('home')->with('error', 'Произошла ошибка при загрузке страницы бронирования.');
+            \Log::error('Booking page error: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return redirect()->route('home')->with('error', 'Ошибка загрузки страницы бронирования: ' . $e->getMessage());
         }
     }
 
@@ -146,7 +121,8 @@ class TicketController extends Controller
                 'user_id' => $guestUser->id,
                 'final_price' => $checkResult['final_price'],
                 'unique_code' => Ticket::generateUniqueCode(),
-                'expires_at' => now()->addMinutes(30)
+                'status' => 'booked',
+                'expires_at' => null
             ]);
 
             return response()->json([
@@ -194,16 +170,14 @@ class TicketController extends Controller
             ], 422);
         }
 
-        // Используем транзакцию для защиты от дублирования
         return DB::transaction(function () use ($validated, $checkResult) {
-            // Создаем билет
             $ticket = Ticket::create([
                 'movie_session_id' => $validated['movie_session_id'],
                 'seat_id' => $validated['seat_id'],
                 'user_id' => $validated['user_id'],
                 'final_price' => $checkResult['final_price'],
                 'unique_code' => Ticket::generateUniqueCode(),
-                'expires_at' => now()->addMinutes(30)
+                'status' => 'booked'
             ]);
 
             return response()->json($ticket->load(['movieSession.movie', 'seat', 'user']), 201);
@@ -218,15 +192,10 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket)
     {
         $validated = $request->validate([
-            'status' => 'sometimes|in:reserved,paid,cancelled'
+            'status' => 'sometimes|in:booked,cancelled'
         ]);
 
-        // Если меняем статус на "оплачено"
-        if (isset($validated['status']) && $validated['status'] === 'paid') {
-            $ticket->markAsPaid();
-        } else {
-            $ticket->update($validated);
-        }
+        $ticket->update($validated);
 
         return response()->json($ticket->load(['movieSession.movie', 'seat', 'user']));
     }
@@ -295,7 +264,7 @@ class TicketController extends Controller
         // Проверяем, не занято ли уже место на этом сеансе
         $existingTicket = Ticket::where('movie_session_id', $movieSessionId)
             ->where('seat_id', $seatId)
-            ->whereIn('status', ['reserved', 'paid'])
+            ->where('status', 'booked')
             ->first();
 
         if ($existingTicket) {
@@ -305,7 +274,7 @@ class TicketController extends Controller
             ];
         }
 
-        // Рассчитываем цену
+        // Рассчитываем цену (только для информации)
         $finalPrice = $seat->price;
 
         return [
@@ -315,50 +284,6 @@ class TicketController extends Controller
             'seat' => $seat,
             'final_price' => $finalPrice
         ];
-    }
-
-    // Метод для оплаты билета
-    public function payTicket(Ticket $ticket)
-    {
-        $ticket->load(['movieSession.movie', 'seat', 'user']);
-        
-        if ($ticket->isPaid()) {
-            return response()->json([
-                'message' => 'Билет уже оплачен'
-            ], 422);
-        }
-
-        if ($ticket->isExpired()) {
-            return response()->json([
-                'message' => 'Время бронирования истекло'
-            ], 422);
-        }
-
-        $ticket->markAsPaid();
-
-        return response()->json([
-            'message' => 'Билет успешно оплачен',
-            'ticket' => $ticket
-        ]);
-    }
-
-    // Метод для отмены билета
-    public function cancelTicket(Ticket $ticket)
-    {
-        $ticket->load(['movieSession.movie', 'seat', 'user']);
-        
-        if ($ticket->isPaid()) {
-            return response()->json([
-                'message' => 'Оплаченный билет нельзя отменить'
-            ], 422);
-        }
-
-        $ticket->cancel();
-
-        return response()->json([
-            'message' => 'Бронь отменена',
-            'ticket' => $ticket
-        ]);
     }
 
     // Получить билет по уникальному коду
