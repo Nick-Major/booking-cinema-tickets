@@ -65,4 +65,20 @@ class Movie extends Model
             }])
             ->get();
     }
+
+    public function scopeWithSessionsForDate($query, $date)
+    {
+        return $query->whereHas('movieSessions', function($query) use ($date) {
+                $query->whereDate('session_start', $date)
+                    ->where('is_actual', true)
+                    ->where('session_start', '>', now());
+            })
+            ->with(['movieSessions' => function($query) use ($date) {
+                $query->whereDate('session_start', $date)
+                    ->where('is_actual', true)
+                    ->where('session_start', '>', now())
+                    ->orderBy('session_start')
+                    ->with('cinemaHall');
+            }]);
+    }
 }

@@ -23,13 +23,10 @@ class AdminController extends Controller
     {
         $data = $this->getTimelineData($request->get('date', now()->format('Y-m-d')));
         
-        // Возвращаем только HTML таймлайна
         return view('admin.components.sessions-timeline', $data);
     }
 
-    /**
-     * Общий метод для получения данных таймлайна
-     */
+    // Общий метод для получения данных таймлайна
     private function getTimelineData($date)
     {
         $currentDate = $date;

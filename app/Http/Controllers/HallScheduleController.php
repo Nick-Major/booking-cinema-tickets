@@ -205,7 +205,7 @@ class HallScheduleController extends Controller
     public function destroy(Request $request, HallSchedule $hallSchedule)
     {
         try {
-            \Log::info('🗑️ Удаление расписания', [
+            \Log::info('Удаление расписания', [
                 'schedule_id' => $hallSchedule->id,
                 'hall_id' => $hallSchedule->cinema_hall_id,
                 'date' => $hallSchedule->date,
@@ -243,7 +243,7 @@ class HallScheduleController extends Controller
             // Удаляем само расписание
             $hallSchedule->delete();
 
-            \Log::info('✅ Расписание удалено', [
+            \Log::info('Расписание удалено', [
                 'schedule_id' => $hallSchedule->id,
                 'deleted_sessions' => $deletedSessionsCount
             ]);
@@ -255,7 +255,7 @@ class HallScheduleController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            \Log::error('❌ Ошибка удаления расписания: ' . $e->getMessage(), [
+            \Log::error('Ошибка удаления расписания: ' . $e->getMessage(), [
                 'schedule_id' => $hallSchedule->id,
                 'error' => $e->getMessage()
             ]);

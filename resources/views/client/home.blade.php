@@ -3,24 +3,26 @@
 @section('title', 'Главная страница')
 
 @section('content')
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta http-equiv="X-UA-Compatible" content="ie=edge">
-  <title>ИдёмВКино</title>
-</head>
-
-<body>
   <header class="page-header">
     <h1 class="page-header__title">Идём<span>в</span>кино</h1>
   </header>
   
   <nav class="page-nav">
-    <!-- Навигация по дням будет добавлена позже -->
-    <div style="text-align: center; padding: 20px;">
-      <a href="{{ route('login') }}" style="color: #fff; text-decoration: none; background: #4481c3; padding: 10px 20px; border-radius: 4px;">
+    @foreach($dates as $date)
+      <a class="page-nav__day 
+                {{ $date['isToday'] ? 'page-nav__day_today' : '' }} 
+                {{ $date['isSelected'] ? 'page-nav__day_chosen' : '' }}
+                {{ $date['isWeekend'] ? 'page-nav__day_weekend' : '' }}"
+         href="{{ route('home', ['date' => $date['date']]) }}">
+        <span class="page-nav__day-week">{{ $date['isToday'] ? 'Сегодня' : $date['dayOfWeek'] }}</span>
+        <span class="page-nav__day-number">{{ $date['dayNumber'] }}</span>
+      </a>
+    @endforeach
+    <a class="page-nav__day page-nav__day_next" href="{{ route('home', ['date' => $currentDate->copy()->addDays(7)->format('Y-m-d')]) }}"></a>
+    
+    <!-- Кнопка входа для администратора -->
+    <div style="margin-left: auto; padding: 0 20px;">
+      <a href="{{ route('login') }}" style="color: #fff; text-decoration: none; background: #4481c3; padding: 8px 16px; border-radius: 4px; font-size: 14px;">
         Вход для администратора
       </a>
     </div>
@@ -35,12 +37,12 @@
               @if($movie->movie_poster)
                 <img class="movie__poster-image" alt="{{ $movie->title }} постер" src="{{ Storage::url($movie->movie_poster) }}">
               @else
-                <img class="movie__poster-image" alt="Постер отсутствует" src="{{ asset('images/placeholder-poster.jpg') }}">
+                <img class="movie__poster-image" alt="Постер отсутствует" src="{{ asset('images/client/poster-placeholder.png') }}">
               @endif
             </div>
             <div class="movie__description">
               <h2 class="movie__title">{{ $movie->title }}</h2>
-              <p class="movie__synopsis">{{ $movie->movie_description }}</p>
+              <p class="movie__synopsis">{{ $movie->movie_description ?: 'Описание отсутствует' }}</p>
               <p class="movie__data">
                 <span class="movie__data-duration">{{ $movie->movie_duration }} минут</span>
                 @if($movie->country)
@@ -59,18 +61,23 @@
             @php
               $hall = $sessions->first()->cinemaHall;
             @endphp
-            <div class="movie-seances__hall">
-              <h3 class="movie-seances__hall-title">{{ $hall->hall_name }}</h3>
-              <ul class="movie-seances__list">
-                @foreach($sessions as $session)
-                  <li class="movie-seances__time-block">
-                    <a class="movie-seances__time" href="{{ route('sessions.booking', $session) }}">
-                      {{ $session->session_start->format('H:i') }}
-                    </a>
-                  </li>
-                @endforeach
-              </ul>
-            </div>
+            
+            @if($hall && $hall->is_active)
+              <div class="movie-seances__hall">
+                <h3 class="movie-seances__hall-title">{{ $hall->hall_name }}</h3>
+                <ul class="movie-seances__list">
+                  @foreach($sessions as $session)
+                    @if($session->isAvailable())
+                      <li class="movie-seances__time-block">
+                        <a class="movie-seances__time" href="{{ route('sessions.booking', $session) }}">
+                          {{ $session->session_start->format('H:i') }}
+                        </a>
+                      </li>
+                    @endif
+                  @endforeach
+                </ul>
+              </div>
+            @endif
           @endforeach
         </section>
       @endforeach
@@ -78,13 +85,11 @@
       <section class="movie">
         <div class="movie__info">
           <div class="movie__description" style="text-align: center; width: 100%;">
-            <h2 class="movie__title">Фильмов пока нет</h2>
-            <p class="movie__synopsis">Администратор может добавить фильмы и сеансы в панели управления</p>
+            <h2 class="movie__title">На {{ $currentDate->translatedFormat('j F') }} сеансов нет</h2>
+            <p class="movie__synopsis">Выберите другую дату или проверьте позже</p>
           </div>
         </div>
       </section>
     @endif
   </main>
-</body>
-</html>
 @endsection

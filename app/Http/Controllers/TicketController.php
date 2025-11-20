@@ -18,9 +18,40 @@ class TicketController extends Controller
             ->get();
     }
 
+    private function getGuestUser(): User
+    {
+        $guestEmail = 'guest@cinema.local';
+        
+        $user = User::where('email', $guestEmail)->first();
+        
+        if (!$user) {
+            $user = User::create([
+                'name' => 'Гость',
+                'email' => $guestEmail,
+                'password' => bcrypt(\Str::random(32)),
+                'is_admin' => false
+            ]);
+        }
+        
+        return $user;
+    }
+
     // Страница выбора места
     public function showBookingPage(MovieSession $session)
     {
+        // Загружаем сеанс с необходимыми отношениями
+        $session->load(['cinemaHall.seats', 'movie', 'cinemaHall']);
+        
+        // Проверяем, что зал существует
+        if (!$session->cinemaHall) {
+            abort(404, 'Зал для этого сеанса не найден.');
+        }
+
+        // Проверяем, что сеанс доступен для бронирования
+        if (!$session->isAvailable()) {
+            return redirect()->back()->with('error', 'Этот сеанс недоступен для бронирования.');
+        }
+
         // Получаем все места зала
         $seats = $session->cinemaHall->seats()
             ->orderBy('row_number')
@@ -47,22 +78,22 @@ class TicketController extends Controller
             'seat_id' => 'required|exists:seats,id',
         ]);
 
-        // Используем транзакцию для защиты от дублирования
-        return DB::transaction(function () use ($validated) {
-            // ПРОВЕРКА ДОСТУПНОСТИ - ДОБАВЛЕНО
-            $checkResult = $this->checkBookingAvailability(
-                $validated['movie_session_id'],
-                $validated['seat_id']
-            );
+        // ПРОВЕРКА ДОСТУПНОСТИ
+        $checkResult = $this->checkBookingAvailability(
+            $validated['movie_session_id'],
+            $validated['seat_id']
+        );
 
-            if (!$checkResult['available']) {
-                return back()->with('error', $checkResult['message']);
-            }
+        if (!$checkResult['available']) {
+            return response()->json([
+                'success' => false,
+                'message' => $checkResult['message']
+            ], 422);
+        }
 
-            // УЛУЧШЕННАЯ СИСТЕМА ГОСТЕВЫХ ПОЛЬЗОВАТЕЛЕЙ
-            $guestUser = $this->createGuestUser();
+        return DB::transaction(function () use ($validated, $checkResult) {
+            $guestUser = $this->getGuestUser();
 
-            // Создаем билет
             $ticket = Ticket::create([
                 'movie_session_id' => $validated['movie_session_id'],
                 'seat_id' => $validated['seat_id'],
@@ -72,27 +103,19 @@ class TicketController extends Controller
                 'expires_at' => now()->addMinutes(30)
             ]);
 
-            // Перенаправляем на страницу подтверждения
-            return redirect()->route('tickets.confirmation', $ticket);
+            return response()->json([
+                'success' => true,
+                'message' => 'Билет успешно забронирован',
+                'ticket_id' => $ticket->id,
+                'redirect_url' => route('tickets.confirmation', $ticket)
+            ]);
         });
-    }
-
-    private function createGuestUser(): User
-    {
-        $timestamp = now()->timestamp;
-        $random = \Str::random(8);
-        
-        return User::create([
-            'name' => 'Гость_' . $timestamp,
-            'email' => "guest_{$timestamp}_{$random}@cinema.local",
-            'password' => bcrypt(\Str::random(32)),
-            'is_admin' => false
-        ]);
     }
 
     // Страница подтверждения бронирования
     public function showConfirmation(Ticket $ticket)
     {
+        $ticket->load(['movieSession.movie', 'movieSession.cinemaHall', 'seat', 'user']);
         return view('client.booking-confirmation', compact('ticket'));
     }
 
@@ -187,12 +210,20 @@ class TicketController extends Controller
     // Метод проверки доступности бронирования
     private function checkBookingAvailability($movieSessionId, $seatId): array
     {
-        // Проверяем существование сеанса
-        $movieSession = MovieSession::findOrFail($movieSessionId);
-        $seat = Seat::findOrFail($seatId);
+        // Загружаем сеанс с отношениями
+        $movieSession = MovieSession::with(['cinemaHall', 'movie'])->findOrFail($movieSessionId);
+        $seat = Seat::with(['cinemaHall'])->findOrFail($seatId);
+
+        // Проверяем, что зал сеанса и зал места совпадают
+        if ($movieSession->cinema_hall_id !== $seat->cinema_hall_id) {
+            return [
+                'available' => false,
+                'message' => 'Место не принадлежит залу сеанса'
+            ];
+        }
 
         // Проверяем доступность зала
-        if (!$movieSession->cinemaHall->is_active) {
+        if (!$movieSession->cinemaHall || !$movieSession->cinemaHall->is_active) {
             return [
                 'available' => false,
                 'message' => 'Продажа билетов в этом зале приостановлена'
@@ -218,7 +249,7 @@ class TicketController extends Controller
         // Проверяем, не занято ли уже место на этом сеансе
         $existingTicket = Ticket::where('movie_session_id', $movieSessionId)
             ->where('seat_id', $seatId)
-            ->where('status', '!=', 'cancelled')
+            ->whereIn('status', ['reserved', 'paid'])
             ->first();
 
         if ($existingTicket) {
@@ -234,7 +265,7 @@ class TicketController extends Controller
         return [
             'available' => true,
             'message' => 'Место доступно для бронирования',
-            'movie_session' => $movieSession->load(['movie', 'cinemaHall']),
+            'movie_session' => $movieSession,
             'seat' => $seat,
             'final_price' => $finalPrice
         ];
@@ -243,6 +274,8 @@ class TicketController extends Controller
     // Метод для оплаты билета
     public function payTicket(Ticket $ticket)
     {
+        $ticket->load(['movieSession.movie', 'seat', 'user']);
+        
         if ($ticket->isPaid()) {
             return response()->json([
                 'message' => 'Билет уже оплачен'
@@ -259,13 +292,15 @@ class TicketController extends Controller
 
         return response()->json([
             'message' => 'Билет успешно оплачен',
-            'ticket' => $ticket->load(['movieSession.movie', 'seat', 'user'])
+            'ticket' => $ticket
         ]);
     }
 
     // Метод для отмены билета
     public function cancelTicket(Ticket $ticket)
     {
+        $ticket->load(['movieSession.movie', 'seat', 'user']);
+        
         if ($ticket->isPaid()) {
             return response()->json([
                 'message' => 'Оплаченный билет нельзя отменить'

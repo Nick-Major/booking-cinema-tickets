@@ -138,7 +138,7 @@ class CinemaHallController extends Controller
         \Log::info('Validated data', [
             'hall_id' => $hallId,
             'seats_count' => count($validated['seats']),
-            'sample_seats' => array_slice($validated['seats'], 0, 3) // первые 3 места для примера
+            'sample_seats' => array_slice($validated['seats'], 0, 3)
         ]);
 
         try {
@@ -184,7 +184,7 @@ class CinemaHallController extends Controller
                 'hall_id' => $cinemaHall->id,
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
-                'request_data' => $validated['seats'] // логируем ВСЕ места из запроса
+                'request_data' => $validated['seats']
             ]);
             return response()->json(['success' => false, 'message' => 'Ошибка при сохранении: ' . $e->getMessage()], 500);
         }

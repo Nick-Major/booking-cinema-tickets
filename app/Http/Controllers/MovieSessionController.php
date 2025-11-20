@@ -103,12 +103,29 @@ class MovieSessionController extends Controller
             ]);
 
             $cinemaHallId = $validated['cinema_hall_id'];
-            $sessionDate = $validated['session_date']; // "2025-11-19"
-            $sessionTime = $validated['session_time']; // "00:30"
+            $sessionDate = $validated['session_date'];
+            $sessionTime = $validated['session_time'];
             
+            // Проверяем доступность зала
+            $cinemaHall = CinemaHall::find($cinemaHallId);
+            if (!$cinemaHall) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Зал не найден'
+                ], 422);
+            }
+
             // Создаем объект DateTime для сеанса
             $sessionDateTime = Carbon::createFromFormat('Y-m-d H:i', $sessionDate . ' ' . $sessionTime);
             
+            // Проверяем, что сеанс не в прошлом
+            if ($sessionDateTime <= now()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Нельзя создать сеанс в прошлом'
+                ], 422);
+            }
+
             \Log::info('Session creation started:', [
                 'cinema_hall_id' => $cinemaHallId,
                 'session_date' => $sessionDate,
@@ -174,36 +191,43 @@ class MovieSessionController extends Controller
                 ], 422);
             }
 
-            // Получаем длительность фильма
+            // Получаем длительность фильма и рассчитываем окончание сеанса
             $movie = Movie::find($validated['movie_id']);
-            $sessionEnd = $sessionDateTime->copy()->addMinutes($movie->movie_duration + 25);
+            
+            // Создаем временный экземпляр MovieSession для использования getTotalDuration()
+            $tempSession = new MovieSession();
+            $tempSession->movie = $movie;
+            $sessionEnd = $sessionDateTime->copy()->addMinutes($tempSession->getTotalDuration());
 
             \Log::info('Session timing calculated:', [
                 'movie_title' => $movie->title,
                 'movie_duration' => $movie->movie_duration,
+                'total_duration' => $tempSession->getTotalDuration(),
                 'session_start' => $sessionDateTime->format('Y-m-d H:i:s'),
                 'session_end' => $sessionEnd->format('Y-m-d H:i:s')
             ]);
 
-            // Проверяем конфликты с другими сеансами
+            // Проверяем конфликты с другими сеансами (только актуальными)
             $conflictingSession = MovieSession::where('cinema_hall_id', $cinemaHallId)
+                ->where('is_actual', true)
                 ->where(function($query) use ($sessionDateTime, $sessionEnd) {
                     $query->where('session_start', '<', $sessionEnd)
                         ->where('session_end', '>', $sessionDateTime);
                 })
-                ->where('id', '!=', $request->session_id ?? 0)
                 ->first();
 
             if ($conflictingSession) {
                 \Log::warning('Session conflict detected', [
                     'existing_session_id' => $conflictingSession->id,
                     'existing_start' => $conflictingSession->session_start->format('Y-m-d H:i:s'),
-                    'existing_end' => $conflictingSession->session_end->format('Y-m-d H:i:s')
+                    'existing_end' => $conflictingSession->session_end->format('Y-m-d H:i:s'),
+                    'existing_movie' => $conflictingSession->movie->title ?? 'Unknown'
                 ]);
                 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Время сеанса пересекается с существующим сеансом'
+                    'message' => 'Время сеанса пересекается с существующим сеансом: ' . 
+                            ($conflictingSession->movie->title ?? 'Unknown')
                 ], 422);
             }
 
@@ -219,7 +243,7 @@ class MovieSessionController extends Controller
             \Log::info('Session created successfully!', [
                 'session_id' => $movieSession->id,
                 'movie' => $movie->title,
-                'hall' => $cinemaHallId,
+                'hall' => $cinemaHall->hall_name,
                 'start' => $sessionDateTime->format('Y-m-d H:i:s'),
                 'end' => $sessionEnd->format('Y-m-d H:i:s')
             ]);
@@ -227,7 +251,7 @@ class MovieSessionController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Сеанс успешно создан',
-                'session' => $movieSession
+                'session' => $movieSession->load(['movie', 'cinemaHall'])
             ]);
 
         } catch (\Exception $e) {
@@ -359,7 +383,7 @@ class MovieSessionController extends Controller
     public function edit(MovieSession $movieSession)
     {
         try {
-            \Log::info('🔄 Запрос данных сеанса для редактирования', [
+            \Log::info('Запрос данных сеанса для редактирования', [
                 'session_id' => $movieSession->id,
                 'movie_id' => $movieSession->movie_id,
                 'hall_id' => $movieSession->cinema_hall_id,
@@ -370,7 +394,7 @@ class MovieSessionController extends Controller
 
             // ПРЕОБРАЗОВАНИЕ ВРЕМЕНИ С УЧЕТОМ ЧАСОВОГО ПОЯСА ПРИЛОЖЕНИЯ
             $sessionStart = $movieSession->session_start;
-            $timezone = config('app.timezone', 'UTC');
+            $timezone = config('app.timezone', 'Europe/Moscow');
             
             \Log::info('📅 Информация о времени:', [
                 'original_utc' => $movieSession->session_start->format('Y-m-d H:i:s'),
