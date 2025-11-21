@@ -96,14 +96,13 @@ body {
     }  
   }
 
-  // УБИРАЕМ конфликтующий блок и объединяем стили
   .page-nav__day_today {
     flex-grow: 1;
     background-color: $white;
     font-weight: 700;
     transform: scale(1.1);
     
-    // Убираем запятую и пробел для сегодняшнего дня
+    
     .page-nav__day-week::after {
       content: '';
     }
@@ -112,13 +111,13 @@ body {
       content: '';
     }
     
-    // Для сегодняшнего дня скрываем число и делаем неделю блочной
+    
     .page-nav__day-week {
       display: block;
     }
     
     .page-nav__day-number {
-      display: none; // Скрываем число для сегодняшнего дня
+      display: none;
     }
   }
   
@@ -522,7 +521,6 @@ body {
     display: none;
   }
   
-  // Добавляем адаптивность для кнопки администратора
   .admin-login-btn {
     font-size: 16px;
     padding: 10px 20px;

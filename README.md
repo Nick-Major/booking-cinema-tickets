@@ -1,61 +1,95 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Система бронирования билетов в кинотеатр
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Веб-приложение для онлайн-бронирования билетов в кинотеатр с административной панелью управления.
 
-## About Laravel
+## Технические требования
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.4.14
+- Laravel 12.35.1
+- MySQL 8.0+
+- Docker + Laravel Sail
+- Node.js (для сборки фронтенда)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Установка и запуск
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. **Клонируйте репозиторий**
+```bash
+git clone <repository-url>
+cd booking-cinema-tickets
+```
 
-## Learning Laravel
+2. **Настройте окружение**
+```bash
+cp .env.example .env
+```
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+3. **Запустите контейнеры**
+```bash
+./vendor/bin/sail up -d
+```
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+4. **Установите зависимости и настройте приложение**
+```bash
+./vendor/bin/sail composer install
+./vendor/bin/sail artisan key:generate
+./vendor/bin/sail artisan migrate --seed
+./vendor/bin/sail npm install
+./vendor/bin/sail npm run build
+```
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Миграции базы данных
 
-## Laravel Sponsors
+```bash
+# Запуск миграций
+./vendor/bin/sail artisan migrate
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+# Заполнение тестовыми данными
+./vendor/bin/sail artisan db:seed
+```
 
-### Premium Partners
+## Доступ к приложению
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+- **Клиентская часть:** http://localhost
 
-## Contributing
+- **Админ панель:** http://localhost/admin
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+- **База данных:** localhost:3306 (логин: sail, пароль: password)
 
-## Code of Conduct
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Учетные данные администратора
 
-## Security Vulnerabilities
+- Email: admin@cinema.ru
+- Пароль: password123
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Фронтенд сборка
+```bash
+# Разработка
+./vendor/bin/sail yarn dev:all
 
-## License
+# Продакшен
+./vendor/bin/sail yarn build
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## Структура проекта
+
+- app/Models/ - Модели данных
+
+- app/Http/Controllers/ - Контроллеры
+
+- resources/views/ - Blade шаблоны
+
+- database/migrations/ - Миграции БД
+
+- public/css/, public/js/ - Скомпилированные ресурсы
+
+## Особенности реализации
+
+- Серверная валидация данных
+
+- Хеширование паролей
+
+- Генерация QR-кодов для билетов
+
+- Транзакции при бронировании
+
+- Разделение на клиентскую и административную части

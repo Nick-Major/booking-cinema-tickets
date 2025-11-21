@@ -4,9 +4,9 @@ function openModal(modalId) {
   if (modal) {
     modal.style.display = "flex";
     document.body.style.overflow = "hidden";
-    console.log(`\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
+    console.log(`\u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043E\u0442\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
   } else {
-    console.error(`\u274C \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E: ${modalId}`);
+    console.error(`\u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u043E: ${modalId}`);
   }
 }
 function closeModal(modalId) {
@@ -14,16 +14,16 @@ function closeModal(modalId) {
   if (modal) {
     modal.style.display = "none";
     document.body.style.overflow = "";
-    console.log(`\u2705 \u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
+    console.log(`\u041C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0435 \u043E\u043A\u043D\u043E \u0437\u0430\u043A\u0440\u044B\u0442\u043E: ${modalId}`);
   }
 }
 function initModalHandlers() {
-  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D...");
+  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D...");
   document.querySelectorAll("[data-open-modal]").forEach((button) => {
     button.addEventListener("click", function(e) {
       e.preventDefault();
       const modalId = this.getAttribute("data-open-modal");
-      console.log(`\u{1F3AF} \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
+      console.log(`\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
       openModal(modalId);
     });
   });
@@ -41,7 +41,7 @@ function initModalHandlers() {
     button.addEventListener("click", function(e) {
       e.preventDefault();
       const modalId = this.getAttribute("data-close-modal");
-      console.log(`\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
+      console.log(`\u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430: ${modalId}`);
       closeModal(modalId);
     });
   });
@@ -49,7 +49,7 @@ function initModalHandlers() {
     modal.addEventListener("click", function(e) {
       if (e.target === this) {
         e.preventDefault();
-        console.log(`\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E \u043A\u043B\u0438\u043A\u0443 \u043D\u0430 \u0444\u043E\u043D: ${this.id}`);
+        console.log(`\u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E \u043A\u043B\u0438\u043A\u0443 \u043D\u0430 \u0444\u043E\u043D: ${this.id}`);
         closeModal(this.id);
       }
     });
@@ -57,7 +57,7 @@ function initModalHandlers() {
   document.addEventListener("keydown", function(e) {
     if (e.key === "Escape") {
       e.preventDefault();
-      console.log("\u{1F3AF} \u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E Escape");
+      console.log("\u0417\u0430\u043A\u0440\u044B\u0442\u0438\u0435 \u043F\u043E Escape");
       document.querySelectorAll(".popup").forEach((modal) => {
         if (modal.style.display === "flex") {
           closeModal(modal.id);
@@ -65,7 +65,7 @@ function initModalHandlers() {
       });
     }
   });
-  console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u044B");
+  console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u0438 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u044B\u0445 \u043E\u043A\u043E\u043D \u0438\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0438\u0440\u043E\u0432\u0430\u043D\u044B");
 }
 function closeAddHallModal() {
   closeModal("addHallModal");
@@ -131,7 +131,7 @@ var HallsManager = class {
   openDeleteModal(hallId, hallName) {
     const modal = document.getElementById("deleteHallModal");
     if (!modal) {
-      console.error("Delete hall modal not found");
+      console.error("\u041A\u043D\u043E\u043F\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430!");
       return;
     }
     modal.querySelector('input[name="hall_id"]').value = hallId;
@@ -333,13 +333,13 @@ async function loadPriceConfiguration(hallId) {
 }
 var halls_default = HallsManager;
 function initHallFormHandlers() {
-  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C \u0437\u0430\u043B\u043E\u0432...");
+  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C \u0437\u0430\u043B\u043E\u0432...");
   const addHallForm = document.getElementById("addHallForm");
   if (addHallForm) {
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    console.log("\u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     addHallForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      console.log("\u{1F3AF} \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043B\u0430");
+      console.log("\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0437\u0430\u043B\u0430");
       const formData = new FormData(this);
       const submitBtn = this.querySelector('button[type="submit"]');
       const originalText = submitBtn.textContent;
@@ -357,7 +357,7 @@ function initHallFormHandlers() {
         });
         const result = await response.json();
         if (result.success) {
-          console.log("\u2705 \u0417\u0430\u043B \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
+          console.log("\u0417\u0430\u043B \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
           closeModal("addHallModal");
           if (window.notifications) {
             window.notifications.show(result.message, "success");
@@ -367,13 +367,13 @@ function initHallFormHandlers() {
             window.location.reload();
           }, 1e3);
         } else {
-          console.log("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430:", result.message);
+          console.log("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430:", result.message);
           if (window.notifications) {
             window.notifications.show(result.message, "error");
           }
         }
       } catch (error) {
-        console.error("\u{1F4A5} \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
+        console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
         if (window.notifications) {
           window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430", "error");
         }
@@ -383,12 +383,12 @@ function initHallFormHandlers() {
       }
     });
   } else {
-    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    console.log("\u0424\u043E\u0440\u043C\u0430 addHallForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
   document.querySelectorAll('[data-open-modal="addHallModal"]').forEach((button) => {
     button.addEventListener("click", function(e) {
       e.preventDefault();
-      console.log('\u{1F3AF} \u041A\u043D\u043E\u043F\u043A\u0430 "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043B" \u043D\u0430\u0436\u0430\u0442\u0430');
+      console.log('\u041A\u043D\u043E\u043F\u043A\u0430 "\u0421\u043E\u0437\u0434\u0430\u0442\u044C \u0437\u0430\u043B" \u043D\u0430\u0436\u0430\u0442\u0430');
       openModal("addHallModal");
     });
   });
@@ -1009,7 +1009,6 @@ async function updateMovie(form) {
     const movieId = formData.get("movie_id");
     const response = await fetch(`/admin/movies/${movieId}`, {
       method: "POST",
-      // Laravel требует POST для форм с _method=PUT
       headers: {
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
       },
@@ -1155,7 +1154,7 @@ async function deleteSchedule(form) {
       throw new Error(result.message || `HTTP error! status: ${response.status}`);
     }
     if (result.success) {
-      console.log("\u2705 \u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D\u043E");
+      console.log("\u0420\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0435 \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0443\u0434\u0430\u043B\u0435\u043D\u043E");
       if (window.notifications) {
         window.notifications.show(result.message, "success");
       }
@@ -1167,7 +1166,7 @@ async function deleteSchedule(form) {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u0438 \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
     }
   } catch (error) {
-    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", error);
+    console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", error);
     if (window.notifications) {
       window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: " + error.message, "error");
     }
@@ -1234,7 +1233,7 @@ function openEditScheduleModal(scheduleId) {
   });
 }
 function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
-  console.log("\u{1F5D1}\uFE0F \u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", {
+  console.log("\u041E\u0442\u043A\u0440\u044B\u0442\u0438\u0435 \u043C\u043E\u0434\u0430\u043B\u044C\u043D\u043E\u0433\u043E \u043E\u043A\u043D\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F:", {
     scheduleId,
     hallId,
     hallName,
@@ -1254,14 +1253,14 @@ function openCreateScheduleModal(hallId, date, hallName = "") {
   openModal("hallScheduleModal");
 }
 function initSchedules2() {
-  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043C\u043E\u0434\u0443\u043B\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0439...");
+  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043C\u043E\u0434\u0443\u043B\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u0439...");
   const editScheduleForm = document.getElementById("editScheduleForm");
   if (editScheduleForm) {
     editScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
       await updateSchedule(this);
     });
-    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
+    console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0440\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const hallScheduleForm = document.getElementById("hallScheduleForm");
   if (hallScheduleForm) {
@@ -1269,18 +1268,18 @@ function initSchedules2() {
       e.preventDefault();
       await createSchedule(this);
     });
-    console.log("\u2705 \u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
+    console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u044F \u0443\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D");
   }
   const deleteScheduleForm = document.getElementById("deleteScheduleForm");
   if (deleteScheduleForm) {
-    console.log("\u2705 \u0424\u043E\u0440\u043C\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    console.log("\u0424\u043E\u0440\u043C\u0430 \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
     deleteScheduleForm.addEventListener("submit", async function(e) {
       e.preventDefault();
-      console.log("\u{1F5D1}\uFE0F \u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
+      console.log("\u041E\u0442\u043F\u0440\u0430\u0432\u043A\u0430 \u0444\u043E\u0440\u043C\u044B \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F \u0440\u0430\u0441\u043F\u0438\u0441\u0430\u043D\u0438\u044F");
       await deleteSchedule(this);
     });
   } else {
-    console.log("\u274C \u0424\u043E\u0440\u043C\u0430 deleteScheduleForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
+    console.log("\u0424\u043E\u0440\u043C\u0430 deleteScheduleForm \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D\u0430");
   }
 }
 
@@ -1365,7 +1364,7 @@ async function deleteMovieSession(sessionId) {
   }
 }
 function initSessionFormHandlers() {
-  console.log("\u{1F3AF} \u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
+  console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C\u044B \u0441\u0435\u0430\u043D\u0441\u0430...");
   document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach((button) => {
     button.addEventListener("click", function(e) {
       openModal("addSessionModal");
@@ -1382,7 +1381,7 @@ function initSessionFormHandlers() {
       if (sessionId) {
         openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime);
       } else {
-        console.error("\u274C ID \u0441\u0435\u0430\u043D\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D \u0434\u043B\u044F \u0443\u0434\u0430\u043B\u0435\u043D\u0438\u044F");
+        console.error("ID \u0441\u0435\u0430\u043D\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D");
         if (window.notifications) {
           window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430: ID \u0441\u0435\u0430\u043D\u0441\u0430 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D", "error");
         }
@@ -1432,7 +1431,7 @@ function initSessionFormHandlers() {
           }
         }
       } catch (error) {
-        console.error("\u{1F4A5} \u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
+        console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438:", error);
         if (window.notifications) {
           window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u0441\u0435\u0442\u0438 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430", "error");
         }
@@ -1481,7 +1480,7 @@ async function changeTimelineDate(date) {
       }
     }
   } catch (error) {
-    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430:", error);
+    console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0442\u0430\u0439\u043C\u043B\u0430\u0439\u043D\u0430:", error);
     hideTimelineLoading();
     window.location.href = `/admin/dashboard?date=${date}`;
   }
@@ -1497,7 +1496,7 @@ function openEditSessionModal(sessionId) {
     }).then((session) => {
       fillEditSessionForm(session);
     }).catch((error) => {
-      console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+      console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
       if (window.notifications) {
         window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u0434\u0430\u043D\u043D\u044B\u0445 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
       }
@@ -1599,7 +1598,7 @@ async function updateSession(form) {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430");
     }
   } catch (error) {
-    console.error("\u274C \u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
+    console.error("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430:", error);
     if (window.notifications && typeof window.notifications.show === "function") {
       window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u0435\u0430\u043D\u0441\u0430: " + error.message, "error");
     }
@@ -1697,7 +1696,7 @@ var SalesManager = class {
   }
   init() {
     this.bindEvents();
-    console.log("\u2705 SalesManager initialized");
+    console.log("SalesManager initialized");
   }
   bindEvents() {
     document.addEventListener("click", (e) => {
@@ -1756,7 +1755,7 @@ var SalesManager = class {
       console.log(`${type.toUpperCase()}: ${message}`);
     }
   }
-  // Метод для принудительного обновления статуса (может пригодиться)
+  // Метод для принудительного обновления статуса
   updateSalesStatus(hallId, isActive) {
     const button = document.querySelector(`[data-toggle-sales="${hallId}"]`);
     if (button) {
@@ -1857,27 +1856,27 @@ function updateSession2() {
   console.log("Update sessions");
 }
 document.addEventListener("DOMContentLoaded", function() {
-  console.log("\u{1F680} Admin panel initializing (minimal version)...");
+  console.log("Admin panel initializing...");
   try {
     initModalHandlers();
-    console.log("\u2705 Modal handlers initialized");
+    console.log("Modal handlers initialized");
     window.notifications = new notifications_default();
-    console.log("\u2705 NotificationSystem initialized");
+    console.log("NotificationSystem initialized");
     window.hallsManager = new halls_default(window.notifications);
-    console.log("\u2705 HallsManager initialized");
+    console.log("HallsManager initialized");
     initHallFormHandlers();
-    console.log("\u2705 Hall form handlers initialized");
+    console.log("Hall form handlers initialized");
     window.salesManager = new sales_default(window.notifications);
-    console.log("\u2705 SalesManager initialized");
+    console.log("SalesManager initialized");
     initTimelineHandlers();
-    console.log("\u2705 Timeline handlers initialized");
+    console.log("Timeline handlers initialized");
     initMovies();
     initMovieFilter();
-    console.log("\u2705 Movies module initialized");
+    console.log("Movies module initialized");
     initSchedules2();
-    console.log("\u2705 Schedules module initialized");
+    console.log("Schedules module initialized");
     initSessionFormHandlers();
-    console.log("\u2705 Session form handlers initialized");
+    console.log("Session form handlers initialized");
     initAccordeon();
     console.log("\u2705 Accordeon initialized");
   } catch (error) {
