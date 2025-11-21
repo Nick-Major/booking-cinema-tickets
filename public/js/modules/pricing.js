@@ -34,7 +34,6 @@ export async function savePrices(hallId) {
         const result = await response.json();
 
         if (result.success) {
-            // Используем нашу систему уведомлений
             if (window.notifications && typeof window.notifications.show === 'function') {
                 window.notifications.show('Цены обновлены успешно!', 'success');
             } else {
@@ -46,7 +45,6 @@ export async function savePrices(hallId) {
         }
     } catch (error) {
         console.error('Error updating prices:', error);
-        // Используем нашу систему уведомлений для ошибок
         if (window.notifications && typeof window.notifications.show === 'function') {
             window.notifications.show('Ошибка при обновлении цен: ' + error.message, 'error');
         } else {
@@ -90,7 +88,6 @@ export async function resetPrices(hallId) {
         const result = await response.json();
 
         if (result.success) {
-            // Используем нашу систему уведомлений
             if (window.notifications && typeof window.notifications.show === 'function') {
                 window.notifications.show('Цены сброшены до базовых значений и сохранены', 'success');
             } else {
@@ -102,7 +99,6 @@ export async function resetPrices(hallId) {
         }
     } catch (error) {
         console.error('Error resetting prices:', error);
-        // Используем нашу систему уведомлений для ошибок
         if (window.notifications && typeof window.notifications.show === 'function') {
             window.notifications.show('Ошибка при сбросе цен: ' + error.message, 'error');
         } else {

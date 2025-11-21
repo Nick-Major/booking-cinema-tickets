@@ -76,7 +76,7 @@ import {
 // Импортируем модуль продаж
 import SalesManager from '../../modules/sales.js';
 
-// Реальная функция загрузки конфигурации зала
+// Функция загрузки конфигурации зала
 async function loadHallConfiguration(hallId) {
     try {
         console.log('Loading hall configuration for:', hallId);
@@ -99,7 +99,7 @@ async function loadHallConfiguration(hallId) {
     }
 }
 
-// Реальная функция загрузки конфигурации цен
+// Функция загрузки конфигурации цен
 async function loadPriceConfiguration(hallId) {
     try {
         console.log('Loading price configuration for:', hallId);
@@ -185,43 +185,43 @@ function updateSession() {
 
 // Инициализация
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('🚀 Admin panel initializing (minimal version)...');
+    console.log('Admin panel initializing...');
     
     try {
         initModalHandlers();
-        console.log('✅ Modal handlers initialized');
+        console.log('Modal handlers initialized');
         
         // Инициализируем систему уведомлений
         window.notifications = new NotificationSystem();
-        console.log('✅ NotificationSystem initialized');
+        console.log('NotificationSystem initialized');
         
-        // Инициализируем менеджер залов с настоящей системой уведомлений
+        // Инициализируем менеджер залов
         window.hallsManager = new HallsManager(window.notifications);
-        console.log('✅ HallsManager initialized');
+        console.log('HallsManager initialized');
 
         // Инициализируем обработчики форм залов
         initHallFormHandlers();
-        console.log('✅ Hall form handlers initialized');
+        console.log('Hall form handlers initialized');
 
         // Инициализируем менеджер продаж
         window.salesManager = new SalesManager(window.notifications);
-        console.log('✅ SalesManager initialized');
+        console.log('SalesManager initialized');
 
-        // ИНИЦИАЛИЗИРУЕМ ОБРАБОТЧИКИ ТАЙМЛАЙНА
+        // Инициализируем обработчики таймлайна
         initTimelineHandlers();
-        console.log('✅ Timeline handlers initialized');
+        console.log('Timeline handlers initialized');
 
         // Инициализируем функциональность фильмов
         initMovies();
         initMovieFilter();
-        console.log('✅ Movies module initialized');
+        console.log('Movies module initialized');
 
         // Инициализируем функциональность расписаний
         initSchedules();
-        console.log('✅ Schedules module initialized');
+        console.log('Schedules module initialized');
 
         initSessionFormHandlers();
-        console.log('✅ Session form handlers initialized');
+        console.log('Session form handlers initialized');
         
         // Инициализируем аккордеон
         initAccordeon();

@@ -73,7 +73,6 @@ class BookingSystem {
     }
 
     addNotificationStyles() {
-        // Добавляем CSS анимации если их еще нет
         if (!document.getElementById('notification-styles')) {
             const style = document.createElement('style');
             style.id = 'notification-styles';

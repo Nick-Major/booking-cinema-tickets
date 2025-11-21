@@ -25,7 +25,6 @@
         </button>
     </div>
 
-    <!-- Остальная разметка без изменений -->
     <div class="conf-step__timeline-vertical">
         @foreach($halls as $hall)
             @php

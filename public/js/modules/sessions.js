@@ -103,7 +103,7 @@ async function deleteMovieSession(sessionId) {
 
 // Основная функция инициализации
 export function initSessionFormHandlers() {
-    console.log('🎯 Инициализация обработчиков формы сеанса...');
+    console.log('Инициализация обработчиков формы сеанса...');
 
     document.querySelectorAll('[data-open-modal="addSessionModal"]').forEach(button => {
         button.addEventListener('click', function(e) {
@@ -124,7 +124,7 @@ export function initSessionFormHandlers() {
             if (sessionId) {
                 openDeleteSessionModal(sessionId, movieTitle, hallName, sessionTime);
             } else {
-                console.error('❌ ID сеанса не найден для удаления');
+                console.error('ID сеанса не найден');
                 if (window.notifications) {
                     window.notifications.show('Ошибка: ID сеанса не найден', 'error');
                 }
@@ -186,7 +186,7 @@ export function initSessionFormHandlers() {
                     }
                 }
             } catch (error) {
-                console.error('💥 Ошибка сети:', error);
+                console.error('Ошибка сети:', error);
                 if (window.notifications) {
                     window.notifications.show('Ошибка сети при создании сеанса', 'error');
                 }
@@ -264,7 +264,7 @@ export async function changeTimelineDate(date) {
             }
         }
     } catch (error) {
-        console.error('❌ Ошибка при загрузке таймлайна:', error);
+        console.error('Ошибка при загрузке таймлайна:', error);
         hideTimelineLoading();
         
         window.location.href = `/admin/dashboard?date=${date}`;
@@ -323,7 +323,7 @@ export function openEditSessionModal(sessionId) {
                 fillEditSessionForm(session);
             })
             .catch(error => {
-                console.error('❌ Ошибка при загрузке данных сеанса:', error);
+                console.error('Ошибка при загрузке данных сеанса:', error);
                 if (window.notifications) {
                     window.notifications.show('Ошибка при загрузке данных сеанса: ' + error.message, 'error');
                 }
@@ -455,7 +455,7 @@ async function updateSession(form) {
         }
 
     } catch (error) {
-        console.error('❌ Ошибка при обновлении сеанса:', error);
+        console.error('Ошибка при обновлении сеанса:', error);
         
         if (window.notifications && typeof window.notifications.show === 'function') {
             window.notifications.show('Ошибка при обновлении сеанса: ' + error.message, 'error');

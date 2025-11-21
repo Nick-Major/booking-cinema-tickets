@@ -7,7 +7,7 @@ class SalesManager {
 
     init() {
         this.bindEvents();
-        console.log('✅ SalesManager initialized');
+        console.log('SalesManager initialized');
     }
 
     bindEvents() {
@@ -59,7 +59,7 @@ class SalesManager {
         // Обновляем данные кнопки
         button.setAttribute('data-is-active', isActive);
         
-        // Обновляем текст кнопки согласно ТЗ
+        // Обновляем текст кнопки
         button.textContent = isActive 
             ? 'Приостановить продажу билетов' 
             : 'Открыть продажу билетов';
@@ -86,7 +86,7 @@ class SalesManager {
         }
     }
 
-    // Метод для принудительного обновления статуса (может пригодиться)
+    // Метод для принудительного обновления статуса
     updateSalesStatus(hallId, isActive) {
         const button = document.querySelector(`[data-toggle-sales="${hallId}"]`);
         if (button) {

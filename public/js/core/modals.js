@@ -6,9 +6,9 @@ export function openModal(modalId) {
     if (modal) {
         modal.style.display = 'flex';
         document.body.style.overflow = 'hidden'; // Блокируем скролл страницы
-        console.log(`✅ Модальное окно открыто: ${modalId}`);
+        console.log(`Модальное окно открыто: ${modalId}`);
     } else {
-        console.error(`❌ Модальное окно не найдено: ${modalId}`);
+        console.error(`Модальное окно не найдено: ${modalId}`);
     }
 }
 
@@ -17,19 +17,19 @@ export function closeModal(modalId) {
     if (modal) {
         modal.style.display = 'none';
         document.body.style.overflow = ''; // Восстанавливаем скролл
-        console.log(`✅ Модальное окно закрыто: ${modalId}`);
+        console.log(`Модальное окно закрыто: ${modalId}`);
     }
 }
 
 export function initModalHandlers() {
-    console.log('🎯 Инициализация обработчиков модальных окон...');
+    console.log('Инициализация обработчиков модальных окон...');
 
     // Обработчики для кнопок открытия модальных окон
     document.querySelectorAll('[data-open-modal]').forEach(button => {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const modalId = this.getAttribute('data-open-modal');
-            console.log(`🎯 Открытие модального окна: ${modalId}`);
+            console.log(`Открытие модального окна: ${modalId}`);
             openModal(modalId);
         });
     });
@@ -51,7 +51,7 @@ export function initModalHandlers() {
         button.addEventListener('click', function(e) {
             e.preventDefault();
             const modalId = this.getAttribute('data-close-modal');
-            console.log(`🎯 Закрытие модального окна: ${modalId}`);
+            console.log(`Закрытие модального окна: ${modalId}`);
             closeModal(modalId);
         });
     });
@@ -61,7 +61,7 @@ export function initModalHandlers() {
         modal.addEventListener('click', function(e) {
             if (e.target === this) {
                 e.preventDefault();
-                console.log(`🎯 Закрытие по клику на фон: ${this.id}`);
+                console.log(`Закрытие по клику на фон: ${this.id}`);
                 closeModal(this.id);
             }
         });
@@ -71,7 +71,7 @@ export function initModalHandlers() {
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             e.preventDefault();
-            console.log('🎯 Закрытие по Escape');
+            console.log('Закрытие по Escape');
             document.querySelectorAll('.popup').forEach(modal => {
                 if (modal.style.display === 'flex') {
                     closeModal(modal.id);
@@ -80,7 +80,7 @@ export function initModalHandlers() {
         }
     });
 
-    console.log('✅ Обработчики модальных окон инициализированы');
+    console.log('Обработчики модальных окон инициализированы');
 }
 
 // Специфичные функции закрытия для каждого модального окна

@@ -214,7 +214,6 @@ export async function saveHallConfiguration(hallId) {
     }
 }
 
-// Автоматическая инициализация обработчика формы сброса
 document.addEventListener('DOMContentLoaded', function() {
     const resetForm = document.getElementById('resetHallConfigurationForm');
     if (resetForm) {

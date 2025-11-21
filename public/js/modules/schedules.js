@@ -96,7 +96,7 @@ async function deleteSchedule(form) {
         }
 
         if (result.success) {
-            console.log('✅ Расписание успешно удалено');
+            console.log('Расписание успешно удалено');
             if (window.notifications) {
                 window.notifications.show(result.message, 'success');
             }
@@ -110,7 +110,7 @@ async function deleteSchedule(form) {
         }
 
     } catch (error) {
-        console.error('❌ Ошибка удаления расписания:', error);
+        console.error('Ошибка удаления расписания:', error);
         if (window.notifications) {
             window.notifications.show('Ошибка: ' + error.message, 'error');
         }
@@ -197,7 +197,7 @@ export function openEditScheduleModal(scheduleId) {
 }
 
 export function openDeleteScheduleModal(scheduleId, hallId, hallName, currentDate) {
-    console.log('🗑️ Открытие модального окна удаления расписания:', {
+    console.log('Открытие модального окна удаления расписания:', {
         scheduleId, hallId, hallName, currentDate
     });
 
@@ -220,7 +220,7 @@ export function openCreateScheduleModal(hallId, date, hallName = '') {
 
 // Инициализация
 export function initSchedules() {
-    console.log('🎯 Инициализация модуля расписаний...');
+    console.log('Инициализация модуля расписаний...');
 
     // Обработчики для формы редактирования
     const editScheduleForm = document.getElementById('editScheduleForm');
@@ -229,7 +229,7 @@ export function initSchedules() {
             e.preventDefault();
             await updateSchedule(this);
         });
-        console.log('✅ Обработчик формы редактирования установлен');
+        console.log('Обработчик формы редактирования установлен');
     }
 
     // Обработчики для формы создания расписания
@@ -239,19 +239,19 @@ export function initSchedules() {
             e.preventDefault();
             await createSchedule(this);
         });
-        console.log('✅ Обработчик формы создания установлен');
+        console.log('Обработчик формы создания установлен');
     }
 
-    // Обработчики для формы удаления расписания - ИСПРАВЛЕНО
+    // Обработчики для формы удаления расписания
     const deleteScheduleForm = document.getElementById('deleteScheduleForm');
     if (deleteScheduleForm) {
-        console.log('✅ Форма удаления расписания найдена');
+        console.log('Форма удаления расписания найдена');
         deleteScheduleForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('🗑️ Отправка формы удаления расписания');
+            console.log('Отправка формы удаления расписания');
             await deleteSchedule(this);
         });
     } else {
-        console.log('❌ Форма deleteScheduleForm не найдена');
+        console.log('Форма deleteScheduleForm не найдена');
     }
 }

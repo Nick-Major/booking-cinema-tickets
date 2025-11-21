@@ -111,7 +111,7 @@
     </section>
     @endif
     
-    <!-- Сетка сеансов - УПРОЩЕННАЯ ВЕРСИЯ -->
+    <!-- Сетка сеансов -->
     @if($halls->count() > 0)
     <section class="conf-step" id="sessionsSection">
         <header class="conf-step__header conf-step__header_opened">

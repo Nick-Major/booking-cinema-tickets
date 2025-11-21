@@ -51,7 +51,7 @@ async function addMovie(form) {
                 posterPreview.innerHTML = '<span style="color: #63536C;">Постер</span>';
             }
 
-            // Перезагружаем список фильмов (можно заменить на динамическое добавление)
+            // Перезагружаем список фильмов
             setTimeout(() => {
                 location.reload();
             }, 1000);
@@ -193,7 +193,6 @@ export function initMovies() {
             e.preventDefault();
             const movieId = e.target.getAttribute('data-delete-movie');
             const movieName = e.target.getAttribute('data-movie-name');
-            // ЗАМЕНА: вместо вызова deleteMovie открываем модальное окно
             openDeleteMovieModal(movieId, movieName);
         }
     });
@@ -214,7 +213,7 @@ async function updateMovie(form) {
         const movieId = formData.get('movie_id');
 
         const response = await fetch(`/admin/movies/${movieId}`, {
-            method: 'POST', // Laravel требует POST для форм с _method=PUT
+            method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             },
@@ -248,7 +247,6 @@ async function updateMovie(form) {
     }
 }
 
-// Остальные функции остаются без изменений
 export function toggleInactiveMovies(show) {
     const inactiveMovies = document.querySelectorAll('.conf-step__movie-inactive');
     inactiveMovies.forEach(movie => {

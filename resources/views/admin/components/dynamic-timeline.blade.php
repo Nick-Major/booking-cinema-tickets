@@ -26,7 +26,7 @@
 
 <!-- Динамическая шкала времени -->
 <div class="conf-step__seances-timeline" style="width: {{ $timelineWidth }}px;">
-    <!-- Шкала с часами - теперь динамическая -->
+    <!-- Шкала с часами -->
     <div class="conf-step__timeline-scale">
         @if($schedule)
             <!-- Генерируем метки на основе реального расписания -->
@@ -121,7 +121,6 @@
             @if($session->movie)
                 @php
                     try {
-                        // ВОЗВРАЩАЕМ СТАРУЮ ЛОГИКУ ДЛЯ ПОКАЗА СЕАНСОВ
                         $position = $session->getTimelinePosition($dayStart, $pixelsPerMinute);
                         
                         // Пропускаем сеансы за пределами видимой области
