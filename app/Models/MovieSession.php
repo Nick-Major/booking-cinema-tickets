@@ -25,6 +25,11 @@ class MovieSession extends Model
         'is_actual' => 'boolean'
     ];
 
+    public function hallSchedule()
+    {
+        return $this->belongsTo(HallSchedule::class, 'hall_schedule_id');
+    }
+
     public function movie(): BelongsTo
     {
         return $this->belongsTo(Movie::class);

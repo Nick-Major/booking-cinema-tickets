@@ -176,15 +176,10 @@
                 @endforelse
             </div>
             
-            <!-- УПРОЩЕННАЯ СЕКЦИЯ ТАЙМЛАЙНА -->
+            <!-- Таймлайн -->
             <div class="conf-step__seances-timeline-wrapper" id="sessionsTimelineWrapper">
                 @include('admin.components.sessions-timeline')
             </div>
-            
-            <fieldset class="conf-step__buttons text-center">
-                <button class="conf-step__button conf-step__button-regular" onclick="resetSessions()">Отмена</button>
-                <button class="conf-step__button conf-step__button-accent" onclick="updateSession()">Сохранить</button>
-            </fieldset>
 
             <div class="conf-step__legend" style="margin-bottom: 20px; padding: 15px; background: #f8f9fa; border-radius: 5px; border: 1px solid #dee2e6;">
                 <p class="conf-step__paragraph" style="margin: 0; color: #333; font-size: 14px;">
