@@ -130,7 +130,7 @@ class TestDataSeeder extends Seeder
         $now = Carbon::now();
         
         // Сеансы на сегодня - ставим на время после текущего
-        $todaySession1 = $today->copy()->setTime($now->hour + 2, 0); // Через 2 часа
+        $todaySession1 = $today->copy()->setTime($now->hour + 1, 0); // Через 2 часа
         $todaySession2 = $today->copy()->setTime($now->hour + 5, 0); // Через 5 часов  
         $todaySession3 = $today->copy()->setTime($now->hour + 3, 0); // Через 3 часа
 
@@ -147,7 +147,7 @@ class TestDataSeeder extends Seeder
                 'session_start' => $todaySession1,
             ],
             [
-                'session_end' => $todaySession1->copy()->addMinutes($movie1->movie_duration),
+                'session_end' => $todaySession1->copy()->addMinutes($movie1->movie_duration + 10),
                 'is_actual' => true,
             ]
         );
@@ -160,7 +160,7 @@ class TestDataSeeder extends Seeder
                 'session_start' => $todaySession2,
             ],
             [
-                'session_end' => $todaySession2->copy()->addMinutes($movie2->movie_duration),
+                'session_end' => $todaySession2->copy()->addMinutes($movie2->movie_duration + 10),
                 'is_actual' => true,
             ]
         );
@@ -173,7 +173,7 @@ class TestDataSeeder extends Seeder
                 'session_start' => $todaySession3,
             ],
             [
-                'session_end' => $todaySession3->copy()->addMinutes($movie3->movie_duration),
+                'session_end' => $todaySession3->copy()->addMinutes($movie3->movie_duration + 10),
                 'is_actual' => true,
             ]
         );

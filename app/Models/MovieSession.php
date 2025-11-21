@@ -49,7 +49,7 @@ class MovieSession extends Model
     public function getAvailableSeats()
     {
         $occupiedSeatIds = $this->tickets()
-            ->where('status', 'reserved') // УБРАЛИ 'paid'
+            ->where('status', 'reserved')
             ->pluck('seat_id')
             ->toArray();
 
@@ -65,7 +65,7 @@ class MovieSession extends Model
     public function getOccupiedSeats()
     {
         return $this->tickets()
-            ->where('status', 'reserved') // УБРАЛИ 'paid'
+            ->where('status', 'reserved')
             ->with('seat')
             ->get()
             ->map(function ($ticket) {
@@ -77,14 +77,14 @@ class MovieSession extends Model
             });
     }
 
-    // Длительность фильма с рекламой (для отображения элемента)
+    // Длительность фильма с рекламой
     public function getDisplayDuration(): int
     {
         if (!$this->movie) {
             return 0;
         }
         
-        return $this->movie->movie_duration + 10;
+        return $this->movie->movie_duration + 10; // фильм + реклама
     }
 
     // Полная длительность занятия зала (фильм + реклама + уборка)
@@ -99,7 +99,12 @@ class MovieSession extends Model
         return $this->session_start->copy()->addMinutes($this->getDisplayDuration());
     }
 
-    // Расчет позиции для таймлайна в пикселях (старый метод - оставляем для обратной совместимости)
+    // Время полного освобождения зала
+    public function getSessionEndWithCleaning(): Carbon
+    {
+        return $this->session_start->copy()->addMinutes($this->getTotalDuration());
+    }
+
     public function getTimelinePosition($dayStart, $pixelsPerMinute = 2): array
     {
         $sessionStart = $this->session_start;
@@ -108,8 +113,8 @@ class MovieSession extends Model
         // Расчет позиции относительно переданного начала дня
         $left = $dayStart->diffInMinutes($sessionStart) * $pixelsPerMinute;
         
-        // Ширина элемента (фильм + реклама)
-        $width = $this->getDisplayDuration() * $pixelsPerMinute;
+        // Ширина элемента (фильм + реклама + уборка)
+        $width = $this->getTotalDuration() * $pixelsPerMinute;
 
         // Проверка на ночной сеанс
         $isOvernight = !$sessionStart->isSameDay($movieEnd);
@@ -124,7 +129,7 @@ class MovieSession extends Model
         ];
     }
 
-    // НОВЫЙ МЕТОД: Расчет позиции относительно расписания зала
+    // Расчет позиции относительно расписания зала
     public function getTimelinePositionForSchedule(HallSchedule $schedule, $pixelsPerMinute = 2): array
     {
         $sessionStart = $this->session_start;
@@ -136,8 +141,8 @@ class MovieSession extends Model
         // Расчет позиции относительно начала расписания
         $left = $scheduleStart->diffInMinutes($sessionStart) * $pixelsPerMinute;
         
-        // Ширина элемента (фильм + реклама)
-        $width = $this->getDisplayDuration() * $pixelsPerMinute;
+        // Ширина элемента (фильм + реклама + уборка)
+        $width = $this->getTotalDuration() * $pixelsPerMinute;
         
         // Максимальная ширина - не выходить за пределы расписания
         $maxWidth = $scheduleStart->diffInMinutes($scheduleEnd) * $pixelsPerMinute - $left;
@@ -148,7 +153,7 @@ class MovieSession extends Model
 
         return [
             'left' => max(0, $left),
-            'width' => max(10, $width), // минимальная ширина 10px
+            'width' => max(10, $width),
             'is_overnight' => $isOvernight,
             'start_time' => $sessionStart->format('H:i'),
             'end_time' => $movieEnd->format('H:i'),
@@ -168,40 +173,19 @@ class MovieSession extends Model
     // Проверка пересечения сеансов
     public function hasTimeConflict(): bool
     {
-        $sessionEnd = $this->session_end ?? $this->session_start->copy()->addMinutes($this->getTotalDuration());
+        $currentSessionEnd = $this->getSessionEndWithCleaning();
         
         $conflictingSessions = MovieSession::where('cinema_hall_id', $this->cinema_hall_id)
             ->where('id', '!=', $this->id ?? 0)
             ->where('is_actual', true)
-            ->where(function($query) use ($sessionEnd) {
-                // Только реальные пересечения интервалов
-                $query->where(function($q) use ($sessionEnd) {
-                    // Новый сеанс начинается во время существующего
-                    $q->where('session_start', '<', $sessionEnd)
+            ->where(function($query) use ($currentSessionEnd) {
+                $query->where(function($q) use ($currentSessionEnd) {
+                    $q->where('session_start', '<', $currentSessionEnd)
                     ->where('session_end', '>', $this->session_start);
                 });
             })
-            ->get();
+            ->exists();
 
-        if ($conflictingSessions->isNotEmpty()) {
-            \Log::info('Обнаружены конфликтующие сеансы', [
-                'current_session' => [
-                    'start' => $this->session_start->format('Y-m-d H:i'),
-                    'end' => $sessionEnd->format('Y-m-d H:i'),
-                    'movie' => $this->movie->title ?? 'Unknown'
-                ],
-                'conflicting_sessions' => $conflictingSessions->map(function($session) {
-                    return [
-                        'id' => $session->id,
-                        'start' => $session->session_start->format('Y-m-d H:i'),
-                        'end' => $session->session_end->format('Y-m-d H:i'),
-                        'movie' => $session->movie->title ?? 'Unknown'
-                    ];
-                })->toArray()
-            ]);
-            return true;
-        }
-
-        return false;
+        return $conflictingSessions;
     }
 }

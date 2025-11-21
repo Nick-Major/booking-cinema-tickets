@@ -194,10 +194,7 @@ class MovieSessionController extends Controller
             // Получаем длительность фильма и рассчитываем окончание сеанса
             $movie = Movie::find($validated['movie_id']);
             
-            // Создаем временный экземпляр MovieSession для использования getTotalDuration()
-            $tempSession = new MovieSession();
-            $tempSession->movie = $movie;
-            $sessionEnd = $sessionDateTime->copy()->addMinutes($tempSession->getTotalDuration());
+            $sessionEnd = $sessionDateTime->copy()->addMinutes($movie->movie_duration + 10);
 
             \Log::info('Session timing calculated:', [
                 'movie_title' => $movie->title,
@@ -210,8 +207,8 @@ class MovieSessionController extends Controller
             // Проверяем конфликты с другими сеансами (только актуальными)
             $conflictingSession = MovieSession::where('cinema_hall_id', $cinemaHallId)
                 ->where('is_actual', true)
-                ->where(function($query) use ($sessionDateTime, $sessionEnd) {
-                    $query->where('session_start', '<', $sessionEnd)
+                ->where(function($query) use ($sessionDateTime, $movie) {
+                    $query->where('session_start', '<', $sessionDateTime->copy()->addMinutes($movie->movie_duration + 25)) // полная длительность
                         ->where('session_end', '>', $sessionDateTime);
                 })
                 ->first();
@@ -305,15 +302,14 @@ class MovieSessionController extends Controller
             );
 
             // Рассчитываем время окончания
-            $totalDuration = $movie->movie_duration + 10 + 15;
-            $sessionEnd = $sessionStart->copy()->addMinutes($totalDuration);
+            $sessionEnd = $sessionStart->copy()->addMinutes($movie->movie_duration + 10);
 
             // ПРЯМАЯ ПРОВЕРКА КОНФЛИКТОВ (исключая текущий сеанс)
             $conflictingSession = MovieSession::where('cinema_hall_id', $validated['cinema_hall_id'])
                 ->where('id', '!=', $movieSession->id)
                 ->where('is_actual', true)
-                ->where(function($query) use ($sessionStart, $sessionEnd) {
-                    $query->where('session_start', '<', $sessionEnd)
+                ->where(function($query) use ($sessionStart, $movie) {
+                    $query->where('session_start', '<', $sessionStart->copy()->addMinutes($movie->movie_duration + 25))
                         ->where('session_end', '>', $sessionStart);
                 })
                 ->first();
