@@ -163,7 +163,7 @@ class TestDataSeeder extends Seeder
                 ],
                 [
                     'user_id' => $testUser->id,
-                    'status' => 'paid',
+                    'status' => 'reserved', // ИЗМЕНИЛИ 'paid' на 'reserved'
                     'final_price' => $seat->getPriceAttribute(),
                     'unique_code' => Ticket::generateUniqueCode(),
                     'expires_at' => null,

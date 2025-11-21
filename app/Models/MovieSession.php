@@ -44,7 +44,7 @@ class MovieSession extends Model
     public function getAvailableSeats()
     {
         $occupiedSeatIds = $this->tickets()
-            ->whereIn('status', ['reserved', 'paid'])
+            ->where('status', 'reserved') // УБРАЛИ 'paid'
             ->pluck('seat_id')
             ->toArray();
 
@@ -60,7 +60,7 @@ class MovieSession extends Model
     public function getOccupiedSeats()
     {
         return $this->tickets()
-            ->whereIn('status', ['reserved', 'paid'])
+            ->where('status', 'reserved') // УБРАЛИ 'paid'
             ->with('seat')
             ->get()
             ->map(function ($ticket) {

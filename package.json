@@ -7,13 +7,17 @@
     "dev": "sass resources/css/admin/styles.scss public/css/admin/styles.css && sass resources/css/client/styles.scss public/css/client/styles.css",
     "watch": "sass --watch resources/css/admin/styles.scss:public/css/admin/styles.css resources/css/client/styles.scss:public/css/client/styles.css",
     "build:js": "esbuild public/js/views/admin/dashboard.js --bundle --outfile=public/js/views/admin/dashboard.bundle.js --format=esm",
+    "build:js:client": "esbuild public/js/client/booking.js --bundle --outfile=public/js/client/booking.bundle.js --format=esm",
     "dev:js": "esbuild public/js/views/admin/dashboard.js --bundle --outfile=public/js/views/admin/dashboard.bundle.js --format=esm --watch",
-    "build": "yarn build:js && yarn dev"
+    "dev:js:client": "esbuild public/js/client/booking.js --bundle --outfile=public/js/client/booking.bundle.js --format=esm --watch",
+    "build": "yarn build:js && yarn build:js:client && yarn dev",
+    "dev:all": "concurrently \"yarn dev:js\" \"yarn dev:js:client\" \"yarn watch\""
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "concurrently": "^9.2.1",
     "esbuild": "^0.27.0",
     "sass": "^1.93.3"
   }

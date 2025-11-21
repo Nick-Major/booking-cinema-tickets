@@ -1601,22 +1601,3 @@ input[type="text"]:disabled {
     background-color: #c82333 !important;
   }
 }
-
-// /* Добавьте в ваш CSS файл */
-// .conf-step__input:focus {
-//     border-color: #007bff;
-//     box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-// }
-
-// /* Подсветка выбранного option */
-// .conf-step__input option:checked {
-//     background: linear-gradient(#007bff, #007bff);
-//     background-color: #007bff !important;
-//     color: white !important;
-// }
-
-// /* Принудительное отображение выбранного значения */
-// .conf-step__input {
-//     color: #333 !important;
-//     background-color: white !important;
-// }

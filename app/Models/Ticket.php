@@ -51,7 +51,7 @@ class Ticket extends Model
     // Scope: активные билеты (забронированные)
     public function scopeActive($query)
     {
-        return $query->where('status', 'booked');
+        return $query->where('status', 'reserved');
     }
 
     // Scope: отмененные билеты
@@ -73,7 +73,7 @@ class Ticket extends Model
     // Проверка, активен ли билет
     public function isActive(): bool
     {
-        return $this->status === 'booked';
+        return $this->status === 'reserved';
     }
 
     // Метод для отмены билета
@@ -90,8 +90,8 @@ class Ticket extends Model
             'movie' => $this->movieSession->movie->title,
             'hall' => $this->movieSession->cinemaHall->hall_name,
             'seat' => $this->seat->getSeatLabelAttribute(),
-            'date' => $this->movieSession->start_time->format('d.m.Y'),
-            'time' => $this->movieSession->start_time->format('H:i'),
+            'date' => $this->movieSession->session_start->format('d.m.Y'),
+            'time' => $this->movieSession->session_start->format('H:i'),
             'price' => $this->final_price,
             'status' => $this->status
         ];
@@ -120,14 +120,30 @@ class Ticket extends Model
     // Получить QR-код в base64 для отображения в HTML
     public function getQrCodeBase64(): string
     {
-        $qrPng = $this->generateQrCode();
-        return 'data:image/png;base64,' . base64_encode($qrPng);
+        try {
+            $qrPng = $this->generateQrCode();
+            return 'data:image/png;base64,' . base64_encode($qrPng);
+        } catch (\Exception $e) {
+            \Log::error('QR code generation failed: ' . $e->getMessage());
+            // Возвращаем placeholder если QR не генерируется
+            return 'data:image/svg+xml;base64,' . base64_encode('
+                <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="100%" height="100%" fill="#f0f0f0"/>
+                    <text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="14">QR Error</text>
+                </svg>
+            ');
+        }
     }
 
     // Сохранить QR-код в файл
     public function saveQrCodeToFile(string $path): bool
     {
-        $qrPng = $this->generateQrCode();
-        return file_put_contents($path, $qrPng) !== false;
+        try {
+            $qrPng = $this->generateQrCode();
+            return file_put_contents($path, $qrPng) !== false;
+        } catch (\Exception $e) {
+            \Log::error('QR code save failed: ' . $e->getMessage());
+            return false;
+        }
     }
 }

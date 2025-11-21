@@ -8,6 +8,7 @@ use App\Models\Seat;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TicketController extends Controller
 {
@@ -20,18 +21,15 @@ class TicketController extends Controller
 
     private function getGuestUser(): User
     {
-        $guestEmail = 'guest@cinema.local';
+        // Создаем уникального гостя для каждой сессии бронирования
+        $guestEmail = 'guest_' . Str::random(8) . '_' . time() . '@cinema.local';
         
-        $user = User::where('email', $guestEmail)->first();
-        
-        if (!$user) {
-            $user = User::create([
-                'name' => 'Гость',
-                'email' => $guestEmail,
-                'password' => bcrypt(\Str::random(32)),
-                'is_admin' => false
-            ]);
-        }
+        $user = User::create([
+            'name' => 'Гость',
+            'email' => $guestEmail,
+            'password' => bcrypt(Str::random(32)),
+            'is_admin' => false
+        ]);
         
         return $user;
     }
@@ -77,7 +75,7 @@ class TicketController extends Controller
                 ->get();
 
             $seatsByRow = $seats->groupBy('row_number');
-            $occupiedSeats = $session->tickets->pluck('seat_id')->toArray();
+            $occupiedSeats = $session->tickets()->where('status', 'reserved')->pluck('seat_id')->toArray();
 
             \Log::info('Booking page loaded - Session: ' . $session->id . ', Seats: ' . $seats->count() . ', Occupied: ' . count($occupiedSeats));
             
@@ -119,7 +117,7 @@ class TicketController extends Controller
                 'user_id' => $guestUser->id,
                 'final_price' => $checkResult['final_price'],
                 'unique_code' => Ticket::generateUniqueCode(),
-                'status' => 'booked',
+                'status' => 'reserved',
                 'expires_at' => null
             ]);
 
@@ -175,7 +173,7 @@ class TicketController extends Controller
                 'user_id' => $validated['user_id'],
                 'final_price' => $checkResult['final_price'],
                 'unique_code' => Ticket::generateUniqueCode(),
-                'status' => 'booked'
+                'status' => 'reserved'
             ]);
 
             return response()->json($ticket->load(['movieSession.movie', 'seat', 'user']), 201);
@@ -190,7 +188,7 @@ class TicketController extends Controller
     public function update(Request $request, Ticket $ticket)
     {
         $validated = $request->validate([
-            'status' => 'sometimes|in:booked,cancelled'
+            'status' => 'sometimes|in:reserved,cancelled'
         ]);
 
         $ticket->update($validated);
@@ -262,7 +260,7 @@ class TicketController extends Controller
         // Проверяем, не занято ли уже место на этом сеансе
         $existingTicket = Ticket::where('movie_session_id', $movieSessionId)
             ->where('seat_id', $seatId)
-            ->where('status', 'booked')
+            ->where('status', 'reserved')
             ->first();
 
         if ($existingTicket) {

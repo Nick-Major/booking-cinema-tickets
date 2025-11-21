@@ -1,8 +1,18 @@
 @extends('layouts.base')
 
-@section('title', 'Бронирование билетов')
+@section('title', 'Главная страница')
 
 @section('content')
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>ИдёмВКино - Бронирование</title>
+</head>
+
+<body>
   <header class="page-header">
     <h1 class="page-header__title">Идём<span>в</span>кино</h1>
   </header>
@@ -19,9 +29,6 @@
       
       <div class="buying-scheme">
         <div class="buying-scheme__wrapper">
-          <!-- ЭКРАН -->
-          <div class="buying-scheme__screen">ЭКРАН</div>
-          
           <div class="buying-scheme__hall">
             <div class="buying-scheme__hall-wrapper">
               <!-- Схема зала -->
@@ -30,12 +37,12 @@
                 @foreach($seats as $seat)
                 <span class="buying-scheme__chair 
                             buying-scheme__chair_{{ $seat->seat_status === 'vip' ? 'vip' : 'standart' }}
-                            {{ in_array($seat->id, $occupiedSeats) ? 'buying-scheme__chair_taken' : '' }}
-                            {{ $seat->seat_status === 'blocked' ? 'buying-scheme__chair_disabled' : '' }}"
+                            {{ in_array($seat->id, $occupiedSeats) ? 'buying-scheme__chair_taken' : '' }}"
                       data-seat-id="{{ $seat->id }}"
                       data-row="{{ $seat->row_number }}"
                       data-seat="{{ $seat->row_seat_number }}"
-                      data-price="{{ $seat->seat_status === 'vip' ? $session->cinemaHall->vip_price : $session->cinemaHall->regular_price }}">
+                      data-price="{{ $seat->seat_status === 'vip' ? $session->cinemaHall->vip_price : $session->cinemaHall->regular_price }}"
+                      onclick="selectSeat(this)">
                 </span>
                 @endforeach
               </div>
@@ -70,7 +77,54 @@
     </section>
   </main>
 
-  @push('scripts')
-    <script src="{{ asset('js/client/booking.bundle.js') }}"></script>
-  @endpush
+  <script>
+    let selectedSeats = [];
+    
+    function selectSeat(element) {
+      const seatId = element.dataset.seatId;
+      const row = element.dataset.row;
+      const seat = element.dataset.seat;
+      const price = parseFloat(element.dataset.price);
+      
+      if (element.classList.contains('buying-scheme__chair_taken')) {
+        return; // Нельзя выбрать занятое место
+      }
+      
+      if (element.classList.contains('buying-scheme__chair_selected')) {
+        // Отмена выбора
+        element.classList.remove('buying-scheme__chair_selected');
+        selectedSeats = selectedSeats.filter(s => s.id !== seatId);
+      } else {
+        // Выбор места (пока только одно место за раз)
+        if (selectedSeats.length >= 1) {
+          alert('Можно выбрать только одно место за раз');
+          return;
+        }
+        element.classList.add('buying-scheme__chair_selected');
+        selectedSeats.push({ id: seatId, row, seat, price });
+      }
+      
+      updateSelectionSummary();
+    }
+    
+    function updateSelectionSummary() {
+      const selectedCount = document.getElementById('selectedCount');
+      const totalPrice = document.getElementById('totalPrice');
+      const bookButton = document.getElementById('bookButton');
+      const seatIdInput = document.getElementById('selectedSeatId');
+      
+      selectedCount.textContent = selectedSeats.length;
+      totalPrice.textContent = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+      
+      if (selectedSeats.length > 0) {
+        bookButton.disabled = false;
+        seatIdInput.value = selectedSeats[0].id;
+      } else {
+        bookButton.disabled = true;
+        seatIdInput.value = '';
+      }
+    }
+  </script>
+</body>
+</html>
 @endsection
