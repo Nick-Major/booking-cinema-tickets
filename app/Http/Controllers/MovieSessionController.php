@@ -392,7 +392,7 @@ class MovieSessionController extends Controller
             $sessionStart = $movieSession->session_start;
             $timezone = config('app.timezone', 'Europe/Moscow');
             
-            \Log::info('📅 Информация о времени:', [
+            \Log::info('Информация о времени:', [
                 'original_utc' => $movieSession->session_start->format('Y-m-d H:i:s'),
                 'app_timezone' => $timezone,
                 'converted_local' => $sessionStart->setTimezone($timezone)->format('Y-m-d H:i:s')
@@ -413,19 +413,19 @@ class MovieSessionController extends Controller
                     'id' => $movieSession->cinemaHall->id ?? null,
                     'hall_name' => $movieSession->cinemaHall->hall_name ?? 'Неизвестный зал',
                 ],
-                // ДОБАВЛЯЕМ РАЗОБРАННЫЕ ДАННЫЕ В ЛОКАЛЬНОМ ЧАСОВОМ ПОЯСЕ
+                
                 'parsed_date' => $sessionStart->setTimezone($timezone)->format('Y-m-d'),
                 'parsed_time' => $sessionStart->setTimezone($timezone)->format('H:i'),
                 'timezone' => $timezone,
                 'timezone_offset' => $sessionStart->setTimezone($timezone)->format('P')
             ];
 
-            \Log::info('✅ Данные сеанса подготовлены для ответа', $responseData);
+            \Log::info('Данные сеанса подготовлены для ответа', $responseData);
 
             return response()->json($responseData);
 
         } catch (\Exception $e) {
-            \Log::error('❌ Ошибка в методе edit сеанса: ' . $e->getMessage(), [
+            \Log::error('Ошибка в методе edit сеанса: ' . $e->getMessage(), [
                 'session_id' => $movieSession->id,
                 'exception' => $e
             ]);

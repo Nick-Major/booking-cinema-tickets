@@ -41,14 +41,12 @@ class HallSchedule extends Model
         });
     }
 
-    // Геттер для эффективного времени окончания (учитывает ночной режим)
     public function getEffectiveEndTimeAttribute()
     {
         $end = Carbon::parse($this->end_time);
         return $this->overnight ? $end->addDay() : $end;
     }
 
-    // ЕДИНСТВЕННЫЙ метод для форматированного времени (заменяет оба дублирующих)
     public function getFormattedTimeAttribute()
     {
         $start = Carbon::parse($this->start_time)->format('H:i');
@@ -56,37 +54,25 @@ class HallSchedule extends Model
         
         return $this->overnight ? "{$start} - {$end} (ночной)" : "{$start} - {$end}";
     }
-
-    // НОВЫЕ МЕТОДЫ ДЛЯ РАБОТЫ С РАСПИСАНИЕМ
     
-    /**
-     * Получить время начала расписания как Carbon объект
-     */
     public function getScheduleStart(): Carbon
     {
         return Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->start_time);
     }
 
-    /**
-     * Получить время окончания расписания как Carbon объект (с учетом ночного режима)
-     */
     public function getScheduleEnd(): Carbon
     {
         $end = Carbon::parse($this->date->format('Y-m-d') . ' ' . $this->end_time);
         return $this->overnight ? $end->addDay() : $end;
     }
 
-    /**
-     * Получить общую длительность расписания в минутах
-     */
+    // Получить общую длительность расписания в минутах
     public function getTotalDuration(): int
     {
         return $this->getScheduleStart()->diffInMinutes($this->getScheduleEnd());
     }
 
-    /**
-     * Проверить, попадает ли время в расписание (включая ночные сеансы)
-     */
+    // Проверить, попадает ли время в расписание (включая ночные сеансы)
     public function isTimeWithinSchedule(Carbon $time): bool
     {
         $scheduleStart = $this->getScheduleStart();
@@ -95,9 +81,7 @@ class HallSchedule extends Model
         return $time->between($scheduleStart, $scheduleEnd);
     }
 
-    /**
-     * Получить все сеансы, которые попадают в это расписание
-     */
+    // Получить все сеансы, которые попадают в это расписание
     public function getSessionsWithinSchedule()
     {
         return MovieSession::where('cinema_hall_id', $this->cinema_hall_id)

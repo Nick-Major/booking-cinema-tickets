@@ -40,7 +40,6 @@ class TicketController extends Controller
         try {
             \Log::info('=== SHOW BOOKING PAGE ===');
             
-            // Универсальный подход: работаем и с ID, и с объектом
             if (is_numeric($movieSession)) {
                 $session = \App\Models\MovieSession::with(['movie', 'cinemaHall', 'tickets'])->find($movieSession);
             } else {

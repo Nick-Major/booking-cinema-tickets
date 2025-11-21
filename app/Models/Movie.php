@@ -24,13 +24,11 @@ class Movie extends Model
         'is_active' => 'boolean'
     ];
 
-    // Связь: один фильм имеет много сеансов
     public function movieSessions(): HasMany
     {
         return $this->hasMany(MovieSession::class);
     }
 
-    // Scope: активные фильмы
     public function scopeActive($query)
     {
         return $query->where('is_active', true);

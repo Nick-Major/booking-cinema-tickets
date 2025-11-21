@@ -125,7 +125,6 @@ class Ticket extends Model
             return 'data:image/png;base64,' . base64_encode($qrPng);
         } catch (\Exception $e) {
             \Log::error('QR code generation failed: ' . $e->getMessage());
-            // Возвращаем placeholder если QR не генерируется
             return 'data:image/svg+xml;base64,' . base64_encode('
                 <svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">
                     <rect width="100%" height="100%" fill="#f0f0f0"/>
