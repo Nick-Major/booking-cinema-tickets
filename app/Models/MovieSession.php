@@ -99,7 +99,7 @@ class MovieSession extends Model
         return $this->session_start->copy()->addMinutes($this->getDisplayDuration());
     }
 
-    // Время полного освобождения зала
+    // Время полного освобождения зала (с уборкой)
     public function getSessionEndWithCleaning(): Carbon
     {
         return $this->session_start->copy()->addMinutes($this->getTotalDuration());

@@ -2,8 +2,9 @@
 
 namespace App\Providers;
 
-use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Vite;
+use App\Services\SessionValidationService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -12,7 +13,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Регистрируем SessionValidationService в контейнере
+        $this->app->singleton(SessionValidationService::class, function ($app) {
+            return new SessionValidationService();
+        });
     }
 
     /**

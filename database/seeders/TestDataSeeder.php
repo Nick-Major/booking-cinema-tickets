@@ -9,13 +9,24 @@ use App\Models\Seat;
 use App\Models\Ticket;
 use App\Models\User;
 use App\Models\HallSchedule;
+use App\Models\Booking;
+use App\Services\SessionValidationService;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 
 class TestDataSeeder extends Seeder
 {
+    private $validationService;
+    
+    public function __construct(SessionValidationService $validationService)
+    {
+        $this->validationService = $validationService;
+    }
+    
     public function run(): void
     {
+        $this->command->info('Начинаем создание тестовых данных...');
+        
         // Создаем залы
         $hall1 = CinemaHall::firstOrCreate(
             ['hall_name' => 'Основной зал'],
@@ -43,7 +54,7 @@ class TestDataSeeder extends Seeder
         $this->createSeatsForHall($hall1);
         $this->createSeatsForHall($hall2);
 
-        // Создаем фильмы с путями через Storage
+        // Создаем фильмы
         $movies = [
             [
                 'title' => 'Аватар: Путь воды',
@@ -78,12 +89,14 @@ class TestDataSeeder extends Seeder
             );
         }
 
-        // Создаем расписания для залов
+        // Создаем расписания для залов на сегодня и завтра
         $today = Carbon::today();
         $tomorrow = Carbon::tomorrow();
 
+        $this->command->info("Создаем расписания на {$today->format('d.m.Y')} и {$tomorrow->format('d.m.Y')}");
+
         // Расписание для Основного зала на сегодня
-        HallSchedule::firstOrCreate(
+        $hall1ScheduleToday = HallSchedule::firstOrCreate(
             [
                 'cinema_hall_id' => $hall1->id,
                 'date' => $today->format('Y-m-d'),
@@ -96,7 +109,7 @@ class TestDataSeeder extends Seeder
         );
 
         // Расписание для VIP зала на сегодня
-        HallSchedule::firstOrCreate(
+        $hall2ScheduleToday = HallSchedule::firstOrCreate(
             [
                 'cinema_hall_id' => $hall2->id,
                 'date' => $today->format('Y-m-d'),
@@ -109,7 +122,7 @@ class TestDataSeeder extends Seeder
         );
 
         // Расписание для завтра
-        HallSchedule::firstOrCreate(
+        $hall1ScheduleTomorrow = HallSchedule::firstOrCreate(
             [
                 'cinema_hall_id' => $hall1->id,
                 'date' => $tomorrow->format('Y-m-d'),
@@ -121,75 +134,43 @@ class TestDataSeeder extends Seeder
             ]
         );
 
-        // СОЗДАЕМ СЕАНСЫ НА БУДУЩЕЕ ВРЕМЯ
+        // Создаем сеансы с помощью сервиса валидации
         $movie1 = Movie::where('title', 'Аватар: Путь воды')->first();
         $movie2 = Movie::where('title', 'Оппенгеймер')->first();
         $movie3 = Movie::where('title', 'Довод')->first();
 
-        // Получаем текущее время и добавляем часы для будущих сеансов
-        $now = Carbon::now();
+        $this->command->info('Создаем сеансы...');
+
+        // Попробуем создать сеансы в разное "круглое" время
+        $todayTimes = [
+            ['time' => '10:00', 'hall' => $hall1, 'movie' => $movie1],
+            ['time' => '14:00', 'hall' => $hall1, 'movie' => $movie2],
+            ['time' => '12:00', 'hall' => $hall2, 'movie' => $movie3],
+            ['time' => '18:00', 'hall' => $hall1, 'movie' => $movie3],
+        ];
         
-        // Сеансы на сегодня - ставим на время после текущего
-        $todaySession1 = $today->copy()->setTime($now->hour + 1, 0); // Через 2 часа
-        $todaySession2 = $today->copy()->setTime($now->hour + 5, 0); // Через 5 часов  
-        $todaySession3 = $today->copy()->setTime($now->hour + 3, 0); // Через 3 часа
+        $tomorrowTimes = [
+            ['time' => '16:00', 'hall' => $hall1, 'movie' => $movie1],
+            ['time' => '19:00', 'hall' => $hall2, 'movie' => $movie2],
+        ];
 
-        // Убедимся, что время не выходит за пределы расписания
-        if ($todaySession1->hour >= 23) $todaySession1 = $today->copy()->setTime(20, 0);
-        if ($todaySession2->hour >= 23) $todaySession2 = $today->copy()->setTime(21, 0);
-        if ($todaySession3->hour >= 24) $todaySession3 = $today->copy()->setTime(19, 0);
-
-        // Утренний сеанс на сегодня (будущее время)
-        MovieSession::firstOrCreate(
-            [
-                'cinema_hall_id' => $hall1->id,
-                'movie_id' => $movie1->id,
-                'session_start' => $todaySession1,
-            ],
-            [
-                'session_end' => $todaySession1->copy()->addMinutes($movie1->movie_duration + 10),
-                'is_actual' => true,
-            ]
-        );
-
-        // Дневной сеанс на сегодня (будущее время)
-        MovieSession::firstOrCreate(
-            [
-                'cinema_hall_id' => $hall1->id,
-                'movie_id' => $movie2->id,
-                'session_start' => $todaySession2,
-            ],
-            [
-                'session_end' => $todaySession2->copy()->addMinutes($movie2->movie_duration + 10),
-                'is_actual' => true,
-            ]
-        );
-
-        // Вечерний сеанс на сегодня (будущее время)
-        MovieSession::firstOrCreate(
-            [
-                'cinema_hall_id' => $hall2->id,
-                'movie_id' => $movie3->id,
-                'session_start' => $todaySession3,
-            ],
-            [
-                'session_end' => $todaySession3->copy()->addMinutes($movie3->movie_duration + 10),
-                'is_actual' => true,
-            ]
-        );
-
-        // Сеанс на завтра
-        MovieSession::firstOrCreate(
-            [
-                'cinema_hall_id' => $hall1->id,
-                'movie_id' => $movie1->id,
-                'session_start' => $tomorrow->copy()->setTime(16, 0),
-            ],
-            [
-                'session_end' => $tomorrow->copy()->setTime(19, 12),
-                'is_actual' => true,
-            ]
-        );
+        foreach ($todayTimes as $session) {
+            $this->createValidatedSession(
+                $session['hall'], 
+                $session['movie'], 
+                $today, 
+                $session['time']
+            );
+        }
+        
+        foreach ($tomorrowTimes as $session) {
+            $this->createValidatedSession(
+                $session['hall'], 
+                $session['movie'], 
+                $tomorrow, 
+                $session['time']
+            );
+        }
 
         // Создаем тестового пользователя
         $testUser = User::firstOrCreate(
@@ -201,37 +182,127 @@ class TestDataSeeder extends Seeder
             ]
         );
 
-        // Создаем тестовый билет (на первый доступный сеанс)
-        $session = MovieSession::where('session_start', '>', now())->first();
+        // Создаем тестовое бронирование с билетом
+        $session = MovieSession::where('session_start', '>', now())
+            ->orderBy('session_start')
+            ->first();
+            
         if ($session) {
             $seat = Seat::where('cinema_hall_id', $session->cinema_hall_id)
                        ->where('seat_status', 'regular')
                        ->first();
 
             if ($seat) {
-                Ticket::firstOrCreate(
+                // Создаем бронирование
+                $booking = Booking::firstOrCreate(
                     [
-                        'movie_session_id' => $session->id,
-                        'seat_id' => $seat->id,
+                        'booking_code' => Booking::generateBookingCode(),
                     ],
                     [
                         'user_id' => $testUser->id,
+                        'guest_email' => null,
+                        'guest_phone' => null,
+                        'guest_name' => null,
+                        'movie_session_id' => $session->id,
+                        'total_price' => $seat->getPriceAttribute(),
+                        'status' => 'reserved',
+                        'expires_at' => now()->addHours(24),
+                    ]
+                );
+
+                // Создаем билет
+                Ticket::firstOrCreate(
+                    [
+                        'booking_id' => $booking->id,
+                        'seat_id' => $seat->id,
+                    ],
+                    [
+                        'movie_session_id' => $session->id,
                         'status' => 'reserved',
                         'final_price' => $seat->getPriceAttribute(),
                         'unique_code' => Ticket::generateUniqueCode(),
-                        'expires_at' => null,
+                        'expires_at' => now()->addHours(24),
                     ]
                 );
+                $this->command->info("Создано тестовое бронирование для пользователя {$testUser->name}");
             }
         }
 
-        $this->command->info('Тестовые данные созданы успешно!');
+        $this->command->info('=== Сводка тестовых данных ===');
         $this->command->info('Залы: ' . CinemaHall::count());
         $this->command->info('Места: ' . Seat::count());
         $this->command->info('Фильмы: ' . Movie::count());
         $this->command->info('Расписания: ' . HallSchedule::count());
         $this->command->info('Сеансы: ' . MovieSession::count());
+        $this->command->info('Бронирования: ' . Booking::count());
         $this->command->info('Билеты: ' . Ticket::count());
+    }
+
+    /**
+     * Создать сеанс с проверкой валидации
+     */
+    private function createValidatedSession($hall, $movie, $date, $time): void
+    {
+        try {
+            $sessionStart = Carbon::createFromFormat('Y-m-d H:i', $date->format('Y-m-d') . ' ' . $time);
+            
+            // Используем сервис валидации
+            $validationResult = $this->validationService->validateSession(
+                $hall->id,
+                $movie->id,
+                $sessionStart
+            );
+            
+            if (!$validationResult['valid']) {
+                $this->command->warn("Не удалось создать сеанс '{$movie->title}' в {$time}: {$validationResult['message']}");
+                
+                // Попробуем найти ближайшее доступное время
+                $availableTime = $this->validationService->findAvailableTime(
+                    $hall->id,
+                    $movie->id,
+                    $sessionStart
+                );
+                
+                if ($availableTime['success']) {
+                    $newTime = $availableTime['available_time']->format('H:i');
+                    $this->command->info("Вместо этого создаем сеанс в {$newTime}");
+                    
+                    // Создаем сеанс в доступное время
+                    MovieSession::firstOrCreate(
+                        [
+                            'cinema_hall_id' => $hall->id,
+                            'movie_id' => $movie->id,
+                            'session_start' => $availableTime['available_time'],
+                        ],
+                        [
+                            'session_end' => $availableTime['session_end'],
+                            'is_actual' => true,
+                        ]
+                    );
+                    
+                    $this->command->info("Создан сеанс '{$movie->title}' в зале '{$hall->hall_name}' на {$newTime}");
+                }
+                return;
+            }
+            
+            // Создаем сеанс
+            MovieSession::firstOrCreate(
+                [
+                    'cinema_hall_id' => $hall->id,
+                    'movie_id' => $movie->id,
+                    'session_start' => $sessionStart,
+                ],
+                [
+                    'session_end' => $validationResult['session_end'],
+                    'is_actual' => true,
+                ]
+            );
+            
+            $this->command->info("Создан сеанс '{$movie->title}' в зале '{$hall->hall_name}' на {$sessionStart->format('H:i')}");
+            
+        } catch (\Exception $e) {
+            $this->command->error("Ошибка при создании сеанса '{$movie->title}': " . $e->getMessage());
+        }
     }
 
     private function createSeatsForHall(CinemaHall $hall): void
