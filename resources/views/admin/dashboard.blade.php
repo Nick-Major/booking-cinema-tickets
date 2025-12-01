@@ -143,13 +143,8 @@
                         data-movie-id="{{ $movie->id }}" 
                         data-movie-duration="{{ $movie->movie_duration }}" 
                         style="position: relative;">
-                        @if($movie->movie_poster)
                             <img class="conf-step__movie-poster" alt="{{ $movie->title }}"
-                                src="{{ Storage::url($movie->movie_poster) }}">
-                        @else
-                            <img class="conf-step__movie-poster" alt="Постер отсутствует"
-                                src="{{ asset('images/admin/poster-placeholder.png') }}">
-                        @endif
+                                src="{{ $movie->poster_url }}">
                         <h3 class="conf-step__movie-title">{{ $movie->title }}</h3>
                         <p class="conf-step__movie-duration">{{ $movie->movie_duration }} минут</p>
 

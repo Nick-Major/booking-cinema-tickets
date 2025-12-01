@@ -293,6 +293,15 @@ var HallsManager = class {
     }
   }
 };
+HallsManager.prototype.updateHallList = async function() {
+  try {
+    const response = await fetch("/admin/halls");
+    const halls = await response.json();
+    this.updateHallSelectors(halls);
+  } catch (error) {
+    console.error("Error updating hall list:", error);
+  }
+};
 async function loadHallConfiguration(hallId) {
   try {
     const response = await fetch(`/admin/halls/${hallId}/configuration`);
@@ -350,12 +359,12 @@ function initHallFormHandlers() {
           method: "POST",
           body: formData,
           headers: {
-            "X-Requested-With": "XMLHttpRequest",
-            "Accept": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+            "Accept": "application/json"
           }
         });
         const result = await response.json();
+        console.log("Response:", result);
         if (result.success) {
           console.log("\u0417\u0430\u043B \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0441\u043E\u0437\u0434\u0430\u043D");
           closeModal("addHallModal");
@@ -363,9 +372,7 @@ function initHallFormHandlers() {
             window.notifications.show(result.message, "success");
           }
           this.reset();
-          setTimeout(() => {
-            window.location.reload();
-          }, 1e3);
+          await this.updateHallList();
         } else {
           console.log("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430:", result.message);
           if (window.notifications) {

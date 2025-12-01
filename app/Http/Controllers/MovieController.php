@@ -22,33 +22,34 @@ class MovieController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'movie_description' => 'nullable|string',
-            'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'title' => 'required|string|max:255|unique:movies',
+            'movie_description' => 'required|string',
             'movie_duration' => 'required|integer|min:1',
-            'country' => 'nullable|string|max:100',
-            'is_active' => 'sometimes|boolean'
+            'country' => 'required|string|max:100',
+            'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'is_active' => 'boolean'
         ]);
 
+        $movie = new Movie();
+        $movie->title = $validated['title'];
+        $movie->movie_description = $validated['movie_description'];
+        $movie->movie_duration = $validated['movie_duration'];
+        $movie->country = $validated['country'];
+        $movie->is_active = $request->boolean('is_active', true);
+        
         // Обработка загрузки постера
         if ($request->hasFile('movie_poster')) {
             $path = $request->file('movie_poster')->store('posters', 'public');
-            $validated['movie_poster'] = $path;
+            $movie->movie_poster = $path;
         }
+        
+        $movie->save();
 
-        $movie = Movie::create($validated);
-
-        // Проверяем, является ли запрос AJAX по заголовку
-        if ($request->header('X-Requested-With') === 'XMLHttpRequest') {
-            return response()->json([
-                'success' => true,
-                'message' => 'Фильм успешно добавлен!',
-                'movie' => $movie
-            ]);
-        }
-
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Фильм успешно добавлен!');
+        return response()->json([
+            'success' => true,
+            'message' => 'Фильм успешно добавлен',
+            'movie' => $movie
+        ]);
     }
 
     public function show(Movie $movie)
@@ -70,32 +71,43 @@ class MovieController extends Controller
     public function update(Request $request, Movie $movie)
     {
         $validated = $request->validate([
-            'title' => 'sometimes|string|max:255',
-            'movie_description' => 'nullable|string',
-            'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'movie_duration' => 'sometimes|integer|min:1',
-            'country' => 'nullable|string|max:100',
+            'title' => 'required|string|max:255|unique:movies,title,' . $movie->id,
+            'movie_description' => 'required|string',
+            'movie_duration' => 'required|integer|min:1',
+            'country' => 'required|string|max:100',
+            'movie_poster' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048',
+            'is_active' => 'boolean'
         ]);
 
-        // Обработка загрузки постера
+        $movie->title = $validated['title'];
+        $movie->movie_description = $validated['movie_description'];
+        $movie->movie_duration = $validated['movie_duration'];
+        $movie->country = $validated['country'];
+        $movie->is_active = $request->boolean('is_active', true);
+        
+        // Обработка загрузки нового постера
         if ($request->hasFile('movie_poster')) {
-            // Удаляем старый постер если существует
-            if ($movie->movie_poster) {
+            // Удаляем старый постер, если он существует
+            if ($movie->movie_poster && Storage::disk('public')->exists($movie->movie_poster)) {
                 Storage::disk('public')->delete($movie->movie_poster);
             }
             
             $path = $request->file('movie_poster')->store('posters', 'public');
-            $validated['movie_poster'] = $path;
+            $movie->movie_poster = $path;
+        } elseif ($request->has('remove_poster')) {
+            // Удаляем постер, если пользователь хочет его убрать
+            if ($movie->movie_poster && Storage::disk('public')->exists($movie->movie_poster)) {
+                Storage::disk('public')->delete($movie->movie_poster);
+            }
+            $movie->movie_poster = null;
         }
+        
+        $movie->save();
 
-        $validated['is_active'] = $request->has('is_active');
-
-        $movie->update($validated);
-
-        // Возвращаем JSON ответ для AJAX запросов
         return response()->json([
-            'success' => true, 
-            'message' => 'Фильм успешно обновлен!'
+            'success' => true,
+            'message' => 'Фильм успешно обновлен',
+            'movie' => $movie
         ]);
     }
 

@@ -20,17 +20,41 @@ class CinemaHallController extends Controller
             'hall_name' => 'required|string|max:100|unique:cinema_halls,hall_name',
         ]);
 
-        $hall = CinemaHall::create([
-            'hall_name' => $validated['hall_name'],
-            'row_count' => 0,
-            'max_seats_number_in_row' => 0,
-            'regular_price' => 300,
-            'vip_price' => 500,
-            'is_active' => false,
-        ]);
+        try {
+            $hall = CinemaHall::create([
+                'hall_name' => $validated['hall_name'],
+                'row_count' => 0,
+                'max_seats_number_in_row' => 0,
+                'regular_price' => 300,
+                'vip_price' => 500,
+                'is_active' => false,
+            ]);
 
-        return redirect()->route('admin.dashboard')
-            ->with('success', 'Зал успешно создан!');
+            // Если запрос AJAX, возвращаем JSON
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Зал успешно создан!',
+                    'hall' => $hall,
+                    'redirect' => route('admin.dashboard')
+                ]);
+            }
+
+            return redirect()->route('admin.dashboard')
+                ->with('success', 'Зал успешно создан!');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error creating hall: ' . $e->getMessage());
+            
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ошибка при создании зала: ' . $e->getMessage()
+                ], 500);
+            }
+            
+            return back()->withErrors(['error' => 'Ошибка при создании зала']);
+        }
     }
 
     public function show(CinemaHall $cinemaHall)

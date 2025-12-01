@@ -253,7 +253,6 @@ class HallsManager {
     }
 
     showNoHallsMessage() {
-        // Можно добавить сообщение, что залов нет
         console.log('No halls remaining');
     }
 
@@ -265,6 +264,19 @@ class HallsManager {
         }
     }
 }
+
+HallsManager.prototype.updateHallList = async function() {
+    try {
+        const response = await fetch('/admin/halls');
+        const halls = await response.json();
+        
+        // Обновляем все секции, где используются залы
+        this.updateHallSelectors(halls);
+        
+    } catch (error) {
+        console.error('Error updating hall list:', error);
+    }
+};
 
 export async function loadHallConfiguration(hallId) {
     try {
@@ -370,13 +382,13 @@ export function initHallFormHandlers() {
                     method: 'POST',
                     body: formData,
                     headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        'Accept': 'application/json'
                     }
                 });
                 
                 const result = await response.json();
+                console.log('Response:', result);
 
                 if (result.success) {
                     console.log('Зал успешно создан');
@@ -392,10 +404,8 @@ export function initHallFormHandlers() {
                     // Сбрасываем форму
                     this.reset();
                     
-                    // ОБНОВЛЯЕМ СТРАНИЦУ для отображения нового зала
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1000);
+                    // Обновляем список залов без перезагрузки
+                    await this.updateHallList();
                     
                 } else {
                     console.log('Ошибка при создании зала:', result.message);

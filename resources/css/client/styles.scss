@@ -4,7 +4,6 @@ $black: #000000;
 $white: #FFFFFF;
 $green: #16A6AF;
 
-
 * {
   margin: 0;
   padding: 0;
@@ -35,7 +34,7 @@ body {
   font-weight: 900;
   font-size: 3.4rem;
   color: $white;
-  text-transform: uppercase;  
+  text-transform: uppercase;
 
   span {
     font-weight: 100;
@@ -50,12 +49,11 @@ body {
   border-radius: 4px;
   font-size: 14px;
   transition: background-color 0.3s ease;
-  
+
   &:hover {
     background: #3a70a9;
   }
 }
-
 
 /* ~~~~~~~~~~~~ Главная ~~~~~~~~~~~~ */
 
@@ -68,7 +66,7 @@ body {
   align-items: stretch;
   color: $black;
   z-index: 10;
-  
+
   .page-nav__day {
     flex-basis: calc(100% / 8);
     font-size: 1.2rem;
@@ -78,22 +76,22 @@ body {
     border-radius: 2px;
     text-decoration: none;
     color: $black;
-    
+
     & + .page-nav__day {
       margin-left: 1px;
     }
-    
+
     .page-nav__day-week::after {
       content: ',';
     }
-    
+
     .page-nav__day-number::before {
       content: ' ';
-    }    
-    
+    }
+
     .page-nav__day-week, .page-nav__day-number {
       display: block;
-    }  
+    }
   }
 
   .page-nav__day_today {
@@ -101,37 +99,35 @@ body {
     background-color: $white;
     font-weight: 700;
     transform: scale(1.1);
-    
-    
+
     .page-nav__day-week::after {
       content: '';
     }
-    
+
     .page-nav__day-number::before {
       content: '';
     }
-    
-    
+
     .page-nav__day-week {
       display: block;
     }
-    
+
     .page-nav__day-number {
       display: none;
     }
   }
-  
+
   .page-nav__day_chosen {
     flex-grow: 1;
     background-color: $white;
     font-weight: 700;
     transform: scale(1.1);
   }
-  
+
   .page-nav__day_weekend {
     color: #DE2121;
   }
-  
+
   .page-nav__day_next {
     text-align: center;
 
@@ -140,7 +136,7 @@ body {
       font-family: monospace;
       font-weight: 700;
       font-size: 2.4rem;
-    }    
+    }
   }
 }
 
@@ -150,23 +146,23 @@ body {
   margin-top: 3rem;
   background: rgba(241, 235, 230, 0.95);
   color: $black;
-  
+
   .movie__info {
     display: flex;
   }
-  
+
   .movie__poster {
     position: relative;
     width: 12.5rem;
     height: 17.5rem;
-    
+
     .movie__poster-image {
       position: relative;
       top: -3rem;
       width: 12.5rem;
       height: 17.5rem;
     }
-    
+
     &::after {
       content: '';
       display: block;
@@ -177,65 +173,64 @@ body {
       border-bottom: 0 solid transparent;
       border-right: 0 solid transparent;
       border-left: 0.7rem solid rgb(119, 39, 32);
-    } 
+    }
   }
-  
+
   .movie__description {
     flex-grow: 1;
     padding-left: 1.5rem;
-  }  
-  
+  }
+
   .movie__title {
     font-weight: 700;
     font-size: 1.6rem;
   }
-  
+
   .movie__synopsis {
     font-size: 1.4rem;
     margin-top: 1rem;
   }
-  
+
   .movie__data {
     font-size: 1.4rem;
     font-weight: 300;
     margin-top: 1rem;
   }
-  
+
   .movie-seances__hall {
-    
     & + .movie-seances__hall {
-      margin-top: 2rem;  
+      margin-top: 2rem;
     }
-        
+
     .movie-seances__hall-title {
       font-weight: 700;
       font-size: 1.6rem;
     }
-    
+
     .movie-seances__list {
       margin-top: 0.7rem;
       font-size: 0;
     }
-    
+
     .movie-seances__time-block {
       display: inline-block;
       margin-bottom: 4px;
-      
+
       &:nth-last-of-type(n + 1) {
         margin-right: 4px;
       }
     }
-    
+
     .movie-seances__time {
       display: block;
       padding: 8px;
       box-shadow: 0px 2px 2px rgba(0, 0, 0, 0.24), 0px 0px 2px rgba(0, 0, 0, 0.12);
-      border-radius: 2px;  
-      background-color: $white; 
+      border-radius: 2px;
+      background-color: $white;
       color: $black;
       text-decoration: none;
       font-size: 1.5rem;
-    } 
+    }
   }
 }
 
@@ -250,9 +245,9 @@ body {
   padding: 12px 57px;
   text-transform: uppercase;
   font-weight: 500;
-  font-size: 1.4rem;  
-  background-color: $green;  
-  color: $white;  
+  font-size: 1.4rem;
+  background-color: $green;
+  color: $white;
 }
 
 .buying {
@@ -266,32 +261,32 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1.5rem;
-  
+
   .buying__info-description {
     padding-right: 1.5rem;
   }
-  
+
   .buying__info-title, .buying__info-hall {
     font-size: 1.6rem;
     font-weight: 700;
   }
-  
+
   .buying__info-start {
     font-size: 1.4rem;
     font-weight: 300;
     margin: 0.7rem 0;
   }
-  
+
   .buying__info-hint {
     position: relative;
     font-weight: 300;
     font-size: 1.4rem;
     text-align: center;
-    
+
     p {
       position: relative;
       width: 10rem;
-      
+
       &::before {
         content: '';
         position: absolute;
@@ -300,11 +295,11 @@ body {
         display: block;
         width: 2.4rem;
         height: 3.2rem;
-        background-image: url(../i/hint.png);
+        background-image: url("/images/client/hint.png");
         background-size: 2.4rem 3.2rem;
-      }      
-    } 
-  }  
+      }
+    }
+  }
 }
 
 .buying-scheme {
@@ -316,16 +311,15 @@ body {
 .buying-scheme__wrapper {
   font-size: 0;
   display: inline-block;
-  background-image: url(../i/screen.png);
+  background-image: url("/images/client/screen.png");
   background-position: top;
   background-repeat: no-repeat;
   background-size: 100%;
   padding-top: 3rem;
-  
+
   &::before {
     content: '';
   }
-  
 }
 
 .buying-scheme__row + .buying-scheme__row {
@@ -348,7 +342,7 @@ body {
 
 .buying-scheme__chair_disabled {
   opacity: 0;
-}  
+}
 
 .buying-scheme__chair_standart {
   background-color: $white;
@@ -379,22 +373,21 @@ body {
 
   .col {
     max-width: 25rem;
-    
+
     &:first-of-type {
       padding-right: 1.5rem;
       margin-left: auto;
     }
-    
+
     &:last-of-type {
       margin-right: auto;
     }
   }
-  
+
   .buying-scheme__legend-price + .buying-scheme__legend-price {
     margin-top: 1rem;
   }
 }
-
 
 /* ~~~~~~~~~~~~ Билет ~~~~~~~~~~~~ */
 
@@ -408,7 +401,7 @@ body {
   position: relative;
   padding-top: 2.5rem;
   padding-bottom: 2.5rem;
-  
+
   &::before {
     content: '';
     display: block;
@@ -420,7 +413,7 @@ body {
     background-image: url("/images/client/border-top.png");
     background-size: 10px 3px;
   }
-  
+
   &::after {
     content: '';
     display: block;
@@ -431,8 +424,7 @@ body {
     height: 3px;
     background-image: url("/images/client/border-bottom.png");
     background-size: 10px 3px;
-  }  
-  
+  }
 }
 
 .ticket__info-wrapper {
@@ -440,7 +432,7 @@ body {
   margin-top: 6px;
   padding-top: 2rem;
   padding-bottom: 3rem;
-  
+
   &::before {
     content: '';
     display: block;
@@ -452,7 +444,7 @@ body {
     background-image: url("/images/client/border-top.png");
     background-size: 10px 3px;
   }
-  
+
   &::after {
     content: '';
     display: block;
@@ -463,25 +455,23 @@ body {
     height: 3px;
     background-image: url("/images/client/border-bottom.png");
     background-size: 10px 3px;
-  }    
-  
+  }
 }
 
 .ticket__check-title {
   font-weight: 700;
   font-size: 2.2rem;
   text-transform: uppercase;
-  color: #C76F00;  
+  color: #C76F00;
 }
 
 .ticket__info {
   font-size: 1.6rem;
   color: $black;
-  
+
   & + .ticket__info {
     margin-top: 1rem;
   }
-  
 }
 
 .ticket__details {
@@ -492,7 +482,7 @@ body {
   font-weight: 300;
   font-size: 1.4rem;
   margin-top: 3rem;
-    
+
   & + .ticket__hint {
     margin-top: 1rem;
   }
@@ -505,6 +495,271 @@ body {
   height: 20rem;
 }
 
+/* ~~~~~~~~~~~~ Бронирование ~~~~~~~~~~~~ */
+
+.booking-form {
+  margin-top: 2rem;
+}
+
+.guest-info {
+  display: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+
+  &.visible {
+    display: block;
+  }
+}
+
+.guest-fields {
+  &__title {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #C76F00;
+    margin-bottom: 0.5rem;
+  }
+
+  &__hint {
+    font-size: 1.4rem;
+    color: #666;
+    margin-bottom: 1.5rem;
+  }
+
+  &__group {
+    margin-bottom: 1.5rem;
+  }
+
+  &__label {
+    display: block;
+    font-size: 1.4rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  &__input {
+    width: 100%;
+    padding: 1rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1.4rem;
+    font-family: 'Roboto', sans-serif;
+
+    &:focus {
+      outline: none;
+      border-color: #16A6AF;
+      box-shadow: 0 0 0 2px rgba(22, 166, 175, 0.2);
+    }
+  }
+}
+
+/* ~~~~~~~~~~~~ Подтверждение бронирования ~~~~~~~~~~~~ */
+
+.ticket__summary {
+  margin-bottom: 2rem;
+}
+
+.ticket__section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px dashed #ddd;
+
+  &:first-of-type {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+  }
+}
+
+.ticket__section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #C76F00;
+  margin-bottom: 1.5rem;
+}
+
+.ticket__seats {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.ticket__seat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.ticket__seat-location {
+  font-weight: 500;
+}
+
+.ticket__seat-type {
+  color: #666;
+  font-size: 1.4rem;
+  margin-left: 0.5rem;
+}
+
+.ticket__seat-price {
+  font-weight: 700;
+  color: #C76F00;
+}
+
+.ticket__qr-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.ticket__qr-ticket {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.ticket__qr-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.ticket__qr-location {
+  font-weight: 500;
+}
+
+.ticket__qr-price {
+  font-weight: 700;
+  color: #C76F00;
+}
+
+.ticket__qr-image {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+.ticket__qr-code {
+  font-size: 1.2rem;
+  color: #666;
+  word-break: break-all;
+}
+
+.ticket__actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+
+  .acceptin-button {
+    margin: 0;
+    min-width: 160px;
+  }
+}
+
+.ticket__booking-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(23, 162, 184, 0.1);
+  border-radius: 4px;
+  border-left: 4px solid #16A6AF;
+}
+
+.ticket__booking-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #16A6AF;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.4rem;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.ticket__qr-section {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+/* ~~~~~~~~~~~~ Уведомления ~~~~~~~~~~~~ */
+
+.simple-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: white;
+  z-index: 10000;
+  max-width: 300px;
+  animation: slideInRight 0.3s ease;
+  font-family: 'Roboto', sans-serif;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  cursor: pointer;
+
+  &-success {
+    background-color: #28a745;
+  }
+
+  &-error {
+    background-color: #dc3545;
+  }
+
+  &-warning {
+    background-color: #ffc107;
+    color: #212529;
+  }
+
+  &-info {
+    background-color: #17a2b8;
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* ~~~~~~~~~~~~ Адаптивность ~~~~~~~~~~~~ */
 
 @media screen and (min-width: 479px) {
   .page-nav .page-nav__day {
@@ -520,7 +775,7 @@ body {
   .buying__info-hint {
     display: none;
   }
-  
+
   .admin-login-btn {
     font-size: 16px;
     padding: 10px 20px;

@@ -6,19 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Endroid\QrCode\Builder\Builder;
+use Endroid\QrCode\Writer\PngWriter;
 use Endroid\QrCode\Encoding\Encoding;
 use Endroid\QrCode\ErrorCorrectionLevel\ErrorCorrectionLevelLow;
 use Endroid\QrCode\RoundBlockSizeMode\RoundBlockSizeModeMargin;
-use Endroid\QrCode\Writer\PngWriter;
 
 class Ticket extends Model
 {
     use HasFactory;
 
     protected $fillable = [
+        'booking_id',
         'movie_session_id',
         'seat_id',
-        'user_id',
         'status',
         'final_price',
         'unique_code',
@@ -29,6 +29,12 @@ class Ticket extends Model
         'final_price' => 'decimal:2',
         'expires_at' => 'datetime'
     ];
+
+    // Связь: билет принадлежит бронированию
+    public function booking(): BelongsTo
+    {
+        return $this->belongsTo(Booking::class);
+    }
 
     // Связь: билет принадлежит сеансу
     public function movieSession(): BelongsTo
@@ -42,22 +48,10 @@ class Ticket extends Model
         return $this->belongsTo(Seat::class);
     }
 
-    // Связь: билет принадлежит пользователю
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
-    }
-
     // Scope: активные билеты (забронированные)
     public function scopeActive($query)
     {
         return $query->where('status', 'reserved');
-    }
-
-    // Scope: отмененные билеты
-    public function scopeCancelled($query)
-    {
-        return $query->where('status', 'cancelled');
     }
 
     // Генерация уникального кода билета
@@ -82,14 +76,15 @@ class Ticket extends Model
         $this->update(['status' => 'cancelled']);
     }
 
-    // Генерация данных для QR-кода
+    // Генерация данных для QR-кода отдельного билета
     public function getQrCodeData(): array
     {
         return [
-            'code' => $this->unique_code,
+            'ticket_code' => $this->unique_code,
+            'booking_code' => $this->booking ? $this->booking->booking_code : null,
             'movie' => $this->movieSession->movie->title,
             'hall' => $this->movieSession->cinemaHall->hall_name,
-            'seat' => $this->seat->getSeatLabelAttribute(),
+            'seat' => "Ряд {$this->seat->row_number}, Место {$this->seat->row_seat_number}",
             'date' => $this->movieSession->session_start->format('d.m.Y'),
             'time' => $this->movieSession->session_start->format('H:i'),
             'price' => $this->final_price,
@@ -131,18 +126,6 @@ class Ticket extends Model
                     <text x="50%" y="50%" text-anchor="middle" dy=".3em" font-family="Arial" font-size="14">QR Error</text>
                 </svg>
             ');
-        }
-    }
-
-    // Сохранить QR-код в файл
-    public function saveQrCodeToFile(string $path): bool
-    {
-        try {
-            $qrPng = $this->generateQrCode();
-            return file_put_contents($path, $qrPng) !== false;
-        } catch (\Exception $e) {
-            \Log::error('QR code save failed: ' . $e->getMessage());
-            return false;
         }
     }
 }

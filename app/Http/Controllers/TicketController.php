@@ -19,21 +19,6 @@ class TicketController extends Controller
             ->get();
     }
 
-    private function getGuestUser(): User
-    {
-        // Создаем уникального гостя для каждой сессии бронирования
-        $guestEmail = 'guest_' . Str::random(8) . '_' . time() . '@cinema.local';
-        
-        $user = User::create([
-            'name' => 'Гость',
-            'email' => $guestEmail,
-            'password' => bcrypt(Str::random(32)),
-            'is_admin' => false
-        ]);
-        
-        return $user;
-    }
-
     // Страница выбора места
     public function showBookingPage($movieSession)
     {
@@ -89,44 +74,122 @@ class TicketController extends Controller
     // Обработка бронирования
     public function bookTicket(Request $request)
     {
+        \Log::info('Booking ticket request:', $request->all());
+        
         $validated = $request->validate([
             'movie_session_id' => 'required|exists:movie_sessions,id',
-            'seat_id' => 'required|exists:seats,id',
+            'seat_ids' => 'required|array|min:1',
+            'seat_ids.*' => 'exists:seats,id',
+            'user_id' => 'nullable|exists:users,id',
+            'guest_email' => 'nullable|email|max:255',
+            'guest_phone' => 'nullable|string|max:20',
+            'guest_name' => 'nullable|string|max:100',
         ]);
 
-        // ПРОВЕРКА ДОСТУПНОСТИ
-        $checkResult = $this->checkBookingAvailability(
-            $validated['movie_session_id'],
-            $validated['seat_id']
-        );
+        // Декодируем JSON если он пришел как строка
+        if (is_string($validated['seat_ids'])) {
+            $validated['seat_ids'] = json_decode($validated['seat_ids'], true);
+            \Log::info('Decoded seat_ids:', $validated['seat_ids']);
+        }
 
+        // Проверяем доступность всех мест
+        $checkResult = $this->checkMultipleSeatsAvailability(
+            $validated['movie_session_id'], 
+            $validated['seat_ids']
+        );
+        
         if (!$checkResult['available']) {
             return response()->json([
                 'success' => false,
-                'message' => $checkResult['message']
+                'message' => $checkResult['message'],
+                'unavailable_seats' => $checkResult['unavailable_seats']
             ], 422);
         }
 
-        return DB::transaction(function () use ($validated, $checkResult) {
-            $guestUser = $this->getGuestUser();
-
-            $ticket = Ticket::create([
+        try {
+            DB::beginTransaction();
+            
+            $session = MovieSession::with('cinemaHall')->findOrFail($validated['movie_session_id']);
+            
+            // Определяем user_id: если пользователь авторизован, используем его ID
+            // Если нет, то null (гость)
+            $user_id = auth()->check() ? auth()->id() : null;
+            
+            // Создаем бронирование
+            $booking = \App\Models\Booking::create([
+                'booking_code' => \App\Models\Booking::generateBookingCode(),
+                'user_id' => $user_id,
+                'guest_email' => $validated['guest_email'] ?? null,
+                'guest_phone' => $validated['guest_phone'] ?? null,
+                'guest_name' => $validated['guest_name'] ?? null,
                 'movie_session_id' => $validated['movie_session_id'],
-                'seat_id' => $validated['seat_id'],
-                'user_id' => $guestUser->id,
-                'final_price' => $checkResult['final_price'],
-                'unique_code' => Ticket::generateUniqueCode(),
+                'total_price' => $checkResult['total_price'],
                 'status' => 'reserved',
-                'expires_at' => null
+                'expires_at' => now()->addHours(24),
             ]);
-
+            
+            // Создаем билеты для каждого места
+            $tickets = [];
+            foreach ($checkResult['available_seats'] as $seatId) {
+                $seat = Seat::findOrFail($seatId);
+                $price = $seat->seat_status === 'vip' 
+                    ? $session->cinemaHall->vip_price 
+                    : $session->cinemaHall->regular_price;
+                
+                $ticket = Ticket::create([
+                    'booking_id' => $booking->id,
+                    'movie_session_id' => $validated['movie_session_id'],
+                    'seat_id' => $seatId,
+                    'status' => 'reserved',
+                    'final_price' => $price,
+                    'unique_code' => Ticket::generateUniqueCode(),
+                    'expires_at' => now()->addHours(24),
+                ]);
+                
+                $tickets[] = $ticket;
+            }
+            
+            DB::commit();
+            
+            \Log::info('Booking created successfully:', [
+                'booking_id' => $booking->id,
+                'user_id' => $booking->user_id,
+                'is_guest' => is_null($booking->user_id),
+                'tickets_count' => count($tickets)
+            ]);
+            
             return response()->json([
                 'success' => true,
-                'message' => 'Билет успешно забронирован',
-                'ticket_id' => $ticket->id,
-                'redirect_url' => route('tickets.confirmation', $ticket)
+                'message' => 'Билеты успешно забронированы',
+                'booking' => $booking,
+                'redirect_url' => route('tickets.booking-confirmation', $booking->booking_code)
             ]);
-        });
+            
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error booking tickets: ' . $e->getMessage());
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при бронировании: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Страница подтверждения бронирования (для всей брони)
+    public function showBookingConfirmation($bookingCode)
+    {
+        try {
+            $booking = \App\Models\Booking::where('booking_code', $bookingCode)
+                ->with(['movieSession.movie', 'movieSession.cinemaHall', 'tickets.seat', 'user'])
+                ->firstOrFail();
+            
+            return view('client.booking-confirmation', compact('booking'));
+            
+        } catch (\Exception $e) {
+            \Log::error('Error loading booking confirmation: ' . $e->getMessage());
+            return redirect()->route('home')->with('error', 'Бронирование не найдено.');
+        }
     }
 
     // Страница подтверждения бронирования
@@ -136,11 +199,10 @@ class TicketController extends Controller
         return view('client.booking-confirmation', compact('ticket'));
     }
 
-    // Страница электронного билета
     public function showTicket($code)
     {
         $ticket = Ticket::where('unique_code', $code)
-            ->with(['movieSession.movie', 'movieSession.cinemaHall', 'seat', 'user'])
+            ->with(['booking', 'movieSession.movie', 'movieSession.cinemaHall', 'seat', 'user'])
             ->firstOrFail();
 
         return view('client.ticket', compact('ticket'));
@@ -201,20 +263,57 @@ class TicketController extends Controller
         return response()->json(null, 204);
     }
 
-    // Метод для проверки доступности места
+    // Метод для проверки доступности массива мест
+    private function checkMultipleSeatsAvailability($movieSessionId, array $seatIds): array
+    {
+        $unavailableSeats = [];
+        $availableSeats = [];
+        $totalPrice = 0;
+        
+        foreach ($seatIds as $seatId) {
+            $checkResult = $this->checkBookingAvailability($movieSessionId, $seatId);
+            
+            if ($checkResult['available']) {
+                $availableSeats[] = $seatId;
+                $totalPrice += $checkResult['final_price'];
+            } else {
+                $seat = Seat::find($seatId);
+                $unavailableSeats[] = [
+                    'seat_id' => $seatId,
+                    'message' => $checkResult['message'],
+                    'row' => $seat->row_number ?? 'N/A',
+                    'seat' => $seat->row_seat_number ?? 'N/A'
+                ];
+            }
+        }
+        
+        return [
+            'available' => empty($unavailableSeats),
+            'available_seats' => $availableSeats,
+            'unavailable_seats' => $unavailableSeats,
+            'total_price' => $totalPrice,
+            'message' => empty($unavailableSeats) 
+                ? 'Все места доступны для бронирования' 
+                : 'Некоторые места недоступны'
+        ];
+    }
+
     public function checkSeatAvailability(Request $request)
     {
+        \Log::info('Check seat availability request:', $request->all());
+        
         $validated = $request->validate([
             'movie_session_id' => 'required|exists:movie_sessions,id',
-            'seat_id' => 'required|exists:seats,id',
+            'seat_ids' => 'required|array|min:1',
+            'seat_ids.*' => 'exists:seats,id',
         ]);
 
-        $checkResult = $this->checkBookingAvailability(
+        $result = $this->checkMultipleSeatsAvailability(
             $validated['movie_session_id'], 
-            $validated['seat_id']
+            $validated['seat_ids']
         );
 
-        return response()->json($checkResult);
+        return response()->json($result);
     }
 
     // Метод проверки доступности бронирования

@@ -39,11 +39,7 @@
         <section class="movie">
           <div class="movie__info">
             <div class="movie__poster">
-              @if($movie->movie_poster)
-                <img class="movie__poster-image" alt="{{ $movie->title }} постер" src="{{ Storage::url($movie->movie_poster) }}">
-              @else
-                <img class="movie__poster-image" alt="Постер отсутствует" src="{{ asset('images/client/poster-placeholder.png') }}">
-              @endif
+                <img class="movie__poster-image" alt="{{ $movie->title }} постер" src="{{ $movie->poster_url }}">
             </div>
             <div class="movie__description">
               <h2 class="movie__title">{{ $movie->title }}</h2>

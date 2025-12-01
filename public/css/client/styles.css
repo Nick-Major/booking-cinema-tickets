@@ -253,7 +253,7 @@ body {
   display: block;
   width: 2.4rem;
   height: 3.2rem;
-  background-image: url(../i/hint.png);
+  background-image: url("/images/client/hint.png");
   background-size: 2.4rem 3.2rem;
 }
 
@@ -266,7 +266,7 @@ body {
 .buying-scheme__wrapper {
   font-size: 0;
   display: inline-block;
-  background-image: url(../i/screen.png);
+  background-image: url("/images/client/screen.png");
   background-position: top;
   background-repeat: no-repeat;
   background-size: 100%;
@@ -437,6 +437,250 @@ body {
   height: 20rem;
 }
 
+/* ~~~~~~~~~~~~ Бронирование ~~~~~~~~~~~~ */
+.booking-form {
+  margin-top: 2rem;
+}
+
+.guest-info {
+  display: none;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 4px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+.guest-info.visible {
+  display: block;
+}
+
+.guest-fields__title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #C76F00;
+  margin-bottom: 0.5rem;
+}
+.guest-fields__hint {
+  font-size: 1.4rem;
+  color: #666;
+  margin-bottom: 1.5rem;
+}
+.guest-fields__group {
+  margin-bottom: 1.5rem;
+}
+.guest-fields__label {
+  display: block;
+  font-size: 1.4rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: #333;
+}
+.guest-fields__input {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1.4rem;
+  font-family: "Roboto", sans-serif;
+}
+.guest-fields__input:focus {
+  outline: none;
+  border-color: #16A6AF;
+  box-shadow: 0 0 0 2px rgba(22, 166, 175, 0.2);
+}
+
+/* ~~~~~~~~~~~~ Подтверждение бронирования ~~~~~~~~~~~~ */
+.ticket__summary {
+  margin-bottom: 2rem;
+}
+
+.ticket__section {
+  margin-top: 3rem;
+  padding-top: 3rem;
+  border-top: 1px dashed #ddd;
+}
+.ticket__section:first-of-type {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+.ticket__section-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #C76F00;
+  margin-bottom: 1.5rem;
+}
+
+.ticket__seats {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+  padding: 1.5rem;
+}
+
+.ticket__seat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid #eee;
+}
+.ticket__seat-item:last-child {
+  border-bottom: none;
+}
+
+.ticket__seat-location {
+  font-weight: 500;
+}
+
+.ticket__seat-type {
+  color: #666;
+  font-size: 1.4rem;
+  margin-left: 0.5rem;
+}
+
+.ticket__seat-price {
+  font-weight: 700;
+  color: #C76F00;
+}
+
+.ticket__qr-codes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.ticket__qr-ticket {
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.ticket__qr-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 1.4rem;
+}
+
+.ticket__qr-location {
+  font-weight: 500;
+}
+
+.ticket__qr-price {
+  font-weight: 700;
+  color: #C76F00;
+}
+
+.ticket__qr-image {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 1rem;
+  display: block;
+}
+
+.ticket__qr-code {
+  font-size: 1.2rem;
+  color: #666;
+  word-break: break-all;
+}
+
+.ticket__actions {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  margin-top: 3rem;
+  flex-wrap: wrap;
+}
+.ticket__actions .acceptin-button {
+  margin: 0;
+  min-width: 160px;
+}
+
+.ticket__booking-info {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(23, 162, 184, 0.1);
+  border-radius: 4px;
+  border-left: 4px solid #16A6AF;
+}
+
+.ticket__booking-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: #16A6AF;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 1.4rem;
+}
+.ticket__booking-link:hover {
+  text-decoration: underline;
+}
+
+.ticket__qr-section {
+  text-align: center;
+  margin: 3rem 0;
+  padding: 2rem;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 4px;
+}
+
+/* ~~~~~~~~~~~~ Уведомления ~~~~~~~~~~~~ */
+.simple-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: white;
+  z-index: 10000;
+  max-width: 300px;
+  animation: slideInRight 0.3s ease;
+  font-family: "Roboto", sans-serif;
+  font-size: 14px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+}
+.simple-notification-success {
+  background-color: #28a745;
+}
+.simple-notification-error {
+  background-color: #dc3545;
+}
+.simple-notification-warning {
+  background-color: #ffc107;
+  color: #212529;
+}
+.simple-notification-info {
+  background-color: #17a2b8;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+/* ~~~~~~~~~~~~ Адаптивность ~~~~~~~~~~~~ */
 @media screen and (min-width: 479px) {
   .page-nav .page-nav__day {
     padding: 1rem 2rem;

@@ -19,24 +19,44 @@
       
       <div class="buying-scheme">
         <div class="buying-scheme__wrapper">
-          <!-- ЭКРАН -->
           <div class="buying-scheme__screen">ЭКРАН</div>
           
           <div class="buying-scheme__hall">
             <div class="buying-scheme__hall-wrapper">
-              <!-- Схема зала -->
               @foreach($seatsByRow as $rowNumber => $seats)
               <div class="buying-scheme__row">
                 @foreach($seats as $seat)
-                <span class="buying-scheme__chair 
-                            buying-scheme__chair_{{ $seat->seat_status === 'vip' ? 'vip' : 'standart' }}
-                            {{ in_array($seat->id, $occupiedSeats) ? 'buying-scheme__chair_taken' : '' }}
-                            {{ $seat->seat_status === 'blocked' ? 'buying-scheme__chair_disabled' : '' }}"
-                      data-seat-id="{{ $seat->id }}"
-                      data-row="{{ $seat->row_number }}"
-                      data-seat="{{ $seat->row_seat_number }}"
-                      data-price="{{ $seat->seat_status === 'vip' ? $session->cinemaHall->vip_price : $session->cinemaHall->regular_price }}">
-                </span>
+                  @php
+                    $isOccupied = in_array($seat->id, $occupiedSeats);
+                    $seatClass = 'buying-scheme__chair';
+                    
+                    if ($seat->seat_status === 'vip') {
+                        $seatClass .= ' buying-scheme__chair_vip';
+                    } elseif ($seat->seat_status === 'blocked') {
+                        $seatClass .= ' buying-scheme__chair_disabled';
+                    } else {
+                        $seatClass .= ' buying-scheme__chair_standart';
+                    }
+                    
+                    if ($isOccupied) {
+                        $seatClass .= ' buying-scheme__chair_taken';
+                    }
+                    
+                    $price = $seat->seat_status === 'vip' 
+                        ? $session->cinemaHall->vip_price 
+                        : $session->cinemaHall->regular_price;
+                  @endphp
+                  
+                  <span class="{{ $seatClass }}"
+                        data-seat-id="{{ $seat->id }}"
+                        data-row="{{ $seat->row_number }}"
+                        data-seat="{{ $seat->row_seat_number }}"
+                        data-price="{{ $price }}"
+                        title="Ряд {{ $seat->row_number }}, Место {{ $seat->row_seat_number }} ({{ $seat->seat_status === 'vip' ? 'VIP' : 'Обычное' }}) - {{ $price }} руб."
+                        @if(!$isOccupied && $seat->seat_status !== 'blocked')
+                          style="cursor: pointer;"
+                        @endif>
+                  </span>
                 @endforeach
               </div>
               @endforeach
@@ -55,15 +75,48 @@
           </div>
         </div>
         
-        <form id="bookingForm" action="{{ route('tickets.book') }}" method="POST">
+        <form id="bookingForm" action="{{ route('tickets.book') }}" method="POST" class="booking-form">
           @csrf
           <input type="hidden" name="movie_session_id" value="{{ $session->id }}">
-          <input type="hidden" name="seat_id" id="selectedSeatId">
+          <input type="hidden" id="seatIdsInput" name="seat_ids" value="[]">
+          
+          @if(auth()->check())
+            <input type="hidden" name="user_id" value="{{ auth()->id() }}">
+          @else
+            <div class="guest-info" id="guestInfo">
+              <div class="guest-fields">
+                <h3 class="guest-fields__title">Информация для связи</h3>
+                <p class="guest-fields__hint">Укажите данные для получения подтверждения (необязательно)</p>
+                
+                <div class="guest-fields__group">
+                  <label for="guest_name" class="guest-fields__label">Ваше имя:</label>
+                  <input type="text" id="guest_name" name="guest_name" 
+                         placeholder="Иван Иванов" class="guest-fields__input">
+                </div>
+                
+                <div class="guest-fields__group">
+                  <label for="guest_email" class="guest-fields__label">Email:</label>
+                  <input type="email" id="guest_email" name="guest_email" 
+                         placeholder="example@mail.com" class="guest-fields__input">
+                </div>
+                
+                <div class="guest-fields__group">
+                  <label for="guest_phone" class="guest-fields__label">Телефон:</label>
+                  <input type="tel" id="guest_phone" name="guest_phone" 
+                         placeholder="+7 (XXX) XXX-XX-XX" class="guest-fields__input">
+                </div>
+              </div>
+            </div>
+          @endif
           
           <div class="buying-scheme__selected">
-            <p>Выбрано мест: <span id="selectedCount">0</span></p>
-            <p>Общая стоимость: <span id="totalPrice">0</span> руб</p>
-            <button type="submit" class="acceptin-button" id="bookButton" disabled>Забронировать</button>
+            <div class="selected-summary">
+                <p>Выбрано мест: <span id="selectedCount">0</span></p>
+                <p>Общая стоимость: <span id="totalPrice">0</span> руб</p>
+            </div>
+            <button type="submit" class="acceptin-button" id="bookButton" disabled>
+                Забронировать
+            </button>
           </div>
         </form>
       </div>

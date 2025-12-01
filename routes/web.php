@@ -29,8 +29,9 @@ Route::get('/sessions/{movieSession}/seats', [MovieSessionController::class, 'av
 
 // Билеты и бронирование
 Route::get('/sessions/{movieSession}/booking', [TicketController::class, 'showBookingPage'])->name('sessions.booking');
-Route::post('/tickets/book', [TicketController::class, 'bookTicket'])->name('tickets.book');
 Route::get('/tickets/{ticket}/confirmation', [TicketController::class, 'showConfirmation'])->name('tickets.confirmation');
+Route::get('/tickets/booking/{bookingCode}/confirmation', [TicketController::class, 'showBookingConfirmation'])->name('tickets.booking-confirmation');
+Route::post('/tickets/book', [TicketController::class, 'bookTicket'])->name('tickets.book');
 Route::get('/tickets/{code}', [TicketController::class, 'showTicket'])->name('tickets.show');
 Route::post('/tickets/check-availability', [TicketController::class, 'checkSeatAvailability'])->name('tickets.check-availability');
 

@@ -62,7 +62,7 @@ class SimpleNotification {
 // Основная логика бронирования
 class BookingSystem {
     constructor() {
-        this.selectedSeats = [];
+        this.selectedSeats = new Map(); // Используем Map для хранения выбранных мест
         this.init();
     }
 
@@ -98,17 +98,59 @@ class BookingSystem {
                         opacity: 0;
                     }
                 }
+                
+                .simple-notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    margin-bottom: 10px;
+                    border-radius: 5px;
+                    color: white;
+                    z-index: 10000;
+                    max-width: 300px;
+                    animation: slideInRight 0.3s ease;
+                    font-family: 'Roboto', sans-serif;
+                    font-size: 14px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                    cursor: pointer;
+                }
+                
+                .simple-notification-success {
+                    background-color: #28a745;
+                }
+                
+                .simple-notification-error {
+                    background-color: #dc3545;
+                }
+                
+                .simple-notification-warning {
+                    background-color: #ffc107;
+                    color: #212529;
+                }
+                
+                .simple-notification-info {
+                    background-color: #17a2b8;
+                }
             `;
             document.head.appendChild(style);
         }
     }
 
     setupEventListeners() {
-        // Обработчик выбора мест
-        document.querySelectorAll('.buying-scheme__chair').forEach(seat => {
-            seat.addEventListener('click', () => {
-                this.handleSeatSelection(seat);
-            });
+        // Обработчик выбора мест - делегирование событий для клика на места
+        document.addEventListener('click', (e) => {
+            const seatElement = e.target.closest('.buying-scheme__chair');
+            
+            if (seatElement) {
+                // Проверяем, не занято ли место и не заблокировано
+                if (seatElement.classList.contains('buying-scheme__chair_taken') || 
+                    seatElement.classList.contains('buying-scheme__chair_disabled')) {
+                    return;
+                }
+                
+                this.handleSeatSelection(seatElement);
+            }
         });
     }
 
@@ -116,29 +158,18 @@ class BookingSystem {
         const seatId = seatElement.dataset.seatId;
         const row = seatElement.dataset.row;
         const seatNumber = seatElement.dataset.seat;
-        const price = parseFloat(seatElement.dataset.price);
+        const price = parseFloat(seatElement.dataset.price) || 400;
         
-        // Нельзя выбрать заблокированные или занятые места
-        if (seatElement.classList.contains('buying-scheme__chair_disabled') || 
-            seatElement.classList.contains('buying-scheme__chair_taken')) {
-            return;
-        }
-        
-        if (seatElement.classList.contains('buying-scheme__chair_selected')) {
+        if (this.selectedSeats.has(seatId)) {
             // Отмена выбора
+            this.selectedSeats.delete(seatId);
             seatElement.classList.remove('buying-scheme__chair_selected');
-            this.selectedSeats = this.selectedSeats.filter(s => s.id !== seatId);
-            SimpleNotification.show('Место отменено', 'info', 2000);
+            this.showNotification(`Место отменено: Ряд ${row}, Место ${seatNumber}`, 'info', 2000);
         } else {
-            // Проверяем, не выбрано ли уже максимальное количество мест
-            if (this.selectedSeats.length >= 1) {
-                SimpleNotification.show('Можно выбрать только одно место за раз', 'warning', 3000);
-                return;
-            }
-            
+            // Добавляем в выбранные
+            this.selectedSeats.set(seatId, { id: seatId, row, seat: seatNumber, price });
             seatElement.classList.add('buying-scheme__chair_selected');
-            this.selectedSeats.push({ id: seatId, row, seat: seatNumber, price });
-            SimpleNotification.show(`Выбрано: Ряд ${row}, Место ${seatNumber}`, 'success', 2000);
+            this.showNotification(`Выбрано: Ряд ${row}, Место ${seatNumber}`, 'success', 2000);
         }
         
         this.updateSelectionSummary();
@@ -148,17 +179,33 @@ class BookingSystem {
         const selectedCount = document.getElementById('selectedCount');
         const totalPrice = document.getElementById('totalPrice');
         const bookButton = document.getElementById('bookButton');
-        const seatIdInput = document.getElementById('selectedSeatId');
+        const seatIdsInput = document.getElementById('seatIdsInput');
+        const guestInfo = document.getElementById('guestInfo');
         
-        selectedCount.textContent = this.selectedSeats.length;
-        totalPrice.textContent = this.selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+        const total = Array.from(this.selectedSeats.values()).reduce((sum, seat) => sum + seat.price, 0);
         
-        if (this.selectedSeats.length > 0) {
-            bookButton.disabled = false;
-            seatIdInput.value = this.selectedSeats[0].id;
-        } else {
-            bookButton.disabled = true;
-            seatIdInput.value = '';
+        if (selectedCount) selectedCount.textContent = this.selectedSeats.size;
+        if (totalPrice) totalPrice.textContent = total.toFixed(2);
+        
+        // Показываем поля для гостей если выбран хотя бы один билет и пользователь не авторизован
+        if (guestInfo) {
+            const isLoggedIn = document.querySelector('input[name="user_id"]') !== null;
+            if (!isLoggedIn && this.selectedSeats.size > 0) {
+                guestInfo.classList.add('visible');
+            } else {
+                guestInfo.classList.remove('visible');
+            }
+        }
+        
+        if (bookButton) {
+            bookButton.disabled = this.selectedSeats.size === 0;
+            bookButton.textContent = this.selectedSeats.size > 0 
+                ? `Забронировать ${this.selectedSeats.size} мест` 
+                : 'Забронировать';
+        }
+        
+        if (seatIdsInput) {
+            seatIdsInput.value = JSON.stringify(Array.from(this.selectedSeats.keys()));
         }
     }
 
@@ -174,9 +221,49 @@ class BookingSystem {
     async handleFormSubmission(e) {
         e.preventDefault();
         
+        if (this.selectedSeats.size === 0) {
+            this.showNotification('Выберите хотя бы одно место', 'warning', 3000);
+            return;
+        }
+        
         const form = e.target;
-        const formData = new FormData(form);
         const bookButton = document.getElementById('bookButton');
+        
+        // Создаем FormData
+        const formData = new FormData();
+        formData.append('movie_session_id', document.querySelector('input[name="movie_session_id"]').value);
+        
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+        formData.append('_token', csrfToken);
+        
+        // Добавляем seat_ids как массив
+        const seatIds = Array.from(this.selectedSeats.keys());
+        
+        // Добавляем каждый seat_id как отдельный элемент массива
+        seatIds.forEach(seatId => {
+            formData.append('seat_ids[]', seatId);
+        });
+        
+        // Добавляем user_id если есть
+        const userIdInput = document.querySelector('input[name="user_id"]');
+        if (userIdInput && userIdInput.value) {
+            formData.append('user_id', userIdInput.value);
+        }
+        
+        // Добавляем данные гостей если они есть
+        const guestNameInput = document.getElementById('guest_name');
+        const guestEmailInput = document.getElementById('guest_email');
+        const guestPhoneInput = document.getElementById('guest_phone');
+        
+        if (guestNameInput && guestNameInput.value) {
+            formData.append('guest_name', guestNameInput.value);
+        }
+        if (guestEmailInput && guestEmailInput.value) {
+            formData.append('guest_email', guestEmailInput.value);
+        }
+        if (guestPhoneInput && guestPhoneInput.value) {
+            formData.append('guest_phone', guestPhoneInput.value);
+        }
         
         // Показываем индикатор загрузки
         const originalText = bookButton.textContent;
@@ -189,14 +276,14 @@ class BookingSystem {
                 body: formData,
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRF-TOKEN': document.querySelector('input[name="_token"]').value
+                    'Accept': 'application/json'
                 }
             });
 
             const result = await response.json();
 
             if (result.success) {
-                SimpleNotification.show(result.message, 'success', 3000);
+                this.showNotification(result.message, 'success', 3000);
                 
                 // Редирект на страницу подтверждения
                 setTimeout(() => {
@@ -204,21 +291,67 @@ class BookingSystem {
                 }, 1500);
                 
             } else {
-                SimpleNotification.show(result.message, 'error', 5000);
+                this.showNotification(result.message, 'error', 5000);
                 bookButton.textContent = originalText;
                 bookButton.disabled = false;
+                
+                // Сбрасываем выбор недоступных мест
+                if (result.unavailable_seats) {
+                    this.resetUnavailableSeats(result.unavailable_seats);
+                }
             }
 
         } catch (error) {
             console.error('Booking error:', error);
-            SimpleNotification.show('Произошла ошибка при бронировании', 'error', 5000);
+            this.showNotification('Произошла ошибка при бронировании', 'error', 5000);
             bookButton.textContent = originalText;
             bookButton.disabled = false;
         }
+    }
+    
+    resetUnavailableSeats(unavailableSeats) {
+        unavailableSeats.forEach(seatInfo => {
+            const seatElement = document.querySelector(`[data-seat-id="${seatInfo.seat_id}"]`);
+            if (seatElement) {
+                this.selectedSeats.delete(seatInfo.seat_id);
+                seatElement.classList.remove('buying-scheme__chair_selected');
+            }
+        });
+        this.updateSelectionSummary();
+    }
+
+    showNotification(message, type = 'info', duration = 3000) {
+        const notification = document.createElement('div');
+        notification.className = `simple-notification simple-notification-${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Автоудаление
+        setTimeout(() => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, duration);
+        
+        // Закрытие по клику
+        notification.addEventListener('click', () => {
+            notification.style.animation = 'slideOutRight 0.3s ease';
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        });
+        
+        return notification;
     }
 }
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    new BookingSystem();
+    window.bookingSystem = new BookingSystem();
 });

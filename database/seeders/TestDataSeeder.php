@@ -72,7 +72,7 @@ class TestDataSeeder extends Seeder
         ];
 
         foreach ($movies as $movieData) {
-            Movie::firstOrCreate(
+            Movie::updateOrCreate(
                 ['title' => $movieData['title']],
                 $movieData
             );
