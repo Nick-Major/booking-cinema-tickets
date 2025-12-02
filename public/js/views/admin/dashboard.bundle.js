@@ -100,6 +100,12 @@ function closeAllModals() {
 }
 
 // public/js/modules/halls.js
+var hallConfigCache = {};
+var priceConfigCache = {};
+var hallConfigAbortController = null;
+var priceConfigAbortController = null;
+var isHallLoading = false;
+var isPriceLoading = false;
 var HallsManager = class {
   constructor(notificationSystem) {
     this.notificationSystem = notificationSystem;
@@ -265,7 +271,7 @@ var HallsManager = class {
   }
   checkAndHideSections() {
     const hallsList = document.querySelector(".conf-step__list");
-    const hasHalls = hallsList && hallsList.children.length > 0;
+    const hasHalls = hallsList && hallsList.querySelectorAll("li[data-hall-id]").length > 0;
     const dependentSections = [
       "#hallConfigurationSection",
       "#priceConfigurationSection",
@@ -278,8 +284,9 @@ var HallsManager = class {
         section.style.display = hasHalls ? "block" : "none";
       }
     });
-    if (!hasHalls) {
-      this.showNoHallsMessage();
+    const emptyMessage = document.querySelector(".conf-step__empty");
+    if (emptyMessage) {
+      emptyMessage.style.display = hasHalls ? "none" : "block";
     }
   }
   showNoHallsMessage() {
@@ -295,51 +302,421 @@ var HallsManager = class {
 };
 HallsManager.prototype.updateHallList = async function() {
   try {
+    console.log("\u041E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0435 \u0441\u043F\u0438\u0441\u043A\u0430 \u0437\u0430\u043B\u043E\u0432...");
     const response = await fetch("/admin/halls");
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const halls = await response.json();
-    this.updateHallSelectors(halls);
+    console.log("\u041F\u043E\u043B\u0443\u0447\u0435\u043D\u044B \u0437\u0430\u043B\u044B:", halls);
+    this.updateHallsList(halls);
+    this.updateAllHallSelectors(halls);
+    this.showNotification("\u0421\u043F\u0438\u0441\u043E\u043A \u0437\u0430\u043B\u043E\u0432 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D", "success");
   } catch (error) {
     console.error("Error updating hall list:", error);
+    this.showNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0441\u043F\u0438\u0441\u043A\u0430 \u0437\u0430\u043B\u043E\u0432", "error");
   }
 };
+HallsManager.prototype.updateHallsList = function(halls) {
+  const listContainer = document.querySelector(".conf-step__list");
+  const emptyMessage = document.querySelector(".conf-step__empty");
+  if (!listContainer) {
+    console.warn("\u041A\u043E\u043D\u0442\u0435\u0439\u043D\u0435\u0440 \u0441\u043F\u0438\u0441\u043A\u0430 \u0437\u0430\u043B\u043E\u0432 \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D");
+    return;
+  }
+  if (halls.length === 0) {
+    if (emptyMessage) {
+      emptyMessage.style.display = "block";
+    } else {
+      const emptyLi = document.createElement("li");
+      emptyLi.className = "conf-step__empty";
+      emptyLi.textContent = "\u041D\u0435\u0442 \u0441\u043E\u0437\u0434\u0430\u043D\u043D\u044B\u0445 \u0437\u0430\u043B\u043E\u0432";
+      listContainer.innerHTML = "";
+      listContainer.appendChild(emptyLi);
+    }
+    return;
+  }
+  if (emptyMessage) {
+    emptyMessage.style.display = "none";
+  }
+  let html = "";
+  halls.forEach((hall) => {
+    html += `
+            <li data-hall-id="${hall.id}">
+                ${hall.hall_name}
+                <button class="conf-step__button conf-step__button-trash" 
+                        data-delete-hall="${hall.id}"
+                        data-hall-name="${hall.hall_name}"></button>
+            </li>
+        `;
+  });
+  listContainer.innerHTML = html;
+  this.bindEvents();
+  this.checkAndHideSections();
+};
+HallsManager.prototype.updateAllHallSelectors = function(halls) {
+  this.updateHallConfigurationSelector(halls);
+  this.updatePriceConfigurationSelector(halls);
+  this.updateSalesManagementSelector(halls);
+};
+HallsManager.prototype.updateHallConfigurationSelector = function(halls) {
+  const hallSelector = document.querySelector("#hallSelector");
+  if (!hallSelector) return;
+  let html = "";
+  halls.forEach((hall) => {
+    const wasSelected = hallSelector.querySelector(`input[value="${hall.id}"]`)?.checked || false;
+    html += `
+            <li>
+                <input type="radio" class="conf-step__radio" name="chairs-hall"
+                       value="${hall.id}" ${wasSelected || halls[0].id === hall.id ? "checked" : ""}
+                       onchange="loadHallConfiguration(${hall.id})">
+                <span class="conf-step__selector">${hall.hall_name}</span>
+            </li>
+        `;
+  });
+  hallSelector.innerHTML = html;
+  const selectedRadio = hallSelector.querySelector('input[type="radio"]:checked');
+  if (selectedRadio && typeof loadHallConfiguration === "function") {
+    loadHallConfiguration(selectedRadio.value);
+  }
+};
+HallsManager.prototype.updatePriceConfigurationSelector = function(halls) {
+  const priceSelector = document.querySelector("#priceConfigurationSection .conf-step__selectors-box");
+  if (!priceSelector) return;
+  let html = "";
+  halls.forEach((hall) => {
+    const wasSelected = priceSelector.querySelector(`input[value="${hall.id}"]`)?.checked || false;
+    html += `
+            <li>
+                <input type="radio" class="conf-step__radio" name="prices-hall"
+                       value="${hall.id}" ${wasSelected || halls[0].id === hall.id ? "checked" : ""}
+                       onchange="loadPriceConfiguration(${hall.id})">
+                <span class="conf-step__selector">${hall.hall_name}</span>
+            </li>
+        `;
+  });
+  priceSelector.innerHTML = html;
+  const selectedRadio = priceSelector.querySelector('input[type="radio"]:checked');
+  if (selectedRadio && typeof loadPriceConfiguration === "function") {
+    loadPriceConfiguration(selectedRadio.value);
+  }
+};
+HallsManager.prototype.updateSalesManagementSelector = function(halls) {
+  const salesList = document.querySelector(".conf-step__sales-list");
+  if (!salesList) return;
+  let html = "";
+  halls.forEach((hall) => {
+    html += `
+            <li>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="hall-name">${hall.hall_name}</span>
+                    <span class="sales-status ${hall.is_active ? "active" : "inactive"}">
+                        ${hall.is_active ? "\u041F\u0440\u043E\u0434\u0430\u0436\u0438 \u043E\u0442\u043A\u0440\u044B\u0442\u044B" : "\u041F\u0440\u043E\u0434\u0430\u0436\u0438 \u043F\u0440\u0438\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u043B\u0435\u043D\u044B"}
+                    </span>
+                </div>
+                <button class="conf-step__button conf-step__button-small ${hall.is_active ? "conf-step__button-warning" : "conf-step__button-accent"}"
+                        data-toggle-sales="${hall.id}"
+                        data-is-active="${hall.is_active ? "true" : "false"}">
+                    ${hall.is_active ? "\u041F\u0440\u0438\u043E\u0441\u0442\u0430\u043D\u043E\u0432\u0438\u0442\u044C \u043F\u0440\u043E\u0434\u0430\u0436\u0443 \u0431\u0438\u043B\u0435\u0442\u043E\u0432" : "\u041E\u0442\u043A\u0440\u044B\u0442\u044C \u043F\u0440\u043E\u0434\u0430\u0436\u0443 \u0431\u0438\u043B\u0435\u0442\u043E\u0432"}
+                </button>
+            </li>
+        `;
+  });
+  salesList.innerHTML = html;
+  this.bindSalesEvents();
+};
+HallsManager.prototype.bindSalesEvents = function() {
+  document.querySelectorAll("[data-toggle-sales]").forEach((button) => {
+    button.addEventListener("click", (e) => {
+      const hallId = e.currentTarget.getAttribute("data-toggle-sales");
+      const isActive = e.currentTarget.getAttribute("data-is-active") === "true";
+      fetch("/admin/toggle-sales", {
+        method: "POST",
+        headers: {
+          "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        },
+        body: JSON.stringify({ hall_id: hallId })
+      }).then((response) => response.json()).then((data) => {
+        if (data.success) {
+          this.showNotification(data.message, "success");
+          this.updateHallList();
+        } else {
+          this.showNotification(data.message, "error");
+        }
+      }).catch((error) => {
+        console.error("Error toggling sales:", error);
+        this.showNotification("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0438\u0437\u043C\u0435\u043D\u0435\u043D\u0438\u0438 \u0441\u0442\u0430\u0442\u0443\u0441\u0430 \u043F\u0440\u043E\u0434\u0430\u0436", "error");
+      });
+    });
+  });
+};
 async function loadHallConfiguration(hallId) {
-  try {
-    const response = await fetch(`/admin/halls/${hallId}/configuration`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const html = await response.text();
+  console.time(`loadHallConfiguration-${hallId}`);
+  if (isHallLoading && hallConfigAbortController) {
+    console.log("\u041E\u0442\u043C\u0435\u043D\u044F\u0435\u043C \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0443\u044E \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0437\u0430\u043B\u0430");
+    hallConfigAbortController.abort();
+  }
+  if (hallConfigCache[hallId]) {
+    console.log("\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u043C \u043A\u044D\u0448\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0443\u044E \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044E \u0437\u0430\u043B\u0430 \u0434\u043B\u044F:", hallId);
     const container = document.getElementById("hallConfiguration");
     if (container) {
-      container.innerHTML = html;
-      if (window.notifications) {
-        window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0437\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
-      }
-    }
-  } catch (error) {
-    console.error("Error loading hall configuration:", error);
-    if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0437\u0430\u043B\u0430", "error");
+      container.innerHTML = hallConfigCache[hallId];
+      console.timeEnd(`loadHallConfiguration-${hallId}`);
+      return;
     }
   }
+  hallConfigAbortController = new AbortController();
+  isHallLoading = true;
+  try {
+    const container = document.getElementById("hallConfiguration");
+    if (container) {
+      container.innerHTML = '<div class="loading-indicator">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438...</div>';
+    }
+    const response = await fetch(`/admin/halls/${hallId}/configuration`, {
+      signal: hallConfigAbortController.signal,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Cache-Control": "no-cache"
+        // Для свежих данных
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    hallConfigCache[hallId] = html;
+    console.log("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0437\u0430\u043B\u0430 \u0437\u0430\u043A\u044D\u0448\u0438\u0440\u043E\u0432\u0430\u043D\u0430:", hallId);
+    if (container) {
+      requestAnimationFrame(() => {
+        container.innerHTML = html;
+        setTimeout(() => initializeHallConfigurationScripts(hallId), 0);
+      });
+    }
+    if (window.notifications) {
+      window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0437\u0430\u043B\u0430 \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      console.log("\u0417\u0430\u043F\u0440\u043E\u0441 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0437\u0430\u043B\u0430 \u043E\u0442\u043C\u0435\u043D\u0435\u043D");
+    } else {
+      console.error("Error loading hall configuration:", error);
+      if (window.notifications) {
+        window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0437\u0430\u043B\u0430", "error");
+      }
+    }
+  } finally {
+    isHallLoading = false;
+    console.timeEnd(`loadHallConfiguration-${hallId}`);
+  }
+}
+function initializeHallConfigurationScripts(hallId) {
+  const container = document.getElementById("hallConfiguration");
+  if (!container) return;
+  if (container.dataset.initialized === "true") {
+    return;
+  }
+  container.dataset.initialized = "true";
+  const generateBtn = container.querySelector("button.conf-step__button-regular");
+  if (generateBtn && generateBtn.textContent.includes("\u0421\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C") && window.generateHallLayout) {
+    generateBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      const rowsInput = container.querySelector(".rows-input");
+      const seatsInput = container.querySelector(".seats-input");
+      if (rowsInput && seatsInput) {
+        const rows = Math.max(1, Math.min(20, parseInt(rowsInput.value) || 0));
+        const seats = Math.max(1, Math.min(20, parseInt(seatsInput.value) || 0));
+        if (rows > 0 && seats > 0) {
+          rowsInput.value = rows;
+          seatsInput.value = seats;
+          window.generateHallLayout(hallId, rows, seats);
+        }
+      }
+    });
+  }
+  const resetBtns = container.querySelectorAll("button.conf-step__button-regular");
+  resetBtns.forEach((btn) => {
+    if (btn.textContent.includes("\u0421\u0431\u0440\u043E\u0441\u0438\u0442\u044C") && window.openResetHallConfigurationModal) {
+      btn.addEventListener("click", function(e) {
+        e.preventDefault();
+        let hallName = "";
+        const hallRadio = document.querySelector(`#hallSelector input[value="${hallId}"]`);
+        if (hallRadio) {
+          const selector = hallRadio.nextElementSibling;
+          if (selector && selector.classList.contains("conf-step__selector")) {
+            hallName = selector.textContent.trim();
+          }
+        }
+        window.openResetHallConfigurationModal(hallId, hallName);
+      });
+    }
+  });
+  const saveBtn = container.querySelector("button.conf-step__button-accent");
+  if (saveBtn && saveBtn.textContent.includes("\u0421\u043E\u0445\u0440\u0430\u043D\u0438\u0442\u044C") && window.saveHallConfiguration) {
+    saveBtn.addEventListener("click", function(e) {
+      e.preventDefault();
+      const seats = [];
+      const hallLayout = container.querySelector("#hallLayout-" + hallId);
+      if (hallLayout) {
+        const seatElements2 = hallLayout.querySelectorAll(".conf-step__chair");
+        seatElements2.forEach((seatElement) => {
+          const row = parseInt(seatElement.getAttribute("data-row")) || 0;
+          const seat = parseInt(seatElement.getAttribute("data-seat")) || 0;
+          const type = seatElement.getAttribute("data-type") || "regular";
+          if (row > 0 && seat > 0) {
+            seats.push({
+              row,
+              seat,
+              type
+            });
+          }
+        });
+      }
+      if (seats.length > 0) {
+        window.saveHallConfiguration(hallId, seats);
+      } else {
+        if (window.notifications) {
+          window.notifications.show("\u041D\u0435\u0442 \u0434\u0430\u043D\u043D\u044B\u0445 \u0434\u043B\u044F \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u044F. \u0421\u0433\u0435\u043D\u0435\u0440\u0438\u0440\u0443\u0439\u0442\u0435 \u0441\u0445\u0435\u043C\u0443 \u0437\u0430\u043B\u0430.", "error");
+        }
+      }
+    });
+  }
+  const seatElements = container.querySelectorAll(".conf-step__chair");
+  seatElements.forEach((seatElement) => {
+    if (!seatElement.hasAttribute("data-click-handler")) {
+      seatElement.setAttribute("data-click-handler", "true");
+      seatElement.addEventListener("click", function() {
+        if (window.changeSeatType) {
+          window.changeSeatType(this);
+        }
+      });
+    }
+  });
 }
 async function loadPriceConfiguration(hallId) {
-  try {
-    const response = await fetch(`/admin/halls/${hallId}/prices`);
-    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-    const html = await response.text();
+  console.time(`loadPriceConfiguration-${hallId}`);
+  if (isPriceLoading && priceConfigAbortController) {
+    console.log("\u041E\u0442\u043C\u0435\u043D\u044F\u0435\u043C \u043F\u0440\u0435\u0434\u044B\u0434\u0443\u0449\u0443\u044E \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0443 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D");
+    priceConfigAbortController.abort();
+  }
+  if (priceConfigCache[hallId]) {
+    console.log("\u0418\u0441\u043F\u043E\u043B\u044C\u0437\u0443\u0435\u043C \u043A\u044D\u0448\u0438\u0440\u043E\u0432\u0430\u043D\u043D\u0443\u044E \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044E \u0446\u0435\u043D \u0434\u043B\u044F:", hallId);
     const container = document.getElementById("priceConfiguration");
     if (container) {
-      container.innerHTML = html;
+      container.innerHTML = priceConfigCache[hallId];
+      console.timeEnd(`loadPriceConfiguration-${hallId}`);
+      return;
+    }
+  }
+  priceConfigAbortController = new AbortController();
+  isPriceLoading = true;
+  try {
+    const container = document.getElementById("priceConfiguration");
+    if (container) {
+      container.innerHTML = '<div class="loading-indicator">\u0417\u0430\u0433\u0440\u0443\u0437\u043A\u0430 \u0446\u0435\u043D...</div>';
+    }
+    const response = await fetch(`/admin/halls/${hallId}/prices`, {
+      signal: priceConfigAbortController.signal,
+      headers: {
+        "X-Requested-With": "XMLHttpRequest",
+        "Cache-Control": "no-cache"
+      }
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    priceConfigCache[hallId] = html;
+    console.log("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0446\u0435\u043D \u0437\u0430\u043A\u044D\u0448\u0438\u0440\u043E\u0432\u0430\u043D\u0430:", hallId);
+    if (container) {
+      requestAnimationFrame(() => {
+        container.innerHTML = html;
+        setTimeout(() => initializePriceConfigurationScripts(hallId), 0);
+      });
+    }
+    if (window.notifications) {
+      window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0446\u0435\u043D \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
+    }
+  } catch (error) {
+    if (error.name === "AbortError") {
+      console.log("\u0417\u0430\u043F\u0440\u043E\u0441 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D \u043E\u0442\u043C\u0435\u043D\u0435\u043D");
+    } else {
+      console.error("Error loading price configuration:", error);
       if (window.notifications) {
-        window.notifications.show("\u041A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u044F \u0446\u0435\u043D \u0437\u0430\u0433\u0440\u0443\u0436\u0435\u043D\u0430", "success");
+        window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D", "error");
+      }
+    }
+  } finally {
+    isPriceLoading = false;
+    console.timeEnd(`loadPriceConfiguration-${hallId}`);
+  }
+}
+function initializePriceConfigurationScripts(hallId) {
+  const container = document.getElementById("priceConfiguration");
+  if (!container) return;
+  const priceForm = container.querySelector("form");
+  if (priceForm) {
+    priceForm.addEventListener("submit", function(e) {
+      e.preventDefault();
+      savePriceConfiguration(hallId);
+    });
+  }
+}
+function clearPriceConfigCache(hallId) {
+  if (priceConfigCache[hallId]) {
+    delete priceConfigCache[hallId];
+    console.log("\u041A\u044D\u0448 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D \u043E\u0447\u0438\u0449\u0435\u043D:", hallId);
+  }
+}
+async function savePriceConfiguration(hallId) {
+  try {
+    const form = document.querySelector("#priceConfiguration form");
+    if (!form) return;
+    const formData = new FormData(form);
+    const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+      method: "POST",
+      body: formData,
+      headers: {
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "Accept": "application/json"
+      }
+    });
+    const result = await response.json();
+    if (result.success) {
+      if (window.notifications) {
+        window.notifications.show(result.message || "\u0426\u0435\u043D\u044B \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u044B", "success");
+      }
+      clearPriceConfigCache(hallId);
+    } else {
+      if (window.notifications) {
+        window.notifications.show(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u043E\u0431\u043D\u043E\u0432\u043B\u0435\u043D\u0438\u0438 \u0446\u0435\u043D", "error");
       }
     }
   } catch (error) {
-    console.error("Error loading price configuration:", error);
+    console.error("Error saving price configuration:", error);
     if (window.notifications) {
-      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0437\u0430\u0433\u0440\u0443\u0437\u043A\u0435 \u043A\u043E\u043D\u0444\u0438\u0433\u0443\u0440\u0430\u0446\u0438\u0438 \u0446\u0435\u043D", "error");
+      window.notifications.show("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0445\u0440\u0430\u043D\u0435\u043D\u0438\u0438 \u0446\u0435\u043D", "error");
     }
   }
 }
+function preloadConfigurations() {
+  document.addEventListener("DOMContentLoaded", () => {
+    const selectedHallConfig = document.querySelector('input[name="chairs-hall"]:checked');
+    const selectedPriceConfig = document.querySelector('input[name="prices-hall"]:checked');
+    if (selectedHallConfig) {
+      setTimeout(() => {
+        loadHallConfiguration(selectedHallConfig.value);
+      }, 300);
+    }
+    if (selectedPriceConfig) {
+      setTimeout(() => {
+        loadPriceConfiguration(selectedPriceConfig.value);
+      }, 500);
+    }
+  });
+}
+preloadConfigurations();
 var halls_default = HallsManager;
 function initHallFormHandlers() {
   console.log("\u0418\u043D\u0438\u0446\u0438\u0430\u043B\u0438\u0437\u0430\u0446\u0438\u044F \u043E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A\u043E\u0432 \u0444\u043E\u0440\u043C \u0437\u0430\u043B\u043E\u0432...");
@@ -372,7 +749,30 @@ function initHallFormHandlers() {
             window.notifications.show(result.message, "success");
           }
           this.reset();
-          await this.updateHallList();
+          hallConfigCache = {};
+          priceConfigCache = {};
+          if (window.hallsManager && typeof window.hallsManager.updateHallList === "function") {
+            await window.hallsManager.updateHallList();
+          } else {
+            console.warn("HallsManager \u043D\u0435 \u043D\u0430\u0439\u0434\u0435\u043D, \u043F\u0440\u043E\u0431\u0443\u0435\u043C \u043E\u0431\u043D\u043E\u0432\u0438\u0442\u044C \u0432\u0440\u0443\u0447\u043D\u0443\u044E");
+            const hallsResponse = await fetch("/admin/halls");
+            const halls = await hallsResponse.json();
+            const listContainer = document.querySelector(".conf-step__list");
+            if (listContainer) {
+              let html = "";
+              halls.forEach((hall) => {
+                html += `
+                                    <li data-hall-id="${hall.id}">
+                                        ${hall.hall_name}
+                                        <button class="conf-step__button conf-step__button-trash" 
+                                                data-delete-hall="${hall.id}"
+                                                data-hall-name="${hall.hall_name}"></button>
+                                    </li>
+                                `;
+              });
+              listContainer.innerHTML = html;
+            }
+          }
         } else {
           console.log("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0441\u043E\u0437\u0434\u0430\u043D\u0438\u0438 \u0437\u0430\u043B\u0430:", result.message);
           if (window.notifications) {
@@ -867,10 +1267,25 @@ function openDeleteMovieModal(movieId, movieName) {
   document.getElementById("movieNameToDelete").textContent = `"${movieName}"`;
   openModal("deleteMovieModal");
 }
+var isAddingMovie = false;
 async function addMovie(form) {
+  console.log("=== \u041D\u0410\u0427\u0410\u041B\u041E addMovie ===");
+  console.log("\u0424\u043E\u0440\u043C\u0430:", form.id);
+  console.log("URL \u0437\u0430\u043F\u0440\u043E\u0441\u0430:", "/admin/movies");
+  console.log("\u0417\u0430\u0449\u0438\u0442\u0430 \u043E\u0442 \u043F\u043E\u0432\u0442\u043E\u0440\u043D\u043E\u0433\u043E \u0432\u044B\u0437\u043E\u0432\u0430 \u0440\u0430\u0431\u043E\u0442\u0430\u0435\u0442?", isAddingMovie);
+  if (isAddingMovie) {
+    console.log("\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0444\u0438\u043B\u044C\u043C\u0430 \u0443\u0436\u0435 \u0432\u044B\u043F\u043E\u043B\u043D\u044F\u0435\u0442\u0441\u044F");
+    return;
+  }
+  isAddingMovie = true;
+  const submitBtn = form.querySelector('button[type="submit"]');
+  const originalText = submitBtn.textContent;
   try {
+    console.log("\u041D\u0430\u0447\u0438\u043D\u0430\u0435\u043C \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435 \u0444\u0438\u043B\u044C\u043C\u0430");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "\u0414\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0435...";
     const formData = new FormData(form);
-    const response = await fetch(form.action, {
+    const response = await fetch("/admin/movies", {
       method: "POST",
       headers: {
         "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
@@ -882,6 +1297,7 @@ async function addMovie(form) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     const result = await response.json();
+    console.log("\u041E\u0442\u0432\u0435\u0442 \u0441\u0435\u0440\u0432\u0435\u0440\u0430:", result);
     if (result.success) {
       if (window.notifications) {
         window.notifications.show("\u0424\u0438\u043B\u044C\u043C \u0443\u0441\u043F\u0435\u0448\u043D\u043E \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D!", "success");
@@ -892,9 +1308,7 @@ async function addMovie(form) {
       if (posterPreview) {
         posterPreview.innerHTML = '<span style="color: #63536C;">\u041F\u043E\u0441\u0442\u0435\u0440</span>';
       }
-      setTimeout(() => {
-        location.reload();
-      }, 1e3);
+      addMovieToList(result.movie);
     } else {
       throw new Error(result.message || "\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430");
     }
@@ -905,7 +1319,47 @@ async function addMovie(form) {
     } else {
       alert("\u041E\u0448\u0438\u0431\u043A\u0430 \u043F\u0440\u0438 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u0438 \u0444\u0438\u043B\u044C\u043C\u0430: " + error.message);
     }
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = originalText;
+    isAddingMovie = false;
   }
+}
+function addMovieToList(movie) {
+  const moviesList = document.getElementById("moviesList");
+  if (!moviesList) return;
+  if (document.querySelector(`[data-movie-id="${movie.id}"]`)) {
+    return;
+  }
+  const emptyMessage = moviesList.querySelector(".conf-step__empty-movies");
+  if (emptyMessage) {
+    emptyMessage.remove();
+  }
+  const movieElement = document.createElement("div");
+  movieElement.className = `conf-step__movie ${!movie.is_active ? "conf-step__movie-inactive" : ""}`;
+  movieElement.dataset.movieId = movie.id;
+  movieElement.dataset.movieDuration = movie.movie_duration;
+  movieElement.style.position = "relative";
+  movieElement.innerHTML = `
+        <img class="conf-step__movie-poster" alt="${movie.title}"
+            src="${movie.poster_url || ""}">
+        <h3 class="conf-step__movie-title">${movie.title}</h3>
+        <p class="conf-step__movie-duration">${movie.movie_duration} \u043C\u0438\u043D\u0443\u0442</p>
+
+        ${!movie.is_active ? '<div class="conf-step__movie-status">\u041D\u0435\u0430\u043A\u0442\u0438\u0432\u0435\u043D</div>' : ""}
+
+        <div class="conf-step__movie-controls">
+            <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                    onclick="openEditMovieModal(${movie.id})"
+                    title="\u0420\u0435\u0434\u0430\u043A\u0442\u0438\u0440\u043E\u0432\u0430\u0442\u044C \u0444\u0438\u043B\u044C\u043C">
+            </button>
+            <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                    data-delete-movie="${movie.id}"
+                    data-movie-name="${movie.title}"
+                    title="\u0423\u0434\u0430\u043B\u0438\u0442\u044C \u0444\u0438\u043B\u044C\u043C"></button>
+        </div>
+    `;
+  moviesList.prepend(movieElement);
 }
 async function confirmMovieDeletion(event) {
   if (event) event.preventDefault();
@@ -971,10 +1425,23 @@ function previewMoviePoster(input) {
 function initMovies() {
   const addMovieForm = document.getElementById("addMovieForm");
   if (addMovieForm) {
-    addMovieForm.addEventListener("submit", async function(e) {
+    console.log("\u041D\u0430\u0439\u0434\u0435\u043D\u0430 \u0444\u043E\u0440\u043C\u0430 \u0434\u043E\u0431\u0430\u0432\u043B\u0435\u043D\u0438\u044F \u0444\u0438\u043B\u044C\u043C\u0430");
+    const newForm = addMovieForm.cloneNode(true);
+    addMovieForm.parentNode.replaceChild(newForm, addMovieForm);
+    document.getElementById("addMovieForm").addEventListener("submit", async function(e) {
+      console.log("\u041E\u0431\u0440\u0430\u0431\u043E\u0442\u0447\u0438\u043A \u0444\u043E\u0440\u043C\u044B \u0441\u0440\u0430\u0431\u043E\u0442\u0430\u043B");
       e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      if (this.dataset.processing === "true") {
+        console.log("\u0424\u043E\u0440\u043C\u0430 \u0443\u0436\u0435 \u043E\u0431\u0440\u0430\u0431\u0430\u0442\u044B\u0432\u0430\u0435\u0442\u0441\u044F");
+        return;
+      }
+      this.dataset.processing = "true";
       await addMovie(this);
-    });
+      this.dataset.processing = "false";
+      return false;
+    }, { capture: true, once: false });
   }
   const posterInput = document.querySelector('#addMovieModal input[name="movie_poster"]');
   if (posterInput) {
@@ -1014,10 +1481,12 @@ async function updateMovie(form) {
   try {
     const formData = new FormData(form);
     const movieId = formData.get("movie_id");
+    formData.append("_method", "PUT");
     const response = await fetch(`/admin/movies/${movieId}`, {
       method: "POST",
       headers: {
-        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+        "X-Requested-With": "XMLHttpRequest"
       },
       body: formData
     });
@@ -1885,9 +2354,9 @@ document.addEventListener("DOMContentLoaded", function() {
     initSessionFormHandlers();
     console.log("Session form handlers initialized");
     initAccordeon();
-    console.log("\u2705 Accordeon initialized");
+    console.log("Accordeon initialized");
   } catch (error) {
-    console.error("\u{1F4A5} Error:", error);
+    console.error("Error:", error);
   }
   window.openEditMovieModal = openEditMovieModal;
   window.loadHallConfiguration = loadHallConfiguration2;

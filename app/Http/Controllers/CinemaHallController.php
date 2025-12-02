@@ -357,4 +357,20 @@ class CinemaHallController extends Controller
             ], 500);
         }
     }
+
+    public function indexJson(Request $request)
+    {
+        try {
+            $halls = CinemaHall::withCount('seats')->orderBy('created_at', 'desc')->get();
+            
+            return response()->json($halls);
+            
+        } catch (\Exception $e) {
+            \Log::error('Error fetching halls: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Ошибка при получении списка залов'
+            ], 500);
+        }
+    }
 }

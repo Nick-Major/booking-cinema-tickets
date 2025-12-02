@@ -11,6 +11,8 @@ class Movie extends Model
 {
     use HasFactory;
 
+    protected $appends = ['poster_url'];
+
     protected $fillable = [
         'title',
         'movie_description',
@@ -28,31 +30,13 @@ class Movie extends Model
     // Аксессор для получения URL постера
     public function getPosterUrlAttribute()
     {
-        // Если есть путь к постеру и файл существует в storage
-        if ($this->movie_poster && Storage::disk('public')->exists($this->movie_poster)) {
+        // Если есть путь к постеру
+        if ($this->movie_poster) {
             return Storage::disk('public')->url($this->movie_poster);
         }
         
-        // Если это внешний URL
-        if ($this->movie_poster && filter_var($this->movie_poster, FILTER_VALIDATE_URL)) {
-            return $this->movie_poster;
-        }
-        
-        // Используем SVG-заглушку с текстом фильма
-        $title = urlencode($this->title ?? 'No Poster');
-        return "data:image/svg+xml;base64," . base64_encode('
-            <svg xmlns="http://www.w3.org/2000/svg" width="300" height="450" viewBox="0 0 300 450">
-                <rect width="100%" height="100%" fill="#f0f0f0"/>
-                <text x="50%" y="50%" font-family="Arial, sans-serif" font-size="16" 
-                      text-anchor="middle" dy=".3em" fill="#666">
-                    ' . htmlspecialchars($this->title ?? 'No Poster') . '
-                </text>
-                <text x="50%" y="60%" font-family="Arial, sans-serif" font-size="14" 
-                      text-anchor="middle" fill="#999">
-                    No poster available
-                </text>
-            </svg>
-        ');
+        // Заглушка
+        return asset('images/client/poster-placeholder.png');
     }
 
     // Мутатор для сохранения постера

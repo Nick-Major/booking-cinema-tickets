@@ -391,6 +391,8 @@ select {
   position: relative;
   display: inline-block;
   font-size: 1.2rem;
+  user-select: none;
+  cursor: pointer;
 }
 .conf-step__selectors-box .conf-step__radio {
   position: absolute;
@@ -402,6 +404,7 @@ select {
   width: 80px;
   height: 42px;
   opacity: 0;
+  cursor: pointer;
 }
 .conf-step__selectors-box .conf-step__selector {
   position: relative;
@@ -418,6 +421,8 @@ select {
   transition-duration: 0.5s;
   transition-timing-function: ease;
   z-index: 5;
+  user-select: none;
+  cursor: pointer;
 }
 .conf-step__selectors-box .conf-step__radio:checked + .conf-step__selector {
   background-color: #ffffff;
@@ -1419,6 +1424,30 @@ input[type=text]:disabled {
 }
 .conf-step__button-danger:hover {
   background-color: #c82333 !important;
+}
+
+.loading-indicator {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 5px;
+  margin: 10px 0;
+}
+.loading-indicator::before {
+  content: "Загрузка...";
+  display: inline-block;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
 }
 
 /*# sourceMappingURL=styles.css.map */

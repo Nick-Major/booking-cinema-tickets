@@ -14,9 +14,7 @@ class SessionValidationService
     const ADVERTISEMENT_DURATION = 10; // минут рекламы
     const CLEANING_DURATION = 15;      // минут уборки
     
-    /**
-     * Проверить возможность создания сеанса
-     */
+    // Проверить возможность создания сеанса
     public function validateSession($cinemaHallId, $movieId, Carbon $sessionStart, $ignoreSessionId = null): array
     {
         $cinemaHall = CinemaHall::find($cinemaHallId);
@@ -72,25 +70,19 @@ class SessionValidationService
         ];
     }
     
-    /**
-     * Рассчитать время окончания сеанса (фильм + реклама)
-     */
+    // Рассчитать время окончания сеанса (фильм + реклама)
     public function calculateSessionEnd(Carbon $start, int $movieDuration): Carbon
     {
         return $start->copy()->addMinutes($movieDuration + self::ADVERTISEMENT_DURATION);
     }
     
-    /**
-     * Рассчитать время окончания с уборкой (для проверки конфликтов)
-     */
+    // Рассчитать время окончания с уборкой (для проверки конфликтов)
     public function calculateSessionEndWithCleaning(Carbon $start, int $movieDuration): Carbon
     {
         return $start->copy()->addMinutes($movieDuration + self::ADVERTISEMENT_DURATION + self::CLEANING_DURATION);
     }
     
-    /**
-     * Проверить, помещается ли сеанс в расписание (без уборки)
-     */
+    // Проверить, помещается ли сеанс в расписание (без уборки)
     private function isWithinSchedule(HallSchedule $schedule, Carbon $sessionStart, Carbon $sessionEnd): bool
     {
         $scheduleStart = $schedule->getScheduleStart();
@@ -99,9 +91,7 @@ class SessionValidationService
         return $sessionStart >= $scheduleStart && $sessionEnd <= $scheduleEnd;
     }
     
-    /**
-     * Проверить конфликт по времени с другими сеансами (с учетом уборки)
-     */
+    // Проверить конфликт по времени с другими сеансами (с учетом уборки)
     private function hasTimeConflict($cinemaHallId, Carbon $sessionStart, Carbon $sessionEndWithCleaning, $ignoreSessionId = null): bool
     {
         $query = MovieSession::where('cinema_hall_id', $cinemaHallId)
@@ -120,9 +110,7 @@ class SessionValidationService
         return $query->exists();
     }
     
-    /**
-     * Найти ближайшее доступное время для сеанса с округлением до 15 минут
-     */
+    // Найти ближайшее доступное время для сеанса с округлением до 15 минут
     public function findAvailableTime($cinemaHallId, $movieId, Carbon $preferredStart): array
     {
         $cinemaHall = CinemaHall::find($cinemaHallId);
@@ -173,7 +161,7 @@ class SessionValidationService
                 }
             }
             
-            // Перейти к следующему временному слоту (каждые 15 минут)
+            // Перейти к следующему временному промежутку (каждые 15 минут)
             $currentTime->addMinutes(15);
             $attempt++;
         }
@@ -181,9 +169,7 @@ class SessionValidationService
         return ['success' => false, 'message' => 'Не удалось найти свободное время для сеанса в течение 12 часов'];
     }
     
-    /**
-     * Округлить время до ближайших 15 минут
-     */
+    // Округлить время до ближайших 15 минут
     private function roundToNearest15(Carbon $time): Carbon
     {
         $minutes = $time->minute;

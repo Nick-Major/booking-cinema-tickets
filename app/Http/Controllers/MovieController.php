@@ -21,6 +21,9 @@ class MovieController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info('=== MOVIE STORE REQUEST ===');
+        \Log::info('Has file:', ['has' => $request->hasFile('movie_poster')]);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255|unique:movies',
             'movie_description' => 'required|string',
@@ -36,14 +39,67 @@ class MovieController extends Controller
         $movie->movie_duration = $validated['movie_duration'];
         $movie->country = $validated['country'];
         $movie->is_active = $request->boolean('is_active', true);
-        
-        // Обработка загрузки постера
+
         if ($request->hasFile('movie_poster')) {
-            $path = $request->file('movie_poster')->store('posters', 'public');
-            $movie->movie_poster = $path;
+            \Log::info('File detected, storing with custom method...');
+            
+            $file = $request->file('movie_poster');
+            
+            // Создаем уникальное имя файла
+            $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+            
+            // Путь для сохранения
+            $directory = 'posters';
+            $path = $directory . '/' . $filename;
+            
+            \Log::info('Attempting to save file:', [
+                'filename' => $filename,
+                'path' => $path,
+                'directory' => $directory
+            ]);
+            
+            // Способ 1: Используем Storage facade с явным указанием пути
+            try {
+                // Создаем директорию, если не существует
+                if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($directory)) {
+                    \Illuminate\Support\Facades\Storage::disk('public')->makeDirectory($directory);
+                }
+                
+                // Сохраняем файл
+                $stored = \Illuminate\Support\Facades\Storage::disk('public')->putFileAs(
+                    $directory, 
+                    $file, 
+                    $filename
+                );
+                
+                \Log::info('Storage::putFileAs result:', ['result' => $stored]);
+                
+                if ($stored) {
+                    $movie->movie_poster = $stored;
+                    \Log::info('File saved successfully:', ['path' => $stored]);
+                } else {
+                    \Log::error('Storage::putFileAs returned false');
+                    
+                    // Способ 2: Попробуем через move
+                    $fullPath = storage_path('app/public/' . $path);
+                    if ($file->move(storage_path('app/public/' . $directory), $filename)) {
+                        $movie->movie_poster = $path;
+                        \Log::info('File moved successfully:', ['path' => $path]);
+                    } else {
+                        \Log::error('File move also failed');
+                    }
+                }
+            } catch (\Exception $e) {
+                \Log::error('Error saving file:', ['error' => $e->getMessage()]);
+            }
         }
-        
+
         $movie->save();
+
+        \Log::info('Movie created:', [
+            'id' => $movie->id,
+            'poster' => $movie->movie_poster
+        ]);
 
         return response()->json([
             'success' => true,

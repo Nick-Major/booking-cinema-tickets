@@ -47,6 +47,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     Route::resource('halls', CinemaHallController::class);
 
     // Дополнительные маршруты для залов
+    Route::get('/halls', [CinemaHallController::class, 'indexJson'])->name('halls.index.json');
     Route::get('/halls/{hall}/configuration', [CinemaHallController::class, 'configuration'])->name('halls.configuration');
     Route::get('/halls/{hall}/prices', [CinemaHallController::class, 'prices'])->name('halls.prices');
     Route::post('/halls/{hall}/generate-layout', [CinemaHallController::class, 'generateLayout'])->name('halls.generate-layout');

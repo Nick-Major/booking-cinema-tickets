@@ -439,6 +439,8 @@ select {
     position: relative;
     display: inline-block;
     font-size: 1.2rem;
+    user-select: none;
+    cursor: pointer;
   }
 
   .conf-step__radio {
@@ -451,6 +453,7 @@ select {
     width: 80px;
     height: 42px;
     opacity: 0;
+    cursor: pointer;
   }
 
   .conf-step__selector {
@@ -468,6 +471,8 @@ select {
     transition-duration: 0.5s;
     transition-timing-function: ease;
     z-index: 5;
+    user-select: none;
+    cursor: pointer;
   }
 
   .conf-step__radio:checked + .conf-step__selector {
@@ -1590,4 +1595,25 @@ input[type="text"]:disabled {
   &:hover {
     background-color: #c82333 !important;
   }
+}
+
+.loading-indicator {
+  padding: 20px;
+  text-align: center;
+  color: #666;
+  font-style: italic;
+  background: #f8f9fa;
+  border-radius: 5px;
+  margin: 10px 0;
+  
+  &::before {
+    content: "Загрузка...";
+    display: inline-block;
+    animation: pulse 1.5s infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }

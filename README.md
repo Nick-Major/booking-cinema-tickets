@@ -8,7 +8,7 @@
 - Laravel 12.35.1
 - MySQL 8.0+
 - Docker + Laravel Sail
-- Node.js (для сборки фронтенда)
+- Node.js + Yarn (для сборки фронтенда)
 
 ## Установка и запуск
 
@@ -33,9 +33,25 @@ cp .env.example .env
 ./vendor/bin/sail composer install
 ./vendor/bin/sail artisan key:generate
 ./vendor/bin/sail artisan migrate --seed
-./vendor/bin/sail npm install
-./vendor/bin/sail npm run build
+./vendor/bin/sail yarn install
+./vendor/bin/sail yarn build
 ```
+
+5. **Настройка прав доступа для загрузки файлов**
+
+## Для корректной работы загрузки постеров фильмов необходимо настроить права доступа в Docker-контейнере:
+
+```bash
+# Настройка прав в контейнере
+./vendor/bin/sail exec laravel.test chmod -R 775 storage/app/public
+./vendor/bin/sail exec laravel.test chown -R www-data:www-data storage/app/public
+```
+
+## **Примечание:** Если возникают проблемы с загрузкой файлов, убедитесь что:
+
+- Директория storage/app/public/posters существует и доступна для записи
+
+- Симлинк public/storage ведет на storage/app/public (создается автоматически при запуске sail)
 
 ## Миграции базы данных
 
@@ -93,3 +109,23 @@ cp .env.example .env
 - Транзакции при бронировании
 
 - Разделение на клиентскую и административную части
+
+## Работа с файлами
+
+- Постеры фильмов сохраняются в storage/app/public/posters/
+
+- Доступ к файлам через симлинк public/storage
+
+- Автоматическая генерация заглушки при отсутствии постера
+
+- Поддержка загрузки изображений форматов: JPEG, PNG, GIF, SVG
+
+## Технические примечания
+
+- Для корректной работы загрузки файлов в Docker-окружении требуются дополнительные права доступа (см. пункт 5 "Настройка прав")
+
+- При разработке в Windows с использованием WSL убедитесь, что файловая система контейнера имеет правильные права
+
+- Все загруженные файлы доступны по URL: http://localhost/storage/posters/имя_файла.jpg
+
+- Проект использует Yarn как пакетный менеджер для фронтенда

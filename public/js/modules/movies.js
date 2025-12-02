@@ -13,12 +13,32 @@ function openDeleteMovieModal(movieId, movieName) {
     openModal('deleteMovieModal');
 }
 
+let isAddingMovie = false;
+
 // Функция добавления фильма
 async function addMovie(form) {
+    console.log('=== НАЧАЛО addMovie ===');
+    console.log('Форма:', form.id);
+    console.log('URL запроса:', "/admin/movies");
+    console.log('Защита от повторного вызова работает?', isAddingMovie);
+
+    if (isAddingMovie) {
+        console.log('Добавление фильма уже выполняется');
+        return;
+    }
+
+    isAddingMovie = true;
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.textContent;
+
     try {
+        console.log('Начинаем добавление фильма');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Добавление...';
+
         const formData = new FormData(form);
 
-        const response = await fetch(form.action, {
+        const response = await fetch("/admin/movies", {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -32,6 +52,7 @@ async function addMovie(form) {
         }
 
         const result = await response.json();
+        console.log('Ответ сервера:', result);
 
         if (result.success) {
             // Показываем уведомление
@@ -44,18 +65,16 @@ async function addMovie(form) {
 
             // Очищаем форму
             form.reset();
-            
+
             // Очищаем превью постера
             const posterPreview = document.getElementById('posterPreview');
             if (posterPreview) {
                 posterPreview.innerHTML = '<span style="color: #63536C;">Постер</span>';
             }
 
-            // Перезагружаем список фильмов
-            setTimeout(() => {
-                location.reload();
-            }, 1000);
-            
+            // Добавляем фильм в список без дополнительного запроса
+            addMovieToList(result.movie);
+
         } else {
             throw new Error(result.message || 'Ошибка при добавлении фильма');
         }
@@ -66,7 +85,100 @@ async function addMovie(form) {
         } else {
             alert('Ошибка при добавлении фильма: ' + error.message);
         }
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
+        isAddingMovie = false;
     }
+}
+
+// Функция для добавления фильма в список без перезагрузки страницы
+function addMovieToList(movie) {
+    const moviesList = document.getElementById('moviesList');
+    if (!moviesList) return;
+
+    // Проверяем, нет ли уже такого фильма
+    if (document.querySelector(`[data-movie-id="${movie.id}"]`)) {
+        return;
+    }
+
+    // Если список пустой и есть сообщение об отсутствии фильмов, удаляем его
+    const emptyMessage = moviesList.querySelector('.conf-step__empty-movies');
+    if (emptyMessage) {
+        emptyMessage.remove();
+    }
+
+    // Создаем элемент фильма
+    const movieElement = document.createElement('div');
+    movieElement.className = `conf-step__movie ${!movie.is_active ? 'conf-step__movie-inactive' : ''}`;
+    movieElement.dataset.movieId = movie.id;
+    movieElement.dataset.movieDuration = movie.movie_duration;
+    movieElement.style.position = 'relative';
+
+    // Заполняем HTML
+    movieElement.innerHTML = `
+        <img class="conf-step__movie-poster" alt="${movie.title}"
+            src="${movie.poster_url || ''}">
+        <h3 class="conf-step__movie-title">${movie.title}</h3>
+        <p class="conf-step__movie-duration">${movie.movie_duration} минут</p>
+
+        ${!movie.is_active ? '<div class="conf-step__movie-status">Неактивен</div>' : ''}
+
+        <div class="conf-step__movie-controls">
+            <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                    onclick="openEditMovieModal(${movie.id})"
+                    title="Редактировать фильм">
+            </button>
+            <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                    data-delete-movie="${movie.id}"
+                    data-movie-name="${movie.title}"
+                    title="Удалить фильм"></button>
+        </div>
+    `;
+
+    // Добавляем в начало списка
+    moviesList.prepend(movieElement);
+}
+
+// Функция для обновления списка фильмов без перезагрузки
+function updateMoviesList(movies) {
+    const moviesList = document.getElementById('moviesList');
+    if (!moviesList) return;
+    
+    let html = '';
+    movies.forEach(movie => {
+        const isActive = movie.is_active;
+        html += `
+            <div class="conf-step__movie ${!isActive ? 'conf-step__movie-inactive' : ''}" 
+                data-movie-id="${movie.id}" 
+                data-movie-duration="${movie.movie_duration}" 
+                style="position: relative;">
+                <img class="conf-step__movie-poster" alt="${movie.title}"
+                    src="${movie.poster_url || ''}">
+                <h3 class="conf-step__movie-title">${movie.title}</h3>
+                <p class="conf-step__movie-duration">${movie.movie_duration} минут</p>
+
+                ${!isActive ? '<div class="conf-step__movie-status">Неактивен</div>' : ''}
+
+                <div class="conf-step__movie-controls">
+                    <button class="conf-step__button conf-step__button-small conf-step__button-regular"
+                            onclick="openEditMovieModal(${movie.id})"
+                            title="Редактировать фильм">
+                    </button>
+                    <button class="conf-step__button conf-step__button-small conf-step__button-trash"
+                            data-delete-movie="${movie.id}"
+                            data-movie-name="${movie.title}"
+                            title="Удалить фильм"></button>
+                </div>
+            </div>
+        `;
+    });
+    
+    if (html === '') {
+        html = '<div class="conf-step__empty-movies">Нет добавленных фильмов</div>';
+    }
+    
+    moviesList.innerHTML = html;
 }
 
 // Функция подтверждения удаления фильма (вызывается из модального окна)
@@ -152,14 +264,39 @@ export function previewMoviePoster(input) {
 }
 
 // Функция инициализации фильмов
+let moviesInitialized = false;
+
 export function initMovies() {
     // Обработчик формы добавления фильма
     const addMovieForm = document.getElementById('addMovieForm');
     if (addMovieForm) {
-        addMovieForm.addEventListener('submit', async function(e) {
+        console.log('Найдена форма добавления фильма');
+        
+        // Удаляем все старые обработчики
+        const newForm = addMovieForm.cloneNode(true);
+        addMovieForm.parentNode.replaceChild(newForm, addMovieForm);
+        
+        // Вешаем новый обработчик с максимальной защитой
+        document.getElementById('addMovieForm').addEventListener('submit', async function(e) {
+            console.log('Обработчик формы сработал');
+            
+            // Полная отмена события
             e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            
+            // Защита от повторного вызова
+            if (this.dataset.processing === 'true') {
+                console.log('Форма уже обрабатывается');
+                return;
+            }
+            
+            this.dataset.processing = 'true';
             await addMovie(this);
-        });
+            this.dataset.processing = 'false';
+            
+            return false;
+        }, {capture: true, once: false});
     }
 
     // Превью постера для добавления фильма
@@ -211,11 +348,14 @@ async function updateMovie(form) {
     try {
         const formData = new FormData(form);
         const movieId = formData.get('movie_id');
+        
+        formData.append('_method', 'PUT');
 
         const response = await fetch(`/admin/movies/${movieId}`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-Requested-With': 'XMLHttpRequest'
             },
             body: formData
         });
@@ -231,7 +371,6 @@ async function updateMovie(form) {
                 window.notifications.show('Фильм успешно обновлен!', 'success');
             }
             closeModal('editMovieModal');
-            // Перезагружаем страницу чтобы обновить список фильмов
             setTimeout(() => location.reload(), 1000);
         } else {
             throw new Error(result.message || 'Ошибка при обновлении фильма');

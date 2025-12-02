@@ -238,9 +238,7 @@ class TestDataSeeder extends Seeder
         $this->command->info('Билеты: ' . Ticket::count());
     }
 
-    /**
-     * Создать сеанс с проверкой валидации
-     */
+    // Создать сеанс с проверкой валидации
     private function createValidatedSession($hall, $movie, $date, $time): void
     {
         try {
@@ -256,7 +254,7 @@ class TestDataSeeder extends Seeder
             if (!$validationResult['valid']) {
                 $this->command->warn("Не удалось создать сеанс '{$movie->title}' в {$time}: {$validationResult['message']}");
                 
-                // Попробуем найти ближайшее доступное время
+                // Ищем ближайшее доступное время
                 $availableTime = $this->validationService->findAvailableTime(
                     $hall->id,
                     $movie->id,

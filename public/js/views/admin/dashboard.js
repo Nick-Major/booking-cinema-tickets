@@ -68,8 +68,8 @@ import {
     initSessionFormHandlers, 
     openEditSessionModal,
     openDeleteSessionModal,
-    initTimelineHandlers, // ← ДОБАВИЛ ИМПОРТ
-    changeTimelineDate    // ← ДОБАВИЛ ИМПОРТ
+    initTimelineHandlers,
+    changeTimelineDate
 } from '../../modules/sessions.js';
 
 
@@ -225,10 +225,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Инициализируем аккордеон
         initAccordeon();
-        console.log('✅ Accordeon initialized');
+        console.log('Accordeon initialized');
         
     } catch (error) {
-        console.error('💥 Error:', error);
+        console.error('Error:', error);
     }
 
     // Экспортируем функции

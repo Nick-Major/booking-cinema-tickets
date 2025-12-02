@@ -349,7 +349,14 @@ body {
 }
 
 .buying-scheme__chair_taken {
-  background-color: transparent;
+  background-color: #333333;
+  border-color: #666666;
+}
+
+.buying-scheme__chair.buying-scheme__chair_vip.buying-scheme__chair_taken {
+  background-color: #333333;
+  border-color: #F9953A;
+  opacity: 0.7;
 }
 
 .buying-scheme__chair_vip {

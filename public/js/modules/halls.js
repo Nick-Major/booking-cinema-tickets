@@ -2,6 +2,14 @@
 
 import { openModal, closeModal } from '../core/modals.js';
 
+// Кэширование и управление запросами
+let hallConfigCache = {}; // Кэш для конфигураций залов
+let priceConfigCache = {}; // Кэш для конфигураций цен
+let hallConfigAbortController = null;
+let priceConfigAbortController = null;
+let isHallLoading = false; // Флаг загрузки конфигурации зала
+let isPriceLoading = false; // Флаг загрузки конфигурации цен
+
 // Модуль для управления залами
 class HallsManager {
     constructor(notificationSystem) {
@@ -229,7 +237,7 @@ class HallsManager {
 
     checkAndHideSections() {
         const hallsList = document.querySelector('.conf-step__list');
-        const hasHalls = hallsList && hallsList.children.length > 0;
+        const hasHalls = hallsList && hallsList.querySelectorAll('li[data-hall-id]').length > 0;
 
         // Секции, которые зависят от наличия залов
         const dependentSections = [
@@ -246,9 +254,10 @@ class HallsManager {
             }
         });
 
-        // Если залов не осталось, показываем сообщение
-        if (!hasHalls) {
-            this.showNoHallsMessage();
+        // Показываем/скрываем сообщение "Нет созданных залов"
+        const emptyMessage = document.querySelector('.conf-step__empty');
+        if (emptyMessage) {
+            emptyMessage.style.display = hasHalls ? 'none' : 'block';
         }
     }
 
@@ -265,59 +274,546 @@ class HallsManager {
     }
 }
 
+// Метод для обновления списка залов
 HallsManager.prototype.updateHallList = async function() {
     try {
-        const response = await fetch('/admin/halls');
-        const halls = await response.json();
+        console.log('Обновление списка залов...');
         
-        // Обновляем все секции, где используются залы
-        this.updateHallSelectors(halls);
+        const response = await fetch('/admin/halls');
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const halls = await response.json();
+        console.log('Получены залы:', halls);
+        
+        // Обновляем список залов
+        this.updateHallsList(halls);
+        
+        // Обновляем все селекторы залов в других секциях
+        this.updateAllHallSelectors(halls);
+        
+        this.showNotification('Список залов обновлен', 'success');
         
     } catch (error) {
         console.error('Error updating hall list:', error);
+        this.showNotification('Ошибка при обновлении списка залов', 'error');
     }
 };
 
+// Обновляем список залов (ul.conf-step__list)
+HallsManager.prototype.updateHallsList = function(halls) {
+    const listContainer = document.querySelector('.conf-step__list');
+    const emptyMessage = document.querySelector('.conf-step__empty');
+    
+    if (!listContainer) {
+        console.warn('Контейнер списка залов не найден');
+        return;
+    }
+    
+    if (halls.length === 0) {
+        if (emptyMessage) {
+            emptyMessage.style.display = 'block';
+        } else {
+            // Создаем сообщение если его нет
+            const emptyLi = document.createElement('li');
+            emptyLi.className = 'conf-step__empty';
+            emptyLi.textContent = 'Нет созданных залов';
+            listContainer.innerHTML = '';
+            listContainer.appendChild(emptyLi);
+        }
+        return;
+    }
+    
+    // Скрываем сообщение "пусто"
+    if (emptyMessage) {
+        emptyMessage.style.display = 'none';
+    }
+    
+    // Генерируем новое содержимое списка
+    let html = '';
+    halls.forEach(hall => {
+        html += `
+            <li data-hall-id="${hall.id}">
+                ${hall.hall_name}
+                <button class="conf-step__button conf-step__button-trash" 
+                        data-delete-hall="${hall.id}"
+                        data-hall-name="${hall.hall_name}"></button>
+            </li>
+        `;
+    });
+    
+    listContainer.innerHTML = html;
+    
+    // Переинициализируем обработчики кнопок
+    this.bindEvents();
+    
+    // Проверяем и обновляем видимость секций
+    this.checkAndHideSections();
+};
+
+// Обновление всех селекторов залов
+HallsManager.prototype.updateAllHallSelectors = function(halls) {
+    // 1. Обновляем селектор в конфигурации залов
+    this.updateHallConfigurationSelector(halls);
+    
+    // 2. Обновляем селектор в конфигурации цен
+    this.updatePriceConfigurationSelector(halls);
+    
+    // 3. Обновляем список в управлении продажами
+    this.updateSalesManagementSelector(halls);
+};
+
+// Обновление селектора конфигурации залов
+HallsManager.prototype.updateHallConfigurationSelector = function(halls) {
+    const hallSelector = document.querySelector('#hallSelector');
+    if (!hallSelector) return;
+    
+    let html = '';
+    halls.forEach(hall => {
+        // Проверяем, какой зал был выбран ранее
+        const wasSelected = hallSelector.querySelector(`input[value="${hall.id}"]`)?.checked || false;
+        
+        html += `
+            <li>
+                <input type="radio" class="conf-step__radio" name="chairs-hall"
+                       value="${hall.id}" ${wasSelected || halls[0].id === hall.id ? 'checked' : ''}
+                       onchange="loadHallConfiguration(${hall.id})">
+                <span class="conf-step__selector">${hall.hall_name}</span>
+            </li>
+        `;
+    });
+    
+    hallSelector.innerHTML = html;
+    
+    // Загружаем конфигурацию для выбранного зала
+    const selectedRadio = hallSelector.querySelector('input[type="radio"]:checked');
+    if (selectedRadio && typeof loadHallConfiguration === 'function') {
+        loadHallConfiguration(selectedRadio.value);
+    }
+};
+
+// Обновление селектора конфигурации цен
+HallsManager.prototype.updatePriceConfigurationSelector = function(halls) {
+    const priceSelector = document.querySelector('#priceConfigurationSection .conf-step__selectors-box');
+    if (!priceSelector) return;
+    
+    let html = '';
+    halls.forEach(hall => {
+        // Проверяем, какой зал был выбран ранее
+        const wasSelected = priceSelector.querySelector(`input[value="${hall.id}"]`)?.checked || false;
+        
+        html += `
+            <li>
+                <input type="radio" class="conf-step__radio" name="prices-hall"
+                       value="${hall.id}" ${wasSelected || halls[0].id === hall.id ? 'checked' : ''}
+                       onchange="loadPriceConfiguration(${hall.id})">
+                <span class="conf-step__selector">${hall.hall_name}</span>
+            </li>
+        `;
+    });
+    
+    priceSelector.innerHTML = html;
+    
+    // Загружаем конфигурацию цен для выбранного зала
+    const selectedRadio = priceSelector.querySelector('input[type="radio"]:checked');
+    if (selectedRadio && typeof loadPriceConfiguration === 'function') {
+        loadPriceConfiguration(selectedRadio.value);
+    }
+};
+
+// Обновление списка в управлении продажами
+HallsManager.prototype.updateSalesManagementSelector = function(halls) {
+    const salesList = document.querySelector('.conf-step__sales-list');
+    if (!salesList) return;
+    
+    let html = '';
+    halls.forEach(hall => {
+        html += `
+            <li>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="hall-name">${hall.hall_name}</span>
+                    <span class="sales-status ${hall.is_active ? 'active' : 'inactive'}">
+                        ${hall.is_active ? 'Продажи открыты' : 'Продажи приостановлены'}
+                    </span>
+                </div>
+                <button class="conf-step__button conf-step__button-small ${hall.is_active ? 'conf-step__button-warning' : 'conf-step__button-accent'}"
+                        data-toggle-sales="${hall.id}"
+                        data-is-active="${hall.is_active ? 'true' : 'false'}">
+                    ${hall.is_active ? 'Приостановить продажу билетов' : 'Открыть продажу билетов'}
+                </button>
+            </li>
+        `;
+    });
+    
+    salesList.innerHTML = html;
+    
+    // Добавляем обработчики для кнопок управления продажами
+    this.bindSalesEvents();
+};
+
+// Привязка событий для кнопок управления продажами
+HallsManager.prototype.bindSalesEvents = function() {
+    document.querySelectorAll('[data-toggle-sales]').forEach(button => {
+        button.addEventListener('click', (e) => {
+            const hallId = e.currentTarget.getAttribute('data-toggle-sales');
+            const isActive = e.currentTarget.getAttribute('data-is-active') === 'true';
+            
+            // Отправляем запрос на сервер
+            fetch('/admin/toggle-sales', {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ hall_id: hallId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    this.showNotification(data.message, 'success');
+                    // Обновляем список залов
+                    this.updateHallList();
+                } else {
+                    this.showNotification(data.message, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error toggling sales:', error);
+                this.showNotification('Ошибка при изменении статуса продаж', 'error');
+            });
+        });
+    });
+};
+
+// Экспортируемые функции для загрузки конфигураций
 export async function loadHallConfiguration(hallId) {
+    console.time(`loadHallConfiguration-${hallId}`);
+    
+    // Если уже идет загрузка для этого зала, прерываем
+    if (isHallLoading && hallConfigAbortController) {
+        console.log('Отменяем предыдущую загрузку конфигурации зала');
+        hallConfigAbortController.abort();
+    }
+    
+    // Проверяем кэш
+    if (hallConfigCache[hallId]) {
+        console.log('Используем кэшированную конфигурацию зала для:', hallId);
+        const container = document.getElementById('hallConfiguration');
+        if (container) {
+            container.innerHTML = hallConfigCache[hallId];
+            console.timeEnd(`loadHallConfiguration-${hallId}`);
+            return;
+        }
+    }
+    
+    hallConfigAbortController = new AbortController();
+    isHallLoading = true;
+    
     try {
-        const response = await fetch(`/admin/halls/${hallId}/configuration`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        // Показываем индикатор загрузки
+        const container = document.getElementById('hallConfiguration');
+        if (container) {
+            container.innerHTML = '<div class="loading-indicator">Загрузка конфигурации...</div>';
+        }
+        
+        const response = await fetch(`/admin/halls/${hallId}/configuration`, {
+            signal: hallConfigAbortController.signal,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache' // Для свежих данных
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const html = await response.text();
-        const container = document.getElementById('hallConfiguration');
         
+        // Кэшируем результат
+        hallConfigCache[hallId] = html;
+        console.log('Конфигурация зала закэширована:', hallId);
+        
+        // Обновляем контейнер с использованием requestAnimationFrame для плавности
         if (container) {
-            container.innerHTML = html;
+            requestAnimationFrame(() => {
+                container.innerHTML = html;
+                // Вызываем инициализацию скриптов для загруженного контента
+                setTimeout(() => initializeHallConfigurationScripts(hallId), 0);
+            });
+        }
+        
+        if (window.notifications) {
+            window.notifications.show('Конфигурация зала загружена', 'success');
+        }
+        
+    } catch (error) {
+        // Игнорируем ошибку отмены запроса
+        if (error.name === 'AbortError') {
+            console.log('Запрос конфигурации зала отменен');
+        } else {
+            console.error('Error loading hall configuration:', error);
             if (window.notifications) {
-                window.notifications.show('Конфигурация зала загружена', 'success');
+                window.notifications.show('Ошибка при загрузке конфигурации зала', 'error');
             }
         }
-    } catch (error) {
-        console.error('Error loading hall configuration:', error);
-        if (window.notifications) {
-            window.notifications.show('Ошибка при загрузке конфигурации зала', 'error');
-        }
+    } finally {
+        isHallLoading = false;
+        console.timeEnd(`loadHallConfiguration-${hallId}`);
     }
 }
 
+// Функция для инициализации скриптов в загруженной конфигурации
+function initializeHallConfigurationScripts(hallId) {
+    const container = document.getElementById('hallConfiguration');
+    if (!container) return;
+    
+    // Проверяем, не инициализирован ли уже этот контейнер
+    if (container.dataset.initialized === 'true') {
+        return;
+    }
+    container.dataset.initialized = 'true';
+    
+    // 1. Кнопка генерации схемы
+    const generateBtn = container.querySelector('button.conf-step__button-regular');
+    if (generateBtn && generateBtn.textContent.includes('Сгенерировать') && window.generateHallLayout) {
+        generateBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const rowsInput = container.querySelector('.rows-input');
+            const seatsInput = container.querySelector('.seats-input');
+            
+            if (rowsInput && seatsInput) {
+                const rows = Math.max(1, Math.min(20, parseInt(rowsInput.value) || 0));
+                const seats = Math.max(1, Math.min(20, parseInt(seatsInput.value) || 0));
+                
+                if (rows > 0 && seats > 0) {
+                    // Обновляем значения в инпутах
+                    rowsInput.value = rows;
+                    seatsInput.value = seats;
+                    
+                    window.generateHallLayout(hallId, rows, seats);
+                }
+            }
+        });
+    }
+    
+    // 2. Кнопка сброса схемы
+    const resetBtns = container.querySelectorAll('button.conf-step__button-regular');
+    resetBtns.forEach(btn => {
+        if (btn.textContent.includes('Сбросить') && window.openResetHallConfigurationModal) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Находим название зала
+                let hallName = '';
+                const hallRadio = document.querySelector(`#hallSelector input[value="${hallId}"]`);
+                if (hallRadio) {
+                    const selector = hallRadio.nextElementSibling;
+                    if (selector && selector.classList.contains('conf-step__selector')) {
+                        hallName = selector.textContent.trim();
+                    }
+                }
+                
+                window.openResetHallConfigurationModal(hallId, hallName);
+            });
+        }
+    });
+    
+    // 3. Кнопка сохранения схемы
+    const saveBtn = container.querySelector('button.conf-step__button-accent');
+    if (saveBtn && saveBtn.textContent.includes('Сохранить') && window.saveHallConfiguration) {
+        saveBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            // Собираем данные мест
+            const seats = [];
+            const hallLayout = container.querySelector('#hallLayout-' + hallId);
+            
+            if (hallLayout) {
+                const seatElements = hallLayout.querySelectorAll('.conf-step__chair');
+                seatElements.forEach(seatElement => {
+                    const row = parseInt(seatElement.getAttribute('data-row')) || 0;
+                    const seat = parseInt(seatElement.getAttribute('data-seat')) || 0;
+                    const type = seatElement.getAttribute('data-type') || 'regular';
+                    
+                    if (row > 0 && seat > 0) {
+                        seats.push({
+                            row: row,
+                            seat: seat,
+                            type: type
+                        });
+                    }
+                });
+            }
+            
+            if (seats.length > 0) {
+                window.saveHallConfiguration(hallId, seats);
+            } else {
+                if (window.notifications) {
+                    window.notifications.show('Нет данных для сохранения. Сгенерируйте схему зала.', 'error');
+                }
+            }
+        });
+    }
+    
+    // 4. Обработчики для кликов по местам
+    const seatElements = container.querySelectorAll('.conf-step__chair');
+    seatElements.forEach(seatElement => {
+        if (!seatElement.hasAttribute('data-click-handler')) {
+            seatElement.setAttribute('data-click-handler', 'true');
+            seatElement.addEventListener('click', function() {
+                if (window.changeSeatType) {
+                    window.changeSeatType(this);
+                }
+            });
+        }
+    });
+}
+
 export async function loadPriceConfiguration(hallId) {
+    console.time(`loadPriceConfiguration-${hallId}`);
+    
+    // Если уже идет загрузка для этого зала, прерываем
+    if (isPriceLoading && priceConfigAbortController) {
+        console.log('Отменяем предыдущую загрузку конфигурации цен');
+        priceConfigAbortController.abort();
+    }
+    
+    // Проверяем кэш
+    if (priceConfigCache[hallId]) {
+        console.log('Используем кэшированную конфигурацию цен для:', hallId);
+        const container = document.getElementById('priceConfiguration');
+        if (container) {
+            container.innerHTML = priceConfigCache[hallId];
+            console.timeEnd(`loadPriceConfiguration-${hallId}`);
+            return;
+        }
+    }
+    
+    priceConfigAbortController = new AbortController();
+    isPriceLoading = true;
+    
     try {
-        const response = await fetch(`/admin/halls/${hallId}/prices`);
-        if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+        // Показываем индикатор загрузки
+        const container = document.getElementById('priceConfiguration');
+        if (container) {
+            container.innerHTML = '<div class="loading-indicator">Загрузка цен...</div>';
+        }
+        
+        const response = await fetch(`/admin/halls/${hallId}/prices`, {
+            signal: priceConfigAbortController.signal,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'Cache-Control': 'no-cache'
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
         
         const html = await response.text();
-        const container = document.getElementById('priceConfiguration');
         
+        // Кэшируем результат
+        priceConfigCache[hallId] = html;
+        console.log('Конфигурация цен закэширована:', hallId);
+        
+        // Обновляем контейнер
         if (container) {
-            container.innerHTML = html;
+            requestAnimationFrame(() => {
+                container.innerHTML = html;
+                // Инициализация скриптов для цен
+                setTimeout(() => initializePriceConfigurationScripts(hallId), 0);
+            });
+        }
+        
+        if (window.notifications) {
+            window.notifications.show('Конфигурация цен загружена', 'success');
+        }
+        
+    } catch (error) {
+        // Игнорируем ошибку отмены запроса
+        if (error.name === 'AbortError') {
+            console.log('Запрос конфигурации цен отменен');
+        } else {
+            console.error('Error loading price configuration:', error);
             if (window.notifications) {
-                window.notifications.show('Конфигурация цен загружена', 'success');
+                window.notifications.show('Ошибка при загрузке конфигурации цен', 'error');
+            }
+        }
+    } finally {
+        isPriceLoading = false;
+        console.timeEnd(`loadPriceConfiguration-${hallId}`);
+    }
+}
+
+// Функция для инициализации скриптов в загруженной конфигурации цен
+function initializePriceConfigurationScripts(hallId) {
+    const container = document.getElementById('priceConfiguration');
+    if (!container) return;
+    
+    // Обработчики для формы цен
+    const priceForm = container.querySelector('form');
+    if (priceForm) {
+        priceForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            savePriceConfiguration(hallId);
+        });
+    }
+}
+
+// Функции для очистки кэша (вызывать после сохранения изменений)
+export function clearHallConfigCache(hallId) {
+    if (hallConfigCache[hallId]) {
+        delete hallConfigCache[hallId];
+        console.log('Кэш конфигурации зала очищен:', hallId);
+    }
+}
+
+export function clearPriceConfigCache(hallId) {
+    if (priceConfigCache[hallId]) {
+        delete priceConfigCache[hallId];
+        console.log('Кэш конфигурации цен очищен:', hallId);
+    }
+}
+
+// Функция сохранения конфигурации цен
+async function savePriceConfiguration(hallId) {
+    try {
+        const form = document.querySelector('#priceConfiguration form');
+        if (!form) return;
+        
+        const formData = new FormData(form);
+        
+        const response = await fetch(`/admin/halls/${hallId}/update-prices`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
+            }
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            if (window.notifications) {
+                window.notifications.show(result.message || 'Цены обновлены', 'success');
+            }
+            // Очищаем кэш после успешного сохранения
+            clearPriceConfigCache(hallId);
+        } else {
+            if (window.notifications) {
+                window.notifications.show(result.message || 'Ошибка при обновлении цен', 'error');
             }
         }
     } catch (error) {
-        console.error('Error loading price configuration:', error);
+        console.error('Error saving price configuration:', error);
         if (window.notifications) {
-            window.notifications.show('Ошибка при загрузке конфигурации цен', 'error');
+            window.notifications.show('Ошибка при сохранении цен', 'error');
         }
     }
 }
@@ -353,6 +849,31 @@ export async function fetchHalls() {
         throw error;
     }
 }
+
+// Предзагрузка конфигураций при загрузке страницы
+export function preloadConfigurations() {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Находим выбранные радио-кнопки
+        const selectedHallConfig = document.querySelector('input[name="chairs-hall"]:checked');
+        const selectedPriceConfig = document.querySelector('input[name="prices-hall"]:checked');
+        
+        if (selectedHallConfig) {
+            // Предзагружаем с небольшой задержкой, чтобы не блокировать основной поток
+            setTimeout(() => {
+                loadHallConfiguration(selectedHallConfig.value);
+            }, 300);
+        }
+        
+        if (selectedPriceConfig) {
+            setTimeout(() => {
+                loadPriceConfiguration(selectedPriceConfig.value);
+            }, 500);
+        }
+    });
+}
+
+// Инициализация предзагрузки
+preloadConfigurations();
 
 // Экспорт класса HallsManager по умолчанию
 export default HallsManager;
@@ -404,8 +925,36 @@ export function initHallFormHandlers() {
                     // Сбрасываем форму
                     this.reset();
                     
-                    // Обновляем список залов без перезагрузки
-                    await this.updateHallList();
+                    // Очищаем кэши при создании нового зала
+                    hallConfigCache = {};
+                    priceConfigCache = {};
+                    
+                    // Обновляем список залов через HallsManager
+                    if (window.hallsManager && typeof window.hallsManager.updateHallList === 'function') {
+                        await window.hallsManager.updateHallList();
+                    } else {
+                        console.warn('HallsManager не найден, пробуем обновить вручную');
+                        // Альтернатива: вызываем fetch для обновления
+                        const hallsResponse = await fetch('/admin/halls');
+                        const halls = await hallsResponse.json();
+                        
+                        // Обновляем список залов
+                        const listContainer = document.querySelector('.conf-step__list');
+                        if (listContainer) {
+                            let html = '';
+                            halls.forEach(hall => {
+                                html += `
+                                    <li data-hall-id="${hall.id}">
+                                        ${hall.hall_name}
+                                        <button class="conf-step__button conf-step__button-trash" 
+                                                data-delete-hall="${hall.id}"
+                                                data-hall-name="${hall.hall_name}"></button>
+                                    </li>
+                                `;
+                            });
+                            listContainer.innerHTML = html;
+                        }
+                    }
                     
                 } else {
                     console.log('Ошибка при создании зала:', result.message);
